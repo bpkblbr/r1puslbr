@@ -4294,9 +4294,34 @@ function checkAndLockKbTable() {
     initNavigationRT(d.kode_kec, d.kode_desa, d.kode_dusun, d.kode_rt, d.tahun, d.id_pus, d.dusun_nama);
   }
 
+  function isTableDataEmpty(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return true;
+    const tbody = table.querySelector("tbody");
+    if (!tbody || tbody.rows.length === 0) return true;
+    
+    // Cek jika hanya ada 1 baris yang berisi pesan placeholder / teks info
+    if (tbody.rows.length === 1 && tbody.rows[0].cells.length <= 1) return true;
+    
+    // Cek jika baris pertama memuat teks default belum ada data
+    const firstCellText = tbody.rows[0].innerText.toLowerCase();
+    if (firstCellText.includes("silakan atur filter") || 
+        firstCellText.includes("memuat") || 
+        firstCellText.includes("tidak ada data") ||
+        firstCellText.includes("mengambil seluruh data")) {
+      return true;
+    }
+    return false;
+  }
+
   function exportBnbaToPDF() {
+    if (isTableDataEmpty('bnbaTable')) {
+      Swal.fire("Data Kosong", "Tampilkan data terlebih dahulu sebelum melakukan ekspor PDF!", "warning");
+      return;
+    }
+
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('landscape', 'pt', 'a2'); // Ukuran A2 Landscape agar 29 kolom muat rapi
+    const doc = new jsPDF('landscape', 'pt', 'a2'); // Ukuran A2 Landscape agar kolom muat rapi
 
     doc.setFontSize(16);
     doc.text("DATA BNBA PASANGAN USIA SUBUR", 40, 35);
@@ -4359,14 +4384,23 @@ function checkAndLockKbTable() {
   function exportRecapToExcel() { exportTableToExcel('recapTable', 'REKAP_PUS'); }  
 
   function exportRecapToPDF() {
+    if (isTableDataEmpty('recapTable')) {
+      Swal.fire("Data Kosong", "Tampilkan data terlebih dahulu sebelum melakukan ekspor PDF!", "warning");
+      return;
+    }
+
     const { jsPDF } = window.jspdf;
-    // Ganti 'a4' menjadi 'a3' agar muat 38 kolom tanpa terpotong
     const doc = new jsPDF('landscape', 'pt', 'a3');
     doc.text("LAPORAN REKAPITULASI PUS & KESERTAAN KB", 40, 30);
-    // Sesuaikan fontSize menjadi 6 agar teks dan angka rapi di dalam sel
-    doc.autoTable({ html: '#recapTable', startY: 45, styles: { fontSize: 6 } });
+    doc.autoTable({ 
+      html: '#recapTable', 
+      startY: 45, 
+      styles: { fontSize: 6, cellPadding: 2, halign: 'center' },
+      headStyles: { fillColor: [31, 78, 120], textColor: 255 },
+      theme: 'grid'
+    });
     doc.save("Rekap_PUS.pdf");
-  }  
+  }
 
   // --- MODAL TRIGGER LAINNYA ---
   function openSearchModal() {
