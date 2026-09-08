@@ -2048,7 +2048,7 @@ function checkAndLockKbTable() {
       cDsn.style.display = (t === "Dusun") ? "block" : "none";
     }
 
-    document.getElementById("recapTableBody").innerHTML = "<tr><td colspan='31' style='text-align:center; padding: 20px;'>Silakan atur filter dan klik Tampilkan Rekap</td></tr>";
+    document.getElementById("recapTableBody").innerHTML = "<tr><td colspan='38' style='text-align:center; padding: 20px;'>Silakan atur filter dan klik Tampilkan Rekap</td></tr>";
   }
   
   function resetRecapFilters() {
@@ -3185,7 +3185,7 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     const prevMonthKey = bulan > 1 ? mKeys[bulan - 2] : null;
 
     const tbody = document.getElementById("recapTableBody");
-    tbody.innerHTML = "<tr><td colspan='31' style='text-align:center; padding: 20px;'>Mengambil seluruh data rekapitulasi...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; padding: 20px;'>Mengambil seluruh data rekapitulasi...</td></tr>";
 
     let filterKec = isDesaRole() || isKecRole() ? userKodeKec : document.getElementById("recapKecamatan").value;
     let filterDesa = isDesaRole() ? userKodeDesa : (document.getElementById("recapDesa") ? document.getElementById("recapDesa").value : "");
@@ -3193,7 +3193,7 @@ function hitungStatusIndikator(r, bulan, mKeys) {
 
     if ((tingkat === "Kecamatan" || tingkat === "Desa" || tingkat === "Dusun") && !filterKec) {
       Swal.fire("Perhatian", "Silakan pilih Kecamatan terlebih dahulu!", "warning");
-      tbody.innerHTML = "<tr><td colspan='31' style='text-align:center; color:red; padding: 20px;'>Kecamatan belum dipilih.</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; color:red; padding: 20px;'>Kecamatan belum dipilih.</td></tr>";
       return;
     }
 
@@ -3202,13 +3202,13 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       allData = await fetchAllPusDataChunked(tahun, filterKec, filterDesa, filterDusun);
     } catch (err) {
       console.error("Fetch Error:", err);
-      tbody.innerHTML = `<tr><td colspan='31' style='text-align:center; color:red; padding: 20px;'>Gagal memuat: ${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan='38' style='text-align:center; color:red; padding: 20px;'>Gagal memuat: ${err.message}</td></tr>`;
       return;
     }
 
     // CEK VALIDASI: Jika tidak ada data dari database
     if (!allData || allData.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='31' style='text-align:center; color:#dc2626; font-weight:bold; padding: 30px;'>Tidak ada data PUS yang terdaftar untuk filter wilayah dan tahun ini.</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; color:#dc2626; font-weight:bold; padding: 30px;'>Tidak ada data PUS yang terdaftar untuk filter wilayah dan tahun ini.</td></tr>";
       Swal.fire({
         icon: 'info',
         title: 'Data Kosong',
@@ -3323,7 +3323,7 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       // Cek jika setelah diproses grouping ternyata tidak ada data valid
       const groupKeys = Object.keys(grouped);
       if (groupKeys.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='31' style='text-align:center; color:#dc2626; font-weight:bold; padding: 30px;'>Tidak ada data PUS yang terdaftar untuk filter wilayah ini.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; color:#dc2626; font-weight:bold; padding: 30px;'>Tidak ada data PUS yang terdaftar untuk filter wilayah ini.</td></tr>";
         return;
       }
 
@@ -3381,7 +3381,7 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       </tr>`;
     } catch (renderErr) {
       console.error("Render Loop Error:", renderErr);
-      tbody.innerHTML = `<tr><td colspan='31' style='text-align:center; color:red; padding: 20px;'>Terjadi kesalahan saat memproses data: ${renderErr.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan='38' style='text-align:center; color:red; padding: 20px;'>Terjadi kesalahan saat memproses data: ${renderErr.message}</td></tr>`;
     }
   }
   
