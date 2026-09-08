@@ -2486,54 +2486,62 @@ function checkAndLockKbTable() {
   let cachedPendingMutasiList = [];
 
   async function checkPendingMutasiNotifications() {
-    if (!currentUser) return;
+  if (!currentUser) return;
 
-    try {
-      // 1. Tarik semua data yang berstatus PENDING (case-insensitive)
-      let query = db.from('mutasi_pus')
-        .select('*')
-        .ilike('status', 'PENDING');
+  try {
+    const { data, error } = await db.from('mutasi_pus')
+      .select('*')
+      .ilike('status', 'PENDING');
 
-      const { data, error } = await query;
-      if (error) {
-        console.error("Gagal mengambil notifikasi mutasi:", error);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        cachedPendingMutasiList = [];
-        updateInboxBadge(0);
-        return;
-      }
-
-      // 2. Normalisasi kode login pengguna ke angka murni (tanpa leading zero)
-      const userKecNum = parseInt(userKodeKec, 10);
-      const userDesaNum = parseInt(userKodeDesa, 10);
-
-      // 3. Filter data mutasi secara fleksibel
-      cachedPendingMutasiList = data.filter(item => {
-        // Normalisasi kode tujuan yang tersimpan di baris database
-        const itemKecNum = parseInt(item.kode_kec_tujuan, 10);
-        const itemDesaNum = parseInt(item.kode_desa_tujuan, 10);
-
-        if (isDesaRole()) {
-          // User Desa: harus cocok Kecamatan & Desa
-          return itemKecNum === userKecNum && itemDesaNum === userDesaNum;
-        } else if (isKecRole()) {
-          // Admin Kec: harus cocok Kecamatan
-          return itemKecNum === userKecNum;
-        } else {
-          // Admin Kab: melihat semua mutasi pending
-          return true;
-        }
-      });
-
-      updateInboxBadge(cachedPendingMutasiList.length);
-
-    } catch (err) {
-      console.error("Error pada checkPendingMutasiNotifications:", err);
+    if (error) {
+      console.error("Gagal mengambil notifikasi mutasi:", error);
+      return;
     }
+
+    if (!data || data.length === 0) {
+      cachedPendingMutasiList = [];
+      updateInboxBadge(0);
+      return;
+    }
+
+    // Normalisasi kode login: buang karakter selain angka dan parse aman
+    const cleanUserKec = String(userKodeKec || "").replace(/\D/g, "");
+    const cleanUserDesa = String(userKodeDesa || "").replace(/\D/g, "");
+    
+    const userKecNum = cleanUserKec ? parseInt(cleanUserKec, 10) : null;
+    const userDesaNum = cleanUserDesa ? parseInt(cleanUserDesa, 10) : null;
+
+    cachedPendingMutasiList = data.filter(item => {
+      const itemKecStr = String(item.kode_kec_tujuan || "").replace(/\D/g, "");
+      const itemDesaStr = String(item.kode_desa_tujuan || "").replace(/\D/g, "");
+
+      const itemKecNum = itemKecStr ? parseInt(itemKecStr, 10) : null;
+      const itemDesaNum = itemDesaStr ? parseInt(itemDesaStr, 10) : null;
+
+      if (isKabRole()) {
+        return true;
+      } else if (isKecRole()) {
+        return userKecNum !== null && itemKecNum === userKecNum;
+      } else {
+        // User Desa
+        return (
+          userKecNum !== null &&
+          userDesaNum !== null &&
+          itemKecNum === userKecNum &&
+          itemDesaNum === userDesaNum
+        );
+      }
+    });
+
+    console.log("Total mutasi PENDING di DB:", data.length);
+    console.log("Mutasi cocok untuk akun ini:", cachedPendingMutasiList.length);
+
+    updateInboxBadge(cachedPendingMutasiList.length);
+
+  } catch (err) {
+    console.error("Error pada checkPendingMutasiNotifications:", err);
   }
+}
 
   function updateInboxBadge(count) {
     const badge = document.getElementById("badgeInboxMutasi");
