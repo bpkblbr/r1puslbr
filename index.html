@@ -3383,6 +3383,9 @@ function checkAndLockKbTable() {
   
   // --- BNBA DATA FETCH DENGAN FILTER TINGKAT (FIXED) ---
   async function fetchBnba() {
+    const thead = document.getElementById("bnbaTableHeader");
+    const tbody = document.getElementById("bnbaTableBody");    
+
     const tingkat = document.getElementById("bnbaTingkat").value;
     const tahun = parseInt(document.getElementById("bnbaTahun").value, 10);
     const bulanVal = document.getElementById("bnbaBulan").value;
@@ -3497,9 +3500,8 @@ function checkAndLockKbTable() {
       kbHeaderHtml = monthNamesShort.map(m => `<th style="background:#28a745; color:white;">${m}</th>`).join("");
     }
 
-    const hideNik = isDesaRole(); // Cek apakah role User Desa
+    const hideNik = isDesaRole();
 
-    // Header NIK hanya dimunculkan jika BUKAN User Desa
     const nikSuamiHeader = !hideNik ? `<th style="background:#1f4e78; color:white;">NIK SUAMI</th>` : ``;
     const nikIstriHeader = !hideNik ? `<th style="background:#1f4e78; color:white;">NIK ISTRI</th>` : ``;
 
@@ -3523,59 +3525,6 @@ function checkAndLockKbTable() {
       <th style="background:#1f4e78; color:white;">PESERTA JKN</th>
       ${kbHeaderHtml}
     </tr>`;
-
-    let filterKec = "";
-    let filterDesa = "";
-    let filterDusun = "";
-    let filterRt = "";
-
-    if (isDesaRole()) {
-      filterKec = userKodeKec;
-      filterDesa = userKodeDesa;
-      if (tingkat === "Dusun" || tingkat === "RT") {
-        filterDusun = (document.getElementById("bnbaDusun").value || "").trim().padStart(4, '0');
-      }
-      if (tingkat === "RT") {
-        filterRt = (document.getElementById("bnbaRt").value || "").trim().padStart(3, '0');
-      }
-    } else if (isKecRole()) {
-      filterKec = userKodeKec;
-      if (tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
-        const dVal = document.getElementById("bnbaDesa").value;
-        if (!dVal && tingkat !== "Kecamatan") {
-          Swal.fire("Perhatian", "Silakan pilih Desa terlebih dahulu!", "warning");
-          return;
-        }
-        filterDesa = dVal ? dVal.trim().padStart(4, '0') : "";
-      }
-      if (tingkat === "Dusun" || tingkat === "RT") {
-        filterDusun = (document.getElementById("bnbaDusun").value || "").trim().padStart(4, '0');
-      }
-      if (tingkat === "RT") {
-        filterRt = (document.getElementById("bnbaRt").value || "").trim().padStart(3, '0');
-      }
-    } else {
-      if (tingkat === "Kecamatan" || tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
-        const kVal = document.getElementById("bnbaKecamatan").value;
-        if (!kVal) {
-          Swal.fire("Perhatian", "Silakan pilih Kecamatan terlebih dahulu!", "warning");
-          return;
-        }
-        filterKec = kVal.trim().padStart(2, '0');
-      }
-      if (tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
-        const dVal = document.getElementById("bnbaDesa").value;
-        if (dVal) filterDesa = dVal.trim().padStart(4, '0');
-      }
-      if (tingkat === "Dusun" || tingkat === "RT") {
-        const dsVal = document.getElementById("bnbaDusun").value;
-        if (dsVal) filterDusun = dsVal.trim().padStart(4, '0');
-      }
-      if (tingkat === "RT") {
-        const rtVal = document.getElementById("bnbaRt").value;
-        if (rtVal) filterRt = rtVal.trim().padStart(3, '0');
-      }
-    }
 
     tbody.innerHTML = "<tr><td colspan='29' style='text-align:center; padding: 20px;'>Memuat seluruh data BNBA...</td></tr>";
 
@@ -3690,7 +3639,6 @@ function checkAndLockKbTable() {
           kbRowTd = mKeys.map(k => `<td style="text-align:center;">${r[k] || '-'}</td>`).join("");
         }
 
-        // Kolom NIK Suami & Istri disembunyikan jika User Desa
         const nikSuamiTd = !hideNik ? `<td style="font-family: monospace;">${r.nik_suami || '-'}</td>` : ``;
         const nikIstriTd = !hideNik ? `<td style="font-family: monospace;">${r.nik_istri || '-'}</td>` : ``;
 
@@ -3719,7 +3667,7 @@ function checkAndLockKbTable() {
     } catch (err) {
       console.error("BNBA Fetch Error:", err);
       const totalCols = (targetBulanIdx ? 18 : 29) - (hideNik ? 2 : 0);
-      tbody.innerHTML = `<tr><td colspan='${totalCols}' style='text-align:center; padding: 20px;'>Memuat seluruh data BNBA...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan='${totalCols}' style='text-align:center; color:red; padding: 20px;'>Gagal memuat BNBA: ${err.message}</td></tr>`;
       Swal.fire("Error", "Gagal memuat BNBA: " + err.message, "error");
     }
   }
