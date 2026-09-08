@@ -2946,11 +2946,6 @@ function checkAndLockKbTable() {
       document.getElementById("id_pus").value = idPus;
     }
 
-      const nextNum = maxSeq + 1;
-      idPus = `${prefix}${String(nextNum).padStart(3, '0')}`;
-      document.getElementById("id_pus").value = idPus;
-    }
-
     const payload = {
       id_pus: idPus,
       tahun: thn,
