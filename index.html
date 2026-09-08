@@ -361,6 +361,9 @@
         <input type="hidden" id="pindah_kec_tujuan" value="">
         <input type="hidden" id="pindah_desa_tujuan" value="">
         <input type="hidden" id="pindah_desa_nama" value="">
+        <input type="hidden" id="original_id_pus" value="">
+        <input type="hidden" id="original_kode_dusun" value="">
+        <input type="hidden" id="original_kode_rt" value="">
 
         <!-- CONTAINER NAVIGASI RT -->
         <div id="navRTContainer" style="display: none; background: #e0f2fe; padding: 12px; border-radius: 6px; border: 1px solid #bae6fd; margin-bottom: 15px; flex-direction: row; justify-content: space-between; align-items: center;">
@@ -2902,6 +2905,41 @@ function checkAndLockKbTable() {
     const kdDsn  = document.getElementById("kode_dusun").value.padStart(4, '0');
     const kdRt   = document.getElementById("kode_rt").value.padStart(3, '0');
 
+    const originalIdPus = document.getElementById("original_id_pus").value.trim();
+    const origDsn = document.getElementById("original_kode_dusun").value.trim();
+    const origRt = document.getElementById("original_kode_rt").value.trim();
+
+    // Deteksi apakah ini edit data tapi Dusun atau RT-nya berubah (Pindah dalam desa)
+    const isPindahInternal = (isEditMode && (origDsn !== kdDsn || origRt !== kdRt));
+
+    // Jika data baru ATAU terjadi pindah Dusun/RT internal, buatkan ID PUS baru
+    if (!idPus || isPindahInternal) {
+      const prefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
+      const { data: matchedRows } = await db
+        .from('data_pus')
+        .select('id_pus')
+        .ilike('id_pus', `${prefix}%`)
+        .eq('tahun', thn);
+
+      let maxSeq = 0;
+      if (matchedRows && matchedRows.length > 0) {
+        matchedRows.forEach(row => {
+          const cleanId = String(row.id_pus || "").trim();
+          const matches = cleanId.match(/\d+$/);
+          if (matches) {
+            const seqPart = parseInt(matches[0], 10);
+            if (!isNaN(seqPart) && seqPart > maxSeq) {
+              maxSeq = seqPart;
+            }
+          }
+        });
+      }
+
+      const nextNum = maxSeq + 1;
+      idPus = `${prefix}${String(nextNum).padStart(3, '0')}`;
+      document.getElementById("id_pus").value = idPus;
+    }
+
     // Penomoran ID PUS Aman: Menghitung nomor urut maksimal (MAX)
     if (!idPus) {
       const prefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
@@ -2971,6 +3009,17 @@ function checkAndLockKbTable() {
 
     const { error } = await db.from('data_pus').upsert([payload], { onConflict: 'id_pus,tahun' });
     if (error) throw error;
+
+    if (isPindahInternal && originalIdPus && originalIdPus !== idPus) {
+      const { error: errDelOld } = await db.from('data_pus')
+        .delete()
+        .eq('id_pus', originalIdPus)
+        .eq('tahun', thn);
+      
+      if (errDelOld) {
+        console.warn("Gagal menghapus ID PUS lama:", errDelOld);
+      }
+    }
 
     // Mutasi Pindah
     const isPindahDalamKab = document.getElementById("is_pindah_dalam_kab").value === "true";
@@ -4305,6 +4354,9 @@ function checkAndLockKbTable() {
     closeSearchModal();
     showFormView();
     document.getElementById("id_pus").value = d.id_pus;
+    document.getElementById("original_id_pus").value = d.id_pus;
+    document.getElementById("original_kode_dusun").value = d.kode_dusun;
+    document.getElementById("original_kode_rt").value = d.kode_rt;
     document.getElementById("tahun_input").value = d.tahun;
     setSelectValueCaseInsensitive("provinsi", d.kode_prov); updateKabupaten(d.kode_kab);
     setSelectValueCaseInsensitive("kabupaten", d.kode_kab); updateKecamatan(d.kode_kec);
@@ -5219,6 +5271,9 @@ function checkAndLockKbTable() {
   function resetInputForm() {
     document.getElementById("pusForm").reset();
     document.getElementById("id_pus").value = "";
+    document.getElementById("original_id_pus").value = "";
+    document.getElementById("original_kode_dusun").value = "";
+    document.getElementById("original_kode_rt").value = "";
 
     const thnInput = document.getElementById("tahun_input");
     if (thnInput) thnInput.value = String(new Date().getFullYear());
