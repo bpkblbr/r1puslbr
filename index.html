@@ -2514,23 +2514,12 @@ function checkAndLockKbTable() {
         badge.style.display = "none";
       }
     }
-  }  
-
-  const badge = document.getElementById("badgeInboxMutasi");
-  if (badge) {
-    if (cachedPendingMutasiList.length > 0) {
-      badge.innerText = cachedPendingMutasiList.length;
-      badge.style.display = "inline-block";
-    } else {
-      badge.style.display = "none";
-    }
   }
-}
 
   function openInboxMutasiModal() {
     document.getElementById("modalInboxMutasi").style.display = "block";
     loadInboxMutasiTable();
-  }
+  }  
 
   function closeInboxMutasiModal() {
     document.getElementById("modalInboxMutasi").style.display = "none";
@@ -3239,7 +3228,10 @@ function hitungStatusIndikator(r, bulan, mKeys) {
         }
 
         if (!key) return;
-        if (!grouped[key]) grouped[key] = emptyRecapItem(key);        
+        if (!grouped[key]) grouped[key] = emptyRecapItem(key);
+
+        const res = hitungStatusIndikator(r, bulan, mKeys);
+        const cur = res.cur;
 
         // 1. TOTAL PUS: Hanya bertambah jika status bulan berjalan adalah PESERTA_KB atau BUKAN_PESERTA (umur < 50 dan bukan mutasi)
         if (res.isPusAktif) {
@@ -3789,10 +3781,11 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     let perWilayahMap = {};
 
     data.forEach(r => {
-      const umurIstri = res.umurIstri; // PERBAIKAN FATAL ERROR #2
-
-      // 1. Total PUS (Hanya Peserta KB dan Bukan Peserta, non-mutasi, umur < 50)
-      if (res.isPusAktif) {
+      const res = hitungStatusIndikator(r, bulan, mKeys);
+      const cur = res.cur;
+      const umurIstri = res.umurIstri;
+      
+      if (res.isPusAktif) {      
         t.total_pus++;
       }
 
@@ -4398,9 +4391,7 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     }
   }
 
-  function exportRecapToExcel() { exportTableToExcel('recapTable', 'REKAP_PUS'); }
-
-  function exportRecapToExcel() { exportTableToExcel('recapTable', 'REKAP_PUS'); }
+  function exportRecapToExcel() { exportTableToExcel('recapTable', 'REKAP_PUS'); }  
 
   function exportRecapToPDF() {
     const { jsPDF } = window.jspdf;
