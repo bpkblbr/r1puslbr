@@ -4466,7 +4466,7 @@ function checkAndLockKbTable() {
 
   function exportBnbaToPDF() {
     if (isTableDataEmpty('bnbaTable')) {
-      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!.", "warning");
+      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!", "warning");
       return;
     }
 
@@ -4500,7 +4500,7 @@ function checkAndLockKbTable() {
     // Cek apakah tabel masih kosong atau hanya berisi teks placeholder
     const tbody = table.querySelector("tbody");
     if (!tbody || tbody.rows.length === 0 || (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1)) {
-      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!.", "warning");
+      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!", "warning");
       return;
     }
 
@@ -4535,7 +4535,7 @@ function checkAndLockKbTable() {
 
   function exportRecapToPDF() {
     if (isTableDataEmpty('recapTable')) {
-      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!.", "warning");
+      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!", "warning");
       return;
     }
 
