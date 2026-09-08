@@ -2514,21 +2514,7 @@ function checkAndLockKbTable() {
         badge.style.display = "none";
       }
     }
-  }
-
-  function openInboxMutasiModal() {
-    document.getElementById("modalInboxMutasi").style.display = "block";
-    loadInboxMutasiTable();
-  }
-
-  function closeInboxMutasiModal() {
-    document.getElementById("modalInboxMutasi").style.display = "none";
-  }
-
-  async function loadInboxMutasiTable() {
-
-  const { data, error } = await query;
-  cachedPendingMutasiList = data || [];
+  }  
 
   const badge = document.getElementById("badgeInboxMutasi");
   if (badge) {
@@ -3174,6 +3160,25 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       return;
     }
 
+    // --- VALIDASI BERTINGKAT REKAP ---
+    let filterKec = isDesaRole() || isKecRole() ? userKodeKec : document.getElementById("recapKecamatan").value;
+    let filterDesa = isDesaRole() ? userKodeDesa : (document.getElementById("recapDesa") ? document.getElementById("recapDesa").value : "");
+    let filterDusun = document.getElementById("recapDusun") ? document.getElementById("recapDusun").value : "";
+
+    if (tingkat === "Kecamatan" && !filterKec) {
+      Swal.fire("Peringatan", "Nama Kecamatan wajib dipilih untuk tingkat Kecamatan!", "warning");
+      return;
+    }
+    if (tingkat === "Desa") {
+      if (!filterKec) { Swal.fire("Peringatan", "Kecamatan wajib dipilih!", "warning"); return; }
+      if (!filterDesa) { Swal.fire("Peringatan", "Nama Desa wajib dipilih untuk tingkat Desa!", "warning"); return; }
+    }
+    if (tingkat === "Dusun") {
+      if (!filterKec) { Swal.fire("Peringatan", "Kecamatan wajib dipilih!", "warning"); return; }
+      if (!filterDesa) { Swal.fire("Peringatan", "Desa wajib dipilih!", "warning"); return; }
+      if (!filterDusun) { Swal.fire("Peringatan", "Nama Dusun wajib dipilih untuk tingkat Dusun!", "warning"); return; }
+    }
+
     if (!bulanVal) {
       Swal.fire("Perhatian", "Silakan pilih Bulan terlebih dahulu!", "warning");
       return;
@@ -3182,20 +3187,9 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     const bulan = parseInt(bulanVal, 10);
     const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
     const monthKey = mKeys[bulan - 1];
-    const prevMonthKey = bulan > 1 ? mKeys[bulan - 2] : null;
 
     const tbody = document.getElementById("recapTableBody");
     tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; padding: 20px;'>Mengambil seluruh data rekapitulasi...</td></tr>";
-
-    let filterKec = isDesaRole() || isKecRole() ? userKodeKec : document.getElementById("recapKecamatan").value;
-    let filterDesa = isDesaRole() ? userKodeDesa : (document.getElementById("recapDesa") ? document.getElementById("recapDesa").value : "");
-    let filterDusun = document.getElementById("recapDusun") ? document.getElementById("recapDusun").value : "";
-
-    if ((tingkat === "Kecamatan" || tingkat === "Desa" || tingkat === "Dusun") && !filterKec) {
-      Swal.fire("Perhatian", "Silakan pilih Kecamatan terlebih dahulu!", "warning");
-      tbody.innerHTML = "<tr><td colspan='38' style='text-align:center; color:red; padding: 20px;'>Kecamatan belum dipilih.</td></tr>";
-      return;
-    }
 
     let allData = [];
     try {
@@ -3246,10 +3240,6 @@ function hitungStatusIndikator(r, bulan, mKeys) {
 
         if (!key) return;
         if (!grouped[key]) grouped[key] = emptyRecapItem(key);        
-
-        // Panggil helper evaluasi indikator
-        const res = hitungStatusIndikator(r, bulan, mKeys);
-        const cur = res.cur;
 
         // 1. TOTAL PUS: Hanya bertambah jika status bulan berjalan adalah PESERTA_KB atau BUKAN_PESERTA (umur < 50 dan bukan mutasi)
         if (res.isPusAktif) {
@@ -3393,12 +3383,93 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     const advCat = document.getElementById("bnbaFilterAdvCategory").value;
     const advVal = document.getElementById("bnbaFilterAdvValue").value;
 
-    const thead = document.getElementById("bnbaTableHeader");
-    const tbody = document.getElementById("bnbaTableBody");
-
     if (!tingkat) {
       Swal.fire("Perhatian", "Silakan pilih Tingkat Wilayah terlebih dahulu!", "warning");
       return;
+    }
+
+    let filterKec = "";
+    let filterDesa = "";
+    let filterDusun = "";
+    let filterRt = "";
+
+    if (isDesaRole()) {
+      filterKec = userKodeKec;
+      filterDesa = userKodeDesa;
+      if (tingkat === "Dusun" || tingkat === "RT") {
+        filterDusun = (document.getElementById("bnbaDusun").value || "").trim().padStart(4, '0');
+        if (!document.getElementById("bnbaDusun").value) {
+          Swal.fire("Peringatan", "Nama Dusun wajib dipilih!", "warning");
+          return;
+        }
+      }
+      if (tingkat === "RT") {
+        filterRt = (document.getElementById("bnbaRt").value || "").trim().padStart(3, '0');
+        if (!document.getElementById("bnbaRt").value) {
+          Swal.fire("Peringatan", "Nomor RT wajib dipilih untuk tingkat RT!", "warning");
+          return;
+        }
+      }
+    } else if (isKecRole()) {
+      filterKec = userKodeKec;
+      if (tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
+        const dVal = document.getElementById("bnbaDesa").value;
+        if (!dVal) {
+          Swal.fire("Peringatan", "Nama Desa wajib dipilih!", "warning");
+          return;
+        }
+        filterDesa = dVal.trim().padStart(4, '0');
+      }
+      if (tingkat === "Dusun" || tingkat === "RT") {
+        const dsVal = document.getElementById("bnbaDusun").value;
+        if (!dsVal) {
+          Swal.fire("Peringatan", "Nama Dusun wajib dipilih!", "warning");
+          return;
+        }
+        filterDusun = dsVal.trim().padStart(4, '0');
+      }
+      if (tingkat === "RT") {
+        const rVal = document.getElementById("bnbaRt").value;
+        if (!rVal) {
+          Swal.fire("Peringatan", "Nomor RT wajib dipilih untuk tingkat RT!", "warning");
+          return;
+        }
+        filterRt = rVal.trim().padStart(3, '0');
+      }
+    } else {
+      // Admin Kabupaten
+      if (tingkat === "Kecamatan" || tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
+        const kVal = document.getElementById("bnbaKecamatan").value;
+        if (!kVal) {
+          Swal.fire("Peringatan", "Nama Kecamatan wajib dipilih!", "warning");
+          return;
+        }
+        filterKec = kVal.trim().padStart(2, '0');
+      }
+      if (tingkat === "Desa" || tingkat === "Dusun" || tingkat === "RT") {
+        const dVal = document.getElementById("bnbaDesa").value;
+        if (!dVal) {
+          Swal.fire("Peringatan", "Nama Desa wajib dipilih!", "warning");
+          return;
+        }
+        filterDesa = dVal.trim().padStart(4, '0');
+      }
+      if (tingkat === "Dusun" || tingkat === "RT") {
+        const dsVal = document.getElementById("bnbaDusun").value;
+        if (!dsVal) {
+          Swal.fire("Peringatan", "Nama Dusun wajib dipilih!", "warning");
+          return;
+        }
+        filterDusun = dsVal.trim().padStart(4, '0');
+      }
+      if (tingkat === "RT") {
+        const rtVal = document.getElementById("bnbaRt").value;
+        if (!rtVal) {
+          Swal.fire("Peringatan", "Nomor RT wajib dipilih untuk tingkat RT!", "warning");
+          return;
+        }
+        filterRt = rtVal.trim().padStart(3, '0');
+      }
     }
 
     if (advCat && !bulanVal) {
@@ -3657,7 +3728,26 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       Swal.fire("Perhatian", "Silakan pilih Tingkat Wilayah terlebih dahulu!", "warning");
       return;
     }
-    
+
+    // --- VALIDASI WILAYAH BERTINGKAT GRAFIK ---
+    let filterKec = isDesaRole() || isKecRole() ? userKodeKec : document.getElementById("chartKecamatan").value;
+    let filterDesa = isDesaRole() ? userKodeDesa : (document.getElementById("chartDesa") ? document.getElementById("chartDesa").value : "");
+    let filterDusun = document.getElementById("chartDusun") ? document.getElementById("chartDusun").value : "";
+
+    if (tingkat === "Kecamatan" && !filterKec) {
+      Swal.fire("Peringatan", "Nama Kecamatan wajib dipilih untuk tingkat Kecamatan!", "warning");
+      return;
+    }
+    if (tingkat === "Desa") {
+      if (!filterKec) { Swal.fire("Peringatan", "Kecamatan wajib dipilih!", "warning"); return; }
+      if (!filterDesa) { Swal.fire("Peringatan", "Nama Desa wajib dipilih untuk tingkat Desa!", "warning"); return; }
+    }
+    if (tingkat === "Dusun") {
+      if (!filterKec) { Swal.fire("Peringatan", "Kecamatan wajib dipilih!", "warning"); return; }
+      if (!filterDesa) { Swal.fire("Peringatan", "Desa wajib dipilih!", "warning"); return; }
+      if (!filterDusun) { Swal.fire("Peringatan", "Nama Dusun wajib dipilih untuk tingkat Dusun!", "warning"); return; }
+    }
+
     if (!bulanVal) {
       Swal.fire("Perhatian", "Silakan pilih Bulan terlebih dahulu!", "warning");
       return;
@@ -3665,14 +3755,13 @@ function hitungStatusIndikator(r, bulan, mKeys) {
 
     const bulan = parseInt(bulanVal, 10);
     const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
-    const monthKey = mKeys[bulan - 1];
-    const prevMonthKey = bulan > 1 ? mKeys[bulan - 2] : null;    
 
-    let filterKec = isDesaRole() || isKecRole() ? userKodeKec : document.getElementById("chartKecamatan").value;
-    let filterDesa = isDesaRole() ? userKodeDesa : (document.getElementById("chartDesa") ? document.getElementById("chartDesa").value : "");
-    let filterDusun = document.getElementById("chartDusun") ? document.getElementById("chartDusun").value : "";
-
-    Swal.fire({ title: 'Memuat Grafik...', text: 'Mengambil seluruh data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    Swal.fire({
+      title: 'Memuat Grafik...',
+      text: 'Mengambil seluruh data...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
 
     let data = [];
     try {
@@ -3680,6 +3769,11 @@ function hitungStatusIndikator(r, bulan, mKeys) {
       Swal.close();
     } catch (err) {
       Swal.fire("Error", "Gagal memuat data grafik: " + err.message, "error");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      Swal.fire("Data Kosong", "Tidak ada data PUS yang ditemukan untuk kriteria wilayah dan tahun ini.", "info");
       return;
     }
 
