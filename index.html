@@ -2487,28 +2487,59 @@ function checkAndLockKbTable() {
 
   async function checkPendingMutasiNotifications() {
     if (!currentUser) return;
-    let query = db.from('mutasi_pus').select('*').eq('status', 'PENDING');
 
-    const cleanKec = String(userKodeKec || "").trim().padStart(2, '0');
-    const cleanDesa = String(userKodeDesa || "").trim().padStart(4, '0');
+    try {
+      // 1. Tarik semua data yang berstatus PENDING (case-insensitive)
+      let query = db.from('mutasi_pus')
+        .select('*')
+        .ilike('status', 'PENDING');
 
-    if (isDesaRole()) {
-      query = query.eq('kode_kec_tujuan', cleanKec).eq('kode_desa_tujuan', cleanDesa);
-    } else if (isKecRole()) {
-      query = query.eq('kode_kec_tujuan', cleanKec);
+      const { data, error } = await query;
+      if (error) {
+        console.error("Gagal mengambil notifikasi mutasi:", error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        cachedPendingMutasiList = [];
+        updateInboxBadge(0);
+        return;
+      }
+
+      // 2. Normalisasi kode login pengguna ke angka murni (tanpa leading zero)
+      const userKecNum = parseInt(userKodeKec, 10);
+      const userDesaNum = parseInt(userKodeDesa, 10);
+
+      // 3. Filter data mutasi secara fleksibel
+      cachedPendingMutasiList = data.filter(item => {
+        // Normalisasi kode tujuan yang tersimpan di baris database
+        const itemKecNum = parseInt(item.kode_kec_tujuan, 10);
+        const itemDesaNum = parseInt(item.kode_desa_tujuan, 10);
+
+        if (isDesaRole()) {
+          // User Desa: harus cocok Kecamatan & Desa
+          return itemKecNum === userKecNum && itemDesaNum === userDesaNum;
+        } else if (isKecRole()) {
+          // Admin Kec: harus cocok Kecamatan
+          return itemKecNum === userKecNum;
+        } else {
+          // Admin Kab: melihat semua mutasi pending
+          return true;
+        }
+      });
+
+      updateInboxBadge(cachedPendingMutasiList.length);
+
+    } catch (err) {
+      console.error("Error pada checkPendingMutasiNotifications:", err);
     }
+  }
 
-    const { data, error } = await query;
-    if (error) {
-      console.error("Gagal mengambil notifikasi mutasi:", error);
-      return;
-    }
-    cachedPendingMutasiList = data || [];
-
+  function updateInboxBadge(count) {
     const badge = document.getElementById("badgeInboxMutasi");
     if (badge) {
-      if (cachedPendingMutasiList.length > 0) {
-        badge.innerText = cachedPendingMutasiList.length;
+      if (count > 0) {
+        badge.innerText = count;
         badge.style.display = "inline-block";
       } else {
         badge.style.display = "none";
