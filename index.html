@@ -3695,8 +3695,6 @@ function hitungStatusIndikator(r, bulan, mKeys) {
     let perWilayahMap = {};
 
     data.forEach(r => {
-      const res = hitungStatusIndikator(r, bulan, mKeys);
-      const cur = res.cur;
       const umurIstri = res.umurIstri; // PERBAIKAN FATAL ERROR #2
 
       // 1. Total PUS (Hanya Peserta KB dan Bukan Peserta, non-mutasi, umur < 50)
