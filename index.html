@@ -3338,13 +3338,15 @@ function checkAndLockKbTable() {
           <td>${d.hamil}</td>
           <td style="background:#fff7ed; font-weight:bold; color:#c2410c;">${d.hamil_baru}</td>
           <td>${d.ias}</td><td>${d.iat}</td><td>${d.tial}</td><td>${d.tki}</td>
-		  <td>${d.u15_19}</td><td>${d.u20_24}</td><td>${d.u25_29}</td><td>${d.u30_34}</td><td>${d.u35_39}</td><td>${d.u40_44}</td><td>${d.u45_plus}</td>
+		      <td>${d.u15_19}</td><td>${d.u20_24}</td><td>${d.u25_29}</td><td>${d.u30_34}</td><td>${d.u35_39}</td><td>${d.u40_44}</td><td>${d.u45_plus}</td>
           <td style="background:#e2e3e5; font-weight:bold;">${d.bukan_pus}</td>
           <td>${d.bcr}</td><td>${d.mng}</td><td>${d.pndh}</td><td>${d.usia_50}</td>
         </tr>`;
-
+        
         for (let prop in totalAll) {
-          if (prop !== "wilayah") totalAll[prop] += (d[prop] || 0);
+          if (prop !== "wilayah") {
+            totalAll[prop] += Number(d[prop] || 0);
+          }
         }
       });
 
@@ -3363,7 +3365,13 @@ function checkAndLockKbTable() {
         <td>${totalAll.hamil}</td>
         <td style="background:#fed7aa; font-size:13px; color:#9a3412;">${totalAll.hamil_baru}</td>
         <td>${totalAll.ias}</td><td>${totalAll.iat}</td><td>${totalAll.tial}</td><td>${totalAll.tki}</td>
-		<td>${totalAll.u15_19}</td><td>${totalAll.u20_24}</td><td>${totalAll.u25_29}</td><td>${totalAll.u30_34}</td><td>${totalAll.u35_39}</td><td>${totalAll.u40_44}</td><td>${totalAll.u45_plus}</td>
+		    <td style="text-align:center;">${totalAll.u15_19}</td>
+        <td style="text-align:center;">${totalAll.u20_24}</td>
+        <td style="text-align:center;">${totalAll.u25_29}</td>
+        <td style="text-align:center;">${totalAll.u30_34}</td>
+        <td style="text-align:center;">${totalAll.u35_39}</td>
+        <td style="text-align:center;">${totalAll.u40_44}</td>
+        <td style="text-align:center;">${totalAll.u45_plus}</td>
         <td style="background:#d6d8d9; font-size:13px;">${totalAll.bukan_pus}</td>
         <td>${totalAll.bcr}</td><td>${totalAll.mng}</td><td>${totalAll.pndh}</td><td>${totalAll.usia_50}</td>
       </tr>`;
@@ -3727,10 +3735,10 @@ function checkAndLockKbTable() {
       return;
     }
 
-    // --- VALIDASI WILAYAH BERTINGKAT GRAFIK ---
-    let filterKec = (isDesaRole() || isKecRole() ? userKodeKec : (document.getElementById("recapKecamatan")?.value || "")).trim();
-    let filterDesa = (isDesaRole() ? userKodeDesa : (document.getElementById("recapDesa")?.value || "")).trim();
-    let filterDusun = (document.getElementById("recapDusun")?.value || "").trim();
+    // --- VALIDASI WILAYAH BERTINGKAT GRAFIK (GUNAKAN ID CHART) ---
+    let filterKec = (isDesaRole() || isKecRole() ? userKodeKec : (document.getElementById("chartKecamatan")?.value || "")).trim();
+    let filterDesa = (isDesaRole() ? userKodeDesa : (document.getElementById("chartDesa")?.value || "")).trim();
+    let filterDusun = (document.getElementById("chartDusun")?.value || "").trim();
 
     if (tingkat === "Kecamatan" && !filterKec) {
       Swal.fire("Peringatan", "Nama Kecamatan wajib dipilih untuk tingkat Kecamatan!", "warning");
