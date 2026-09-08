@@ -2946,29 +2946,6 @@ function checkAndLockKbTable() {
       document.getElementById("id_pus").value = idPus;
     }
 
-    // Penomoran ID PUS Aman: Menghitung nomor urut maksimal (MAX)
-    if (!idPus) {
-      const prefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
-      const { data: matchedRows } = await db
-        .from('data_pus')
-        .select('id_pus')
-        .ilike('id_pus', `${prefix}%`)
-        .eq('tahun', thn);
-
-      let maxSeq = 0;
-      if (matchedRows && matchedRows.length > 0) {
-        matchedRows.forEach(row => {
-          const cleanId = String(row.id_pus || "").trim();
-          const matches = cleanId.match(/\d+$/); // Ambil angka paling belakang secara akurat
-          if (matches) {
-            const seqPart = parseInt(matches[0], 10);
-            if (!isNaN(seqPart) && seqPart > maxSeq) {
-              maxSeq = seqPart;
-            }
-          }
-        });
-      }
-
       const nextNum = maxSeq + 1;
       idPus = `${prefix}${String(nextNum).padStart(3, '0')}`;
       document.getElementById("id_pus").value = idPus;
@@ -4360,6 +4337,7 @@ function checkAndLockKbTable() {
       `;
       container.appendChild(div);
     });
+  }
 
   // 1. Fungsi hapus langsung dari tombol di Form Input
   function handleDeleteFromForm() {
