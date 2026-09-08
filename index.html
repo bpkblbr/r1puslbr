@@ -1913,14 +1913,14 @@ function checkAndLockKbTable() {
         let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
         for (let kdKab in dataKecamatan) {
           for (let kdKec in dataKecamatan[kdKab]) {
-            let cleanKd = String(kdKec).padStart(2, '0');
+            let cleanKd = String(kdKec).trim().padStart(2, '0');
             kecOptions += `<option value="${cleanKd}">${dataKecamatan[kdKab][kdKec].toUpperCase()}</option>`;
           }
         }
 
         Swal.fire({
           title: 'Pilih Wilayah Tujuan',
-          showCloseButton: true, // Menampilkan tombol X (close) di kanan atas
+          showCloseButton: true,
           html: `
             <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Kecamatan Tujuan:</div>
             <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
@@ -1932,26 +1932,28 @@ function checkAndLockKbTable() {
             </select>
           `,
           icon: 'info',
-          showCancelButton: false,
+          showCancelButton: true,
+          cancelButtonText: 'Batal',
           confirmButtonColor: '#059669',
           confirmButtonText: '✅ Tetapkan Wilayah Tujuan',
           allowOutsideClick: false,
           didOpen: () => {
             window.onSwalMutasiKecChange = function() {
-              const selKec = document.getElementById('swalMutasiKec').value;
+              const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
               const selDesa = document.getElementById('swalMutasiDesa');
               selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
               if (selKec && dataDesa[selKec]) {
                 for (let kd in dataDesa[selKec]) {
-                  selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), String(kd).padStart(4, '0')));
+                  let cleanKdDesa = String(kd).trim().padStart(4, '0');
+                  selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
                 }
               }
             };
           },
           preConfirm: () => {
-            const kecTujuan = document.getElementById('swalMutasiKec').value;
+            const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
             const desaSelect = document.getElementById('swalMutasiDesa');
-            const desaTujuan = desaSelect.value;
+            const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
             const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
 
             if (!kecTujuan || !desaTujuan) {
@@ -1967,14 +1969,12 @@ function checkAndLockKbTable() {
             document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
             document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
 
-            Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}. Tiket mutasi akan dibuat saat disimpan.`, 'success');
+            Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
           } else {
-            // JIKA TOMBOL CLOSE (X) ATAU DI-CANCEL PADA PEMILIHAN WILAYAH
             BATalkanPilihanPindah(monthIndex);
           }
         });
       } else {
-        // JIKA DI-CANCEL PADA DIALOG AWAL
         BATalkanPilihanPindah(monthIndex);
       }
     });
@@ -2489,12 +2489,12 @@ function checkAndLockKbTable() {
     if (!currentUser) return;
     let query = db.from('mutasi_pus').select('*').eq('status', 'PENDING');
 
+    const cleanKec = String(userKodeKec || "").trim().padStart(2, '0');
+    const cleanDesa = String(userKodeDesa || "").trim().padStart(4, '0');
+
     if (isDesaRole()) {
-      const cleanKec = String(userKodeKec || "").padStart(2, '0');
-      const cleanDesa = String(userKodeDesa || "").padStart(4, '0');
       query = query.eq('kode_kec_tujuan', cleanKec).eq('kode_desa_tujuan', cleanDesa);
     } else if (isKecRole()) {
-      const cleanKec = String(userKodeKec || "").padStart(2, '0');
       query = query.eq('kode_kec_tujuan', cleanKec);
     }
 
