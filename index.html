@@ -3633,6 +3633,23 @@ function checkAndLockKbTable() {
         }
       }
 
+      // === SANITASI DATA MUTASI UNTUK BNBA (HANYA MUNCUL DI BULAN PERTAMA) ===
+      const mKeysAll = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
+      
+      allData.forEach(r => {
+        let mutasiFound = false;
+        mKeysAll.forEach(k => {
+          let val = String(r[k] || "").trim().toUpperCase();
+          if (mutasiFound) {
+            r[k] = ""; // Paksa kosongkan bulan setelah mutasi pertama
+          } else {
+            if (val.includes("CERAI") || val.includes("MENINGGAL") || val.includes("PINDAH")) {
+              mutasiFound = true; // Kunci: bulan-bulan berikutnya dinonaktifkan
+            }
+          }
+        });
+      });      
+
       // Filter Pencarian Lanjutan (jika dipilih)
       if (advCat) {
         const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
