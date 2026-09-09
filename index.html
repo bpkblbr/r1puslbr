@@ -1578,82 +1578,82 @@ function checkAndLockKbTable() {
 }
   
   function applyMutationAndAgeLocks() {
-  const tglLahir = document.getElementById("tgl_lahir_istri").value;
-  const tahunInput = parseInt(document.getElementById("tahun_input").value || new Date().getFullYear(), 10);
-  
-  let mutationTriggeredIndex = -1;
-  let age50StartIndex = 13;
+    const tglLahir = document.getElementById("tgl_lahir_istri").value;
+    const tahunInput = parseInt(document.getElementById("tahun_input").value || new Date().getFullYear(), 10);
+    
+    let mutationTriggeredIndex = -1;
+    let age50StartIndex = 13;
 
-  // 1. Hitung titik bulan saat istri genap berusia 50 tahun di tahun pelaporan
-  if (tglLahir) {
-    const dob = new Date(tglLahir);
-    if (!isNaN(dob.getTime())) {
-      const birthYear = dob.getFullYear();
-      const birthMonth = dob.getMonth() + 1; // 1 - 12
-      const yearTurning50 = birthYear + 50;
+    // 1. Cek titik bulan usia 50 tahun
+    if (tglLahir) {
+      const dob = new Date(tglLahir);
+      if (!isNaN(dob.getTime())) {
+        const birthYear = dob.getFullYear();
+        const birthMonth = dob.getMonth() + 1; // 1 - 12
+        const yearTurning50 = birthYear + 50;
 
-      if (tahunInput > yearTurning50) {
-        age50StartIndex = 1; // Sudah lewat 50 tahun sejak awal tahun
-      } else if (tahunInput === yearTurning50) {
-        age50StartIndex = birthMonth; // Masuk 50 tahun di bulan kelahirannya
+        if (tahunInput > yearTurning50) {
+          age50StartIndex = 1; 
+        } else if (tahunInput === yearTurning50) {
+          age50StartIndex = birthMonth; 
+        }
       }
     }
-  }
 
-  // 2. Cek apakah ada status mutasi di salah satu bulan
-  for (let i = 1; i <= 12; i++) {
-    const sel = document.getElementById("kb_" + i);
-    if (!sel) continue;
-    const val = String(sel.value || "").toUpperCase();
-    
-    if (val === "BERCERAI" || val === "SUAMI/ISTRI MENINGGAL" || val === "PINDAH") {
-      mutationTriggeredIndex = i;
-      break;
+    // 2. Cek bulan pertama kali terjadinya status MUTASI
+    for (let i = 1; i <= 12; i++) {
+      const sel = document.getElementById("kb_" + i);
+      if (!sel) continue;
+      const val = String(sel.value || "").toUpperCase();
+      
+      if (val === "BERCERAI" || val === "SUAMI/ISTRI MENINGGAL" || val === "PINDAH") {
+        mutationTriggeredIndex = i;
+        break; // Ambil kemunculan pertama saja
+      }
     }
-  }
 
-  // 3. Tentukan batas awal lock
-  let lockStartingIndex = 13;
-  let lockReason = "";
+    // 3. Tentukan batas awal lock
+    let lockStartingIndex = 13;
+    let lockReason = "";
 
-  if (mutationTriggeredIndex !== -1 && age50StartIndex !== 13) {
-    if (mutationTriggeredIndex + 1 <= age50StartIndex) {
+    if (mutationTriggeredIndex !== -1 && age50StartIndex !== 13) {
+      if (mutationTriggeredIndex + 1 <= age50StartIndex) {
+        lockStartingIndex = mutationTriggeredIndex + 1;
+        lockReason = "TERKUNCI (SETELAH MUTASI)";
+      } else {
+        lockStartingIndex = age50StartIndex;
+        lockReason = "TERKUNCI (USIA 50+)";
+      }
+    } else if (mutationTriggeredIndex !== -1) {
       lockStartingIndex = mutationTriggeredIndex + 1;
       lockReason = "TERKUNCI (SETELAH MUTASI)";
-    } else {
+    } else if (age50StartIndex !== 13) {
       lockStartingIndex = age50StartIndex;
       lockReason = "TERKUNCI (USIA 50+)";
     }
-  } else if (mutationTriggeredIndex !== -1) {
-    lockStartingIndex = mutationTriggeredIndex + 1;
-    lockReason = "TERKUNCI (SETELAH MUTASI)";
-  } else if (age50StartIndex !== 13) {
-    lockStartingIndex = age50StartIndex;
-    lockReason = "TERKUNCI (USIA 50+)";
-  }
 
-  // 4. Pasang proteksi tanpa merusak form submit (read-only locking)
-  for (let i = 1; i <= 12; i++) {
-    const sel = document.getElementById("kb_" + i);
-    if (!sel) continue;
+    // 4. Kunci dan OTOMATIS KOSONGKAN bulan setelah mutasi/usia 50+
+    for (let i = 1; i <= 12; i++) {
+      const sel = document.getElementById("kb_" + i);
+      if (!sel) continue;
 
-    const shouldLock = (lockStartingIndex !== 13 && i >= lockStartingIndex);
+      const shouldLock = (lockStartingIndex !== 13 && i >= lockStartingIndex);
 
-    if (shouldLock) {
-      sel.style.backgroundColor = "#e9ecef";
-      sel.style.pointerEvents = "none"; // Mencegah klik/pilihan baru
-      sel.tabIndex = -1;                // Dilewati saat navigasi keyboard
-      sel.title = lockReason;
-      sel.removeAttribute("disabled");  // Pastikan value tetap terbaca saat submit
-    } else {
-      sel.style.backgroundColor = "#ffffff";
-      sel.style.pointerEvents = "auto";
-      sel.tabIndex = 0;
-      sel.title = "";
-      sel.removeAttribute("disabled");
+      if (shouldLock) {
+        // Otomatis kosongkan nilai jika bulan tersebut berada setelah bulan mutasi/usia 50+
+        sel.value = ""; 
+        sel.style.backgroundColor = "#e9ecef";
+        sel.style.pointerEvents = "none"; // Mencegah klik/pilihan
+        sel.tabIndex = -1;
+        sel.title = lockReason;
+      } else {
+        sel.style.backgroundColor = "#ffffff";
+        sel.style.pointerEvents = "auto";
+        sel.tabIndex = 0;
+        sel.title = "";
+      }
     }
   }
-}
 
 // --- KONTROL DROPDOWN BERTINGKAT UNTUK DOWNLOAD DATA TERISI ---
   function initDlExportDropdowns() {
@@ -4445,12 +4445,24 @@ function checkAndLockKbTable() {
     document.getElementById("umur_anak_terkecil").value = d.umur_anak_terkecil;
     setSelectValueCaseInsensitive("peserta_jkn", d.peserta_jkn);
 
+    let hasMutated = false;
     for (let i = 1; i <= 12; i++) {
       let mKey = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"][i-1];
-      setSelectValueCaseInsensitive("kb_" + i, d[mKey]);
+      let val = String(d[mKey] || "").trim().toUpperCase();
+      
+      if (hasMutated) {
+        // Jika bulan sebelumnya sudah mutasi, kosongkan bulan ini
+        document.getElementById("kb_" + i).value = "";
+      } else {
+        setSelectValueCaseInsensitive("kb_" + i, d[mKey]);
+        if (val === "PINDAH" || val === "BERCERAI" || val.includes("MENINGGAL")) {
+          hasMutated = true; // Tandai bahwa mutasi sudah mulai terjadi di bulan ini
+        }
+      }
     }
-	
-	checkAndLockKbTable();    
+    
+    checkAndLockKbTable();
+
     initNavigationRT(d.kode_kec, d.kode_desa, d.kode_dusun, d.kode_rt, d.tahun, d.id_pus, d.dusun_nama);
   
   const btnDel = document.getElementById("btnDeletePus");
@@ -6018,6 +6030,27 @@ function checkAndLockKbTable() {
             idPus = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}${String(idx + 1).padStart(3, '0')}`;
           }
 
+          // Normalisasi status KB bulanan dari file Excel
+          // Kolom r[24] = Januari s.d. r[35] = Desember
+          let cleanedKb = [];
+          let mutasiSudahTerjadi = false;
+
+          for (let col = 24; col <= 35; col++) {
+            let rawVal = String(r[col] || "").trim().toUpperCase();
+
+            if (mutasiSudahTerjadi) {
+              // Jika bulan sebelumnya sudah tercatat mutasi, paksa kosongkan meskipun di Excel ada isinya
+              cleanedKb.push("");
+            } else {
+              if (rawVal.includes("CERAI") || rawVal.includes("MENINGGAL") || rawVal.includes("PINDAH")) {
+                cleanedKb.push(rawVal);
+                mutasiSudahTerjadi = true; // Kunci untuk bulan-bulan setelahnya
+              } else {
+                cleanedKb.push(rawVal);
+              }
+            }
+          }
+
           payloadList.push({
             id_pus: idPus,
             tahun: parseInt(r[1] || targetTahun, 10),
@@ -6043,18 +6076,19 @@ function checkAndLockKbTable() {
             jumlah_anak: parseInt(r[21] || 0, 10),
             umur_anak_terkecil: parseInt(r[22] || 0, 10),
             peserta_jkn: String(r[23] || "").toUpperCase(),
-            kb_jan: String(r[24] || ""),
-            kb_feb: String(r[25] || ""),
-            kb_mar: String(r[26] || ""),
-            kb_apr: String(r[27] || ""),
-            kb_mei: String(r[28] || ""),
-            kb_jun: String(r[29] || ""),
-            kb_jul: String(r[30] || ""),
-            kb_agu: String(r[31] || ""),
-            kb_sep: String(r[32] || ""),
-            kb_okt: String(r[33] || ""),
-            kb_nov: String(r[34] || ""),
-            kb_des: String(r[35] || "")
+            // Gunakan array cleanedKb yang sudah disaring
+            kb_jan: cleanedKb[0],
+            kb_feb: cleanedKb[1],
+            kb_mar: cleanedKb[2],
+            kb_apr: cleanedKb[3],
+            kb_mei: cleanedKb[4],
+            kb_jun: cleanedKb[5],
+            kb_jul: cleanedKb[6],
+            kb_agu: cleanedKb[7],
+            kb_sep: cleanedKb[8],
+            kb_okt: cleanedKb[9],
+            kb_nov: cleanedKb[10],
+            kb_des: cleanedKb[11]
           });
         });
 
