@@ -1346,16 +1346,22 @@
     let identity = "";
     const roleUpper = String(role || "").toUpperCase();
 
-    if (roleUpper.indexOf("KAB") !== -1) {
-      identity = "Admin Kabupaten " + (wilayahNama || "Lombok Barat"); // Fallback aman jika data kosong
-    } else if (roleUpper.indexOf("KEC") !== -1) {
-      identity = "Admin Kecamatan " + (wilayahNama || "");
+    // Pastikan nama kabupaten bersih dan diformat UPPERCASE jika ada
+    let namaWilayah = String(wilayahNama || "").trim().toUpperCase();
+
+    if (roleUpper.includes("KAB")) {
+      // Jika nama kabupaten belum terisi dari DB, beri default LOMBOK BARAT
+      identity = "Admin Kabupaten " + (namaWilayah || "LOMBOK BARAT");
+    } else if (roleUpper.includes("KEC")) {
+      identity = "Admin Kecamatan " + (namaWilayah || "");
     } else {
-      identity = "User Desa " + (wilayahNama || "");
+      identity = "User Desa " + (namaWilayah || "");
     }
 
     identity = identity.trim();
-    if (!wilayahNama) {
+    
+    // Jangan fallback ke format username jika Admin Kab sudah punya nama kabupaten
+    if (!namaWilayah && !roleUpper.includes("KAB")) {
       identity = role + " (" + username + ")";
     }
 
@@ -2433,9 +2439,16 @@ function checkAndLockKbTable() {
 
     let namaWilayahDinamis = "";
     if (userRole.includes("KAB")) {
-      if (dataKabupaten[userKodeKab]) {
-        let kabObj = dataKabupaten[userKodeKab];
-        namaWilayahDinamis = typeof kabObj === 'object' ? Object.values(kabObj)[0] : kabObj;
+      // Cari nama kabupaten di seluruh provinsi pada dataKabupaten
+      for (let kdProv in dataKabupaten) {
+        if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
+          namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
+          break;
+        }
+      }
+      // Fallback cadangan jika kode belum terdaftar di tabel master_wilayah
+      if (!namaWilayahDinamis) {
+        namaWilayahDinamis = "LOMBOK BARAT";
       }
     } else if (userRole.includes("KEC") || userRole === "ADMIN") {
       if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
