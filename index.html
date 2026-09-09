@@ -970,7 +970,7 @@
       <!-- PANEL FILTER DOWNLOAD DATA TERISI BERJENJANG -->
       <div style="border-top: 1px dashed #cbd5e1; padding-top: 10px;">
         <div style="font-size: 12px; font-weight: bold; color: #1f4e78; margin-bottom: 6px;">
-          📊 Unduh Data Terisi (Sesuai Wilayah Login):
+          📊 Unduh Data Terisi:
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1662,19 +1662,19 @@ function checkAndLockKbTable() {
 
     if (isDesaRole()) {
       selTingkat.innerHTML = `
-        <option value="Desa" selected>DESA SAYA</option>
+        <option value="Desa" selected>DESA</option>
         <option value="Dusun">PILIH DUSUN</option>
       `;
     } else if (isKecRole()) {
       selTingkat.innerHTML = `
-        <option value="Kecamatan" selected>SEMUA DESA (SATU KECAMATAN)</option>
+        <option value="Kecamatan" selected>KECAMATAN</option>
         <option value="Desa">PILIH DESA</option>
         <option value="Dusun">PILIH DUSUN</option>
       `;
     } else {
       // Admin Kabupaten
       selTingkat.innerHTML = `
-        <option value="Kabupaten" selected>SEMUA KECAMATAN (SATU KABUPATEN)</option>
+        <option value="Kabupaten" selected>KABUPATEN</option>
         <option value="Kecamatan">PILIH KECAMATAN</option>
         <option value="Desa">PILIH DESA</option>
         <option value="Dusun">PILIH DUSUN</option>
