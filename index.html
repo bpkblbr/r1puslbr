@@ -2270,10 +2270,11 @@ function checkAndLockKbTable() {
       let html = "";
       options.forEach(opt => {
         const displayText = (opt === "BER_KB") ? "BER-KB" : (opt === "TIDAK_BER_KB" ? "TIDAK BER-KB" : opt);
+        
         html += `
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #1e293b; cursor: pointer; user-select: none;">
-            <input type="checkbox" name="bnba_adv_cb" value="${opt}" style="width: 15px; height: 15px; cursor: pointer; border: 1px solid #94a3b8; border-radius: 3px;">
-            <span>${displayText}</span>
+          <label style="display: flex; align-items: flex-start; gap: 7px; font-size: 12px; font-weight: 700; color: #1e293b; cursor: pointer; user-select: none;">
+            <input type="checkbox" name="bnba_adv_cb" value="${opt}" style="margin-top: 1px; flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; border: 1px solid #94a3b8; border-radius: 3px; accent-color: #0284c7;">
+            <span style="white-space: normal; line-height: 1.25; word-break: break-word;">${displayText}</span>
           </label>
         `;
       });
