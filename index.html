@@ -1208,9 +1208,9 @@
           <label>Role Pengguna:</label>
           <select id="user_role_select" onchange="onUserRoleChange()" required>
             <option value="">-- PILIH ROLE PENGGUNA --</option>
-            <option value="User Desa">User Desa</option>
-            <option value="Admin Kec">Admin Kec</option>
             <option value="Admin Kab" id="optRoleKab">Admin Kab</option>
+            <option value="Admin Kec">Admin Kec</option>
+            <option value="User Desa">User Desa</option>
           </select>
         </div>
 
@@ -4969,15 +4969,24 @@ function checkAndLockKbTable() {
     }
 
     // Jika yang login adalah User Desa, hanya boleh mengelola akun User Desa
-    if (isDesaRole()) {
-      roleSelect.innerHTML = `
-        <option value="User Desa" selected>User Desa</option>
-      `;
-    } else if (isKecRole()) {
+    if (isKabRole()) {
       roleSelect.innerHTML = `
         <option value="">-- PILIH ROLE PENGGUNA --</option>
-        <option value="User Desa">User Desa</option>
+        <option value="Admin Kab" id="optRoleKab">Admin Kab</option>
         <option value="Admin Kec">Admin Kec</option>
+        <option value="User Desa">User Desa</option>
+      `;
+    } else if (isKecRole()) {
+      // Admin Kec hanya mengelola Admin Kec dan User Desa (tetap urut dari atas)
+      roleSelect.innerHTML = `
+        <option value="">-- PILIH ROLE PENGGUNA --</option>
+        <option value="Admin Kec">Admin Kec</option>
+        <option value="User Desa">User Desa</option>
+      `;
+    } else {
+      // User Desa
+      roleSelect.innerHTML = `
+        <option value="User Desa" selected>User Desa</option>
       `;
     }
 
