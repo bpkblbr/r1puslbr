@@ -3741,15 +3741,36 @@ function checkAndLockKbTable() {
         });
       });
 
-      // 2. FILTER PENCARIAN LANJUTAN (MULTI-SELECT CHECKBOX)
+            // 2. FILTER PENCARIAN LANJUTAN (MULTI-SELECT CHECKBOX)
       if (advCat) {
         const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
         const targetBulan = bulanVal ? parseInt(bulanVal, 10) : 1;
         const selectedCbs = Array.from(document.querySelectorAll('input[name="bnba_adv_cb"]:checked')).map(cb => cb.value);
 
         allData = allData.filter(r => {
+          const res = hitungStatusIndikator(r, targetBulan, mKeys);
+          const cur = res.cur;
           const hasSpecificFilter = selectedCbs.length > 0;
 
+          // ================= KHUSUS MUTASI =================
+          if (advCat === "MUTASI") {
+            // Mutasi hanya mencari yang statusnya BUKAN PUS akibat mutasi perdata
+            if (cur.type !== "BUKAN_PUS") return false;
+            if (!hasSpecificFilter) return true;
+            let catMutasi = "";
+            if (cur.cat === "CERAI") catMutasi = "BERCERAI";
+            else if (cur.cat === "MENINGGAL") catMutasi = "SUAMI/ISTRI MENINGGAL";
+            else if (cur.cat === "PINDAH") catMutasi = "PINDAH";
+            return selectedCbs.includes(catMutasi);
+          }
+
+          // ================= SEMUA KATEGORI LAIN =================
+          // SYARAT MUTLAK: Harus PUS Aktif pada bulan yang dipilih (bukan Mutasi & bukan Usia 50+)
+          if (!res.isPusAktif || res.isMutasiOr50) {
+            return false;
+          }
+
+          // 1. KATEGORI JKN (Sekarang hanya untuk yang PUS Aktif)
           if (advCat === "JKN") {
             const rawJkn = String(r.peserta_jkn || "").toUpperCase();
             let mappedJkn = "TIDAK MEMILIKI";
@@ -3764,44 +3785,36 @@ function checkAndLockKbTable() {
             return selectedCbs.includes(mappedJkn);
           }
 
-          const res = hitungStatusIndikator(r, targetBulan, mKeys);
-          const cur = res.cur;
-
+          // 2. KATEGORI KESERTAAN KB
           if (advCat === "KESERTAAN_KB") {
-            if (!hasSpecificFilter) return res.isPusAktif;
-            let statusUser = (cur.type === "PESERTA_KB" && !res.isMutasiOr50) ? "BER_KB" : ((cur.type === "BUKAN_PESERTA" && !res.isMutasiOr50) ? "TIDAK_BER_KB" : "");
+            let statusUser = (cur.type === "PESERTA_KB") ? "BER_KB" : ((cur.type === "BUKAN_PESERTA") ? "TIDAK_BER_KB" : "");
+            if (!hasSpecificFilter) return true;
             return selectedCbs.includes(statusUser);
           }
 
+          // 3. KATEGORI METODE KONTRASEPSI
           if (advCat === "METODE_KONTRASEPSI") {
-            if (cur.type !== "PESERTA_KB" || res.isMutasiOr50) return false;
+            if (cur.type !== "PESERTA_KB") return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.method);
           }
 
+          // 4. KATEGORI AKSEPTOR KB BARU
           if (advCat === "AKSEPTOR_KB_BARU") {
-            if (!res.isKbBaru || res.isMutasiOr50) return false;
+            if (!res.isKbBaru) return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.method);
           }
 
+          // 5. KATEGORI ALASAN TIDAK KB
           if (advCat === "ALASAN_TIDAK_KB") {
-            if (cur.type !== "BUKAN_PESERTA" || res.isMutasiOr50) return false;
+            if (cur.type !== "BUKAN_PESERTA") return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.reason);
           }
 
-          if (advCat === "MUTASI") {
-            if (cur.type !== "BUKAN_PUS") return false;
-            if (!hasSpecificFilter) return true;
-            let catMutasi = "";
-            if (cur.cat === "CERAI") catMutasi = "BERCERAI";
-            else if (cur.cat === "MENINGGAL") catMutasi = "SUAMI/ISTRI MENINGGAL";
-            else if (cur.cat === "PINDAH") catMutasi = "PINDAH";
-            return selectedCbs.includes(catMutasi);
-          }
-
-          if (advCat === "HAMIL") return cur.type === "BUKAN_PESERTA" && cur.reason === "HAMIL" && !res.isMutasiOr50;
+          // 6. KATEGORI HAMIL, HAMIL BARU, PUS BARU
+          if (advCat === "HAMIL") return cur.type === "BUKAN_PESERTA" && cur.reason === "HAMIL";
           if (advCat === "HAMIL_BARU") return res.isHamilBaru;
           if (advCat === "PUS_BARU") return res.isPusBaru;
 
