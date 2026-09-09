@@ -4491,45 +4491,55 @@ function checkAndLockKbTable() {
   // HELPER EKSPOR TABEL HTML KE EXCEL (.XLSX)
   // ==========================================
   function exportTableToExcel(tableId, defaultFilename) {
-    const table = document.getElementById(tableId);
-    if (!table) {
-      Swal.fire("Peringatan", "Tabel data tidak ditemukan!", "warning");
-      return;
+  const table = document.getElementById(tableId);
+  if (!table) {
+    Swal.fire("Peringatan", "Tabel data tidak ditemukan!", "warning");
+    return;
+  }
+
+  // Gunakan fungsi isTableDataEmpty untuk validasi yang lebih akurat
+  if (isTableDataEmpty(tableId)) {
+    if (tableId === 'bnbaTable') {
+      Swal.fire(
+        "Data Kosong",
+        "Tabel BNBA belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Data BNBA' terlebih dahulu!",
+        "warning"
+      );
+    } else {
+      Swal.fire(
+        "Data Kosong",
+        "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!",
+        "warning"
+      );
     }
+    return;
+  }
 
-    // Cek apakah tabel masih kosong atau hanya berisi teks placeholder
-    const tbody = table.querySelector("tbody");
-    if (!tbody || tbody.rows.length === 0 || (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1)) {
-      Swal.fire("Data Kosong", "Tabel Rekapitulasi belum memiliki data untuk diekspor! Silakan atur filter dan klik 'Tampilkan Rekap' terlebih dahulu!", "warning");
-      return;
-    }
+  try {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(table, { raw: true });
 
-    try {
-      // Mengonversi elemen HTML Table langsung ke sheet Excel menggunakan library SheetJS (xlsx)
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.table_to_sheet(table, { raw: true });
-
-      // Pastikan format cell teks (khususnya kolom ID PUS / NIK / Kode Wilayah agar awalan 0 tidak hilang)
-      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-          if (ws[cellRef] && typeof ws[cellRef].v === 'string') {
-            ws[cellRef].t = 's';
-          }
+    // Format cell teks agar angka/kode dengan awalan nol tidak terpotong
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cellRef] && typeof ws[cellRef].v === 'string') {
+          ws[cellRef].t = 's';
         }
       }
-
-      XLSX.utils.book_append_sheet(wb, ws, "DATA");
-      
-      const fileName = `${defaultFilename}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-
-    } catch (err) {
-      console.error("Gagal ekspor Excel:", err);
-      Swal.fire("Error", "Gagal mengekspor file Excel: " + err.message, "error");
     }
+
+    XLSX.utils.book_append_sheet(wb, ws, "DATA");
+    
+    const fileName = `${defaultFilename}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+
+  } catch (err) {
+    console.error("Gagal ekspor Excel:", err);
+    Swal.fire("Error", "Gagal mengekspor file Excel: " + err.message, "error");
   }
+}
 
   function exportRecapToExcel() { exportTableToExcel('recapTable', 'REKAP_PUS'); }  
 
