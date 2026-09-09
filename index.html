@@ -676,8 +676,16 @@
               <option value="MUTASI">MUTASI</option>
             </select>
 
-            <select id="bnbaFilterAdvValue" style="display: none; flex: 1; min-width: 200px;">              
-            </select>
+            <div id="bnbaFilterAdvValueWrapper" style="display: none; flex: 1; min-width: 220px; position: relative;">
+              <button type="button" id="btnAdvMultiSelect" onclick="toggleAdvMultiDropdown()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; background-color: #fff; font-size: 13px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                <span id="advMultiSelectedText">-- PILIH NILAI (BISA > 1) --</span>
+                <span>▼</span>
+              </button>
+              
+              <div id="advMultiDropdownPanel" style="display: none; position: absolute; z-index: 50; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 200px; overflow-y: auto; padding: 8px; margin-top: 4px;">
+                <!-- Opsi checkbox diisi oleh JavaScript -->
+              </div>
+            </div>
           </div>
 
           <!-- 3. BULAN (DILETAKKAN DI BAWAH PENCARIAN LANJUTAN) -->
@@ -2166,12 +2174,42 @@ function checkAndLockKbTable() {
     }
   }
 
+  function toggleAdvMultiDropdown() {
+    const panel = document.getElementById("advMultiDropdownPanel");
+    if (panel) {
+      panel.style.display = (panel.style.display === "block") ? "none" : "block";
+    }
+  }
+
+  // Tutup panel jika klik di luar
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById("bnbaFilterAdvValueWrapper");
+    const panel = document.getElementById("advMultiDropdownPanel");
+    if (wrapper && panel && !wrapper.contains(e.target)) {
+      panel.style.display = "none";
+    }
+  });
+
+  function updateAdvMultiLabel() {
+    const checked = document.querySelectorAll('input[name="bnba_adv_cb"]:checked');
+    const label = document.getElementById("advMultiSelectedText");
+    if (!label) return;
+
+    if (checked.length === 0) {
+      label.innerText = "-- PILIH NILAI (BISA > 1) --";
+    } else if (checked.length === 1) {
+      label.innerText = checked[0].value;
+    } else {
+      label.innerText = `${checked.length} Nilai Dipilih`;
+    }
+  }
+
   function onBnbaAdvCategoryChange() {
     const cat = document.getElementById("bnbaFilterAdvCategory").value;
-    const subSelect = document.getElementById("bnbaFilterAdvValue");
+    const wrapper = document.getElementById("bnbaFilterAdvValueWrapper");
+    const panel = document.getElementById("advMultiDropdownPanel");
     const bulanSelect = document.getElementById("bnbaBulan");
 
-    // Highlight border merah jika kategori lanjutan dipilih
     if (cat) {
       bulanSelect.style.border = "2px solid #ef4444";
       bulanSelect.setAttribute("title", "Wajib memilih bulan untuk pencarian lanjutan");
@@ -2180,55 +2218,36 @@ function checkAndLockKbTable() {
       bulanSelect.removeAttribute("title");
     }
 
-    subSelect.innerHTML = "";
-    subSelect.style.display = "none";
+    panel.innerHTML = "";
+    wrapper.style.display = "none";
+    document.getElementById("advMultiSelectedText").innerText = "-- PILIH NILAI (BISA > 1) --";
+
+    let options = [];
 
     if (cat === "JKN") {
-      subSelect.innerHTML = `
-        <option value="">-- PILIH STATUS JKN --</option>
-        <option value="PBI">PBI</option>
-        <option value="BUKAN PBI">BUKAN PBI</option>
-        <option value="SWASTA">SWASTA</option>
-        <option value="TIDAK MEMILIKI">TIDAK MEMILIKI</option>
-      `;
-      subSelect.style.display = "block";
+      options = ["PBI", "BUKAN PBI", "SWASTA", "TIDAK MEMILIKI"];
     } else if (cat === "KESERTAAN_KB") {
-      subSelect.innerHTML = `
-        <option value="">-- PILIH KESERTAAN KB --</option>
-        <option value="BER_KB">BER KB</option>
-        <option value="TIDAK_BER_KB">TIDAK BER KB</option>
-      `;
-      subSelect.style.display = "block";
+      options = ["BER_KB", "TIDAK_BER_KB"];
     } else if (cat === "METODE_KONTRASEPSI" || cat === "AKSEPTOR_KB_BARU") {
-      subSelect.innerHTML = `
-        <option value="">${cat === "AKSEPTOR_KB_BARU" ? "-- PILIH METODE KONTRASEPSI --" : "-- PILIH METODE KONTRASEPSI --"}</option>
-        <option value="PIL">PIL</option>
-        <option value="SUNTIK">SUNTIK</option>
-        <option value="KONDOM">KONDOM</option>
-        <option value="IMPLAN">IMPLAN</option>
-        <option value="IUD">IUD</option>
-        <option value="MOW">MOW</option>
-        <option value="MOP">MOP</option>
-      `;
-      subSelect.style.display = "block";
+      options = ["SUNTIK", "PIL", "KONDOM", "IMPLAN", "IUD", "MOW", "MOP"];
     } else if (cat === "ALASAN_TIDAK_KB") {
-      subSelect.innerHTML = `
-        <option value="">-- PILIH ALASAN --</option>
-        <option value="IAS">IAS</option>
-        <option value="IAT">IAT</option>
-        <option value="TIAL">TIAL</option>
-        <option value="HAMIL">HAMIL</option>
-        <option value="TKI">TKI</option>
-      `;
-      subSelect.style.display = "block";
+      options = ["IAS", "IAT", "TIAL", "HAMIL", "TKI"];
     } else if (cat === "MUTASI") {
-      subSelect.innerHTML = `
-        <option value="">-- PILIH MUTASI --</option>
-        <option value="BERCERAI">BERCERAI</option>
-        <option value="SUAMI/ISTRI MENINGGAL">SUAMI/ISTRI MENINGGAL</option>
-        <option value="PINDAH">PINDAH</option>
-      `;
-      subSelect.style.display = "block";
+      options = ["BERCERAI", "SUAMI/ISTRI MENINGGAL", "PINDAH"];
+    }
+
+    if (options.length > 0) {
+      wrapper.style.display = "block";
+      let html = "";
+      options.forEach(opt => {
+        html += `
+          <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 12px; margin-bottom: 6px; cursor: pointer; padding: 2px 4px;">
+            <input type="checkbox" name="bnba_adv_cb" value="${opt}" onchange="updateAdvMultiLabel()">
+            <span>${opt}</span>
+          </label>
+        `;
+      });
+      panel.innerHTML = html;
     }
   }
 
@@ -2249,6 +2268,13 @@ function checkAndLockKbTable() {
     const advCat = document.getElementById("bnbaFilterAdvCategory");
     if (advCat) advCat.value = "";
     onBnbaAdvCategoryChange();
+
+    const wrapper = document.getElementById("bnbaFilterAdvValueWrapper");
+    if (wrapper) wrapper.style.display = "none";
+    const panel = document.getElementById("advMultiDropdownPanel");
+    if (panel) panel.innerHTML = "";
+    const lblSelected = document.getElementById("advMultiSelectedText");
+    if (lblSelected) lblSelected.innerText = "-- PILIH NILAI (BISA > 1) --";
 
     if (bln) {
     bln.value = "";
@@ -3692,64 +3718,77 @@ function checkAndLockKbTable() {
         const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
         const targetBulan = bulanVal ? parseInt(bulanVal, 10) : 1;
 
+        // Ambil SEMUA nilai yang dicentang pengguna ke dalam Array
+        const selectedCbs = Array.from(document.querySelectorAll('input[name="bnba_adv_cb"]:checked')).map(cb => cb.value);
+
         allData = allData.filter(r => {
+          // Jika tidak ada yang dicentang, loloskan semua kategori tersebut
+          const hasSpecificFilter = selectedCbs.length > 0;
+
+          // 1. KATEGORI JKN
           if (advCat === "JKN") {
-            const jknVal = String(r.peserta_jkn || "").toUpperCase();
-            if (!advVal) return true;
-            if (advVal === "PBI") return jknVal === "PBI";
-            if (advVal === "BUKAN PBI") return jknVal.includes("BUKAN PBI") || jknVal.includes("NON PBI") || jknVal.includes("NON-PBI");
-            if (advVal === "SWASTA") return jknVal.includes("SWASTA");
-            if (advVal === "TIDAK MEMILIKI") return jknVal.includes("TIDAK");
-            return jknVal === advVal;
+            const rawJkn = String(r.peserta_jkn || "").toUpperCase();
+            let mappedJkn = "TIDAK MEMILIKI";
+            if (rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("NON-PBI")) {
+              mappedJkn = "BUKAN PBI";
+            } else if (rawJkn.includes("PBI")) {
+              mappedJkn = "PBI";
+            } else if (rawJkn.includes("SWASTA")) {
+              mappedJkn = "SWASTA";
+            }
+
+            if (!hasSpecificFilter) return true;
+            return selectedCbs.includes(mappedJkn);
           }
 
           const res = hitungStatusIndikator(r, targetBulan, mKeys);
           const cur = res.cur;
 
+          // 2. KATEGORI KESERTAAN KB
           if (advCat === "KESERTAAN_KB") {
-            if (advVal === "BER_KB") return cur.type === "PESERTA_KB" && !res.isMutasiOr50;
-            if (advVal === "TIDAK_BER_KB") return cur.type === "BUKAN_PESERTA" && !res.isMutasiOr50;
-            return res.isPusAktif;
+            if (!hasSpecificFilter) return res.isPusAktif;
+            let statusUser = (cur.type === "PESERTA_KB" && !res.isMutasiOr50) ? "BER_KB" : ((cur.type === "BUKAN_PESERTA" && !res.isMutasiOr50) ? "TIDAK_BER_KB" : "");
+            return selectedCbs.includes(statusUser);
           }
 
+          // 3. KATEGORI METODE KONTRASEPSI
           if (advCat === "METODE_KONTRASEPSI") {
             if (cur.type !== "PESERTA_KB" || res.isMutasiOr50) return false;
-            if (!advVal) return true;
-            return cur.method === advVal;
+            if (!hasSpecificFilter) return true;
+            return selectedCbs.includes(cur.method);
           }
 
+          // 4. KATEGORI AKSEPTOR KB BARU
           if (advCat === "AKSEPTOR_KB_BARU") {
             if (!res.isKbBaru || res.isMutasiOr50) return false;
-            if (advVal) return cur.method === advVal;
-            return true;
+            if (!hasSpecificFilter) return true;
+            return selectedCbs.includes(cur.method);
           }
 
+          // 5. KATEGORI ALASAN TIDAK KB
           if (advCat === "ALASAN_TIDAK_KB") {
             if (cur.type !== "BUKAN_PESERTA" || res.isMutasiOr50) return false;
-            if (!advVal) return true;
-            return cur.reason === advVal;
+            if (!hasSpecificFilter) return true;
+            return selectedCbs.includes(cur.reason);
           }
 
-          if (advCat === "HAMIL") {
-            return cur.type === "BUKAN_PESERTA" && cur.reason === "HAMIL" && !res.isMutasiOr50;
-          }
-
-          if (advCat === "HAMIL_BARU") {
-            return res.isHamilBaru;
-          }
-
-          if (advCat === "PUS_BARU") {
-            return res.isPusBaru;
-          }
-
+          // 6. KATEGORI MUTASI
           if (advCat === "MUTASI") {
             if (cur.type !== "BUKAN_PUS") return false;
-            if (!advVal) return true;
-            if (advVal === "BERCERAI") return cur.cat === "CERAI";
-            if (advVal === "SUAMI/ISTRI MENINGGAL") return cur.cat === "MENINGGAL";
-            if (advVal === "PINDAH") return cur.cat === "PINDAH";
-            return false;
+            if (!hasSpecificFilter) return true;
+
+            let catMutasi = "";
+            if (cur.cat === "CERAI") catMutasi = "BERCERAI";
+            else if (cur.cat === "MENINGGAL") catMutasi = "SUAMI/ISTRI MENINGGAL";
+            else if (cur.cat === "PINDAH") catMutasi = "PINDAH";
+
+            return selectedCbs.includes(catMutasi);
           }
+
+          // Kategori tunggal lainnya
+          if (advCat === "HAMIL") return cur.type === "BUKAN_PESERTA" && cur.reason === "HAMIL" && !res.isMutasiOr50;
+          if (advCat === "HAMIL_BARU") return res.isHamilBaru;
+          if (advCat === "PUS_BARU") return res.isPusBaru;
 
           return true;
         });
