@@ -1223,9 +1223,19 @@
 
         <div id="userDesaRow" class="form-group" style="display: none; margin-bottom: 15px;">
           <label>Desa:</label>
-          <select id="user_desa_select">
+          <select id="user_desa_select" onchange="onUserDesaChange()">
             <option value="">-- PILIH DESA --</option>
           </select>
+        </div>
+
+        <div id="userDusunRow" class="form-group" style="display: none; margin-bottom: 15px;">
+          <label>Hak Akses Dusun:</label>
+          <div style="flex: 1;">
+            <div id="userDusunContainer" style="max-height: 120px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; padding: 8px; background: #fff;">
+              <small style="color: #64748b;">Pilih Desa terlebih dahulu...</small>
+            </div>
+            <small style="color: #64748b; font-size: 11px;">*Kosongkan centang jika akun diizinkan mengakses SEMUA dusun di desa tersebut.</small>
+          </div>
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -1313,7 +1323,8 @@
   let userRole = "";
   let userKodeKab = "";
   let userKodeKec = "";
-  let userKodeDesa = ""; 
+  let userKodeDesa = "";
+  let userKodeDusunList = [];
 
   let dataProvinsi = {};
   let dataKabupaten = {};
@@ -2436,6 +2447,15 @@ function checkAndLockKbTable() {
     userKodeKab = String(data.kode_kab || "").trim().padStart(2, '0');
     userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
     userKodeDesa = String(data.kode_desa || "").trim().padStart(4, '0');
+
+    if (data.kode_dusun_list) {
+      userKodeDusunList = data.kode_dusun_list
+        .split(',')
+        .map(k => k.trim().padStart(4, '0'))
+        .filter(k => k !== "");
+    } else {
+      userKodeDusunList = [];
+    }
 
     let namaWilayahDinamis = "";
     if (userRole.includes("KAB")) {
@@ -5098,12 +5118,50 @@ function checkAndLockKbTable() {
     }
   }
 
+  function onUserDesaChange() {
+    const isKab = (userRole.indexOf("KAB") !== -1 || userRole === "ADMIN");
+    const kdKec = isKab ? document.getElementById("user_kec_select").value : userKodeKec;
+    const kdDesa = isDesaRole() ? userKodeDesa : document.getElementById("user_desa_select").value;
+    const container = document.getElementById("userDusunContainer");
+    const dusunRow = document.getElementById("userDusunRow");
+
+    if (!kdKec || !kdDesa) {
+      if (dusunRow) dusunRow.style.display = "none";
+      if (container) container.innerHTML = "";
+      return;
+    }
+
+    const dsnList = getDusunList(kdKec, kdDesa);
+    if (!dsnList || Object.keys(dsnList).length === 0) {
+      if (dusunRow) dusunRow.style.display = "flex";
+      if (container) container.innerHTML = "<small style='color:#ef4444;'>Tidak ada data dusun terdaftar di desa ini.</small>";
+      return;
+    }
+
+    if (dusunRow) dusunRow.style.display = "flex";
+    let html = "";
+    for (let kd in dsnList) {
+      html += `
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 12px; margin-bottom: 5px; cursor: pointer; width: 100%;">
+          <input type="checkbox" name="user_dusun_checkbox" value="${kd}">
+          <span><b>[${kd}]</b> ${dsnList[kd].nama}</span>
+        </label>
+      `;
+    }
+    if (container) container.innerHTML = html;
+  }
+
   function onUserRoleChange() {
     const roleVal = document.getElementById("user_role_select").value;
     const kecRow = document.getElementById("userKecRow");
     const desaRow = document.getElementById("userDesaRow");
     const selKec = document.getElementById("user_kec_select");
     const selDesa = document.getElementById("user_desa_select");
+
+    const dusunRow = document.getElementById("userDusunRow");
+    if (roleVal !== "User Desa") {
+      if (dusunRow) dusunRow.style.display = "none";
+    }
 
     if (roleVal === "Admin Kab" || roleVal === "") {
       kecRow.style.display = "none";
@@ -5131,6 +5189,7 @@ function checkAndLockKbTable() {
         onUserKecChange();
         selDesa.value = userKodeDesa;
         selDesa.disabled = true;
+        onUserDesaChange();
       }
     }
   }
@@ -5141,6 +5200,11 @@ function checkAndLockKbTable() {
     document.getElementById("user_name_input").readOnly = false;
     document.getElementById("btnSaveUserAcc").innerText = "💾 SIMPAN AKUN";
     onUserRoleChange();
+    
+    const dusunContainer = document.getElementById("userDusunContainer");
+    if (dusunContainer) dusunContainer.innerHTML = "<small style='color: #64748b;'>Pilih Desa terlebih dahulu...</small>";
+    const dusunRow = document.getElementById("userDusunRow");
+    if (dusunRow) dusunRow.style.display = "none";    
   }
 
   async function handleSaveUserAccount(event) {
@@ -5166,6 +5230,13 @@ function checkAndLockKbTable() {
       targetKec = isKabRole() ? document.getElementById("user_kec_select").value : userKodeKec;
       targetDesa = isDesaRole() ? userKodeDesa : document.getElementById("user_desa_select").value;
     }
+    
+    // Ambil daftar kode dusun terpilih
+    let selectedDusun = [];
+    if (roleVal === "User Desa") {
+      const checkedBoxes = document.querySelectorAll('input[name="user_dusun_checkbox"]:checked');
+      checkedBoxes.forEach(cb => selectedDusun.push(cb.value));
+    }
 
     const payload = {
       username: document.getElementById("user_name_input").value.trim(),
@@ -5173,8 +5244,9 @@ function checkAndLockKbTable() {
       role: roleVal,
       kode_kab: userKodeKab || "01",
       kode_kec: targetKec,
-      kode_desa: targetDesa
-    };
+      kode_desa: targetDesa,
+      kode_dusun_list: selectedDusun.length > 0 ? selectedDusun.join(',') : null // <-- Simpan ke kolom baru
+    };    
 
     try {
       let res;
@@ -5267,6 +5339,12 @@ function checkAndLockKbTable() {
       const nmKec = getNamaKec(item.kode_kec);
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa);
 
+      const dsnBadge = (item.role === "User Desa") 
+        ? (item.kode_dusun_list 
+            ? `<br><small style="color:#0284c7; font-weight:bold;">Dusun: ${item.kode_dusun_list}</small>` 
+            : `<br><small style="color:#64748b;">(Semua Dusun)</small>`)
+        : "";
+
       tr.innerHTML = `
         <td style="text-align:center;">${idx + 1}</td>
         <td><b>${item.username}</b></td>
@@ -5305,6 +5383,15 @@ function checkAndLockKbTable() {
     }
     if (item.kode_desa) {
       document.getElementById("user_desa_select").value = item.kode_desa.padStart(4, '0');
+      onUserDesaChange();
+      
+      if (item.kode_dusun_list) {
+        const dsnArr = item.kode_dusun_list.split(',').map(s => s.trim());
+        const checkboxes = document.querySelectorAll('input[name="user_dusun_checkbox"]');
+        checkboxes.forEach(cb => {
+          if (dsnArr.includes(cb.value)) cb.checked = true;
+        });
+      }
     }
 
     document.getElementById("btnSaveUserAcc").innerText = "💾 PERBARUI AKUN";
@@ -5575,6 +5662,7 @@ function checkAndLockKbTable() {
         userKodeKab = "";
         userKodeKec = "";
         userKodeDesa = "";
+        userKodeDusunList = [];
 
         // Reset seluruh modul dan form
         resetLoginForm();
