@@ -6346,11 +6346,30 @@ function checkAndLockKbTable() {
   // MODUL DOWNLOAD & UPLOAD EXCEL KELOLA LOGIN
   // ==========================================
   function downloadUserTemplate() {
-    const headers = ["Username", "Password", "Role", "Kode Kabupaten", "Kode Kecamatan", "Kode Desa"];
-    const sampleRow = ["desamareje", "rahasia123", "User Desa", "01", "05", "0001"];
+    const headers = [
+      "Username", "Password", "Role", "Kode Kabupaten", "Kode Kecamatan", "Kode Desa", "Kode Dusun List"
+    ];    
+    
+    const sampleRows = [
+      ["kader_dsn1_2", "rahasia123", "User Desa", "01", "05", "0001", "0001,0002"],
+      ["desamareje", "rahasia123", "User Desa", "01", "05", "0001", ""]
+    ];
 
-    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
-    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);    
+    
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cell_ref] && [3, 4, 5, 6].includes(C)) {
+          ws[cell_ref].t = 's';
+        }
+      }
+    }
+    
+    ws['!cols'] = [
+      { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 22 }
+    ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "TEMPLATE_USERS");
@@ -6375,14 +6394,30 @@ function checkAndLockKbTable() {
           return;
         }
 
-        const payloadList = rows.slice(1).map(r => ({
-          username: String(r[0] || "").trim(),
-          password_hash: String(r[1] || "").trim(),
-          role: String(r[2] || "User Desa").trim(),
-          kode_kab: String(r[3] || "01").trim().padStart(2, '0'),
-          kode_kec: String(r[4] || "").trim().padStart(2, '0'),
-          kode_desa: String(r[5] || "").trim().padStart(4, '0')
-        })).filter(item => item.username !== "");
+        const payloadList = rows.slice(1).map(r => {
+          let roleVal = String(r[2] || "User Desa").trim();
+          
+          // Format sanitasi kode dusun list (contoh: "0001, 0002" -> "0001,0002")
+          let rawDsn = String(r[6] || "").trim();
+          let cleanDsnList = null;
+          if (roleVal === "User Desa" && rawDsn) {
+            cleanDsnList = rawDsn
+              .split(',')
+              .map(d => d.trim().padStart(4, '0'))
+              .filter(d => d !== "")
+              .join(',');
+          }
+
+          return {
+            username: String(r[0] || "").trim(),
+            password_hash: String(r[1] || "").trim(),
+            role: roleVal,
+            kode_kab: String(r[3] || "01").trim().padStart(2, '0'),
+            kode_kec: String(r[4] || "").trim().padStart(2, '0'),
+            kode_desa: String(r[5] || "").trim().padStart(4, '0'),
+            kode_dusun_list: cleanDsnList // <-- Ikut dimasukkan ke payload database
+          };
+        }).filter(item => item.username !== "");
 
         const { error } = await db.from('users').upsert(payloadList, { onConflict: 'username' });
         if (error) throw error;
