@@ -4673,89 +4673,98 @@ function checkAndLockKbTable() {
    function resetMwForm() {
     document.getElementById("mw_id").value = "";
     document.getElementById("mw_dusun_nama").value = "";
+    document.getElementById("mw_kode_dusun").value = "";
     document.getElementById("mw_jumlah_rt").value = "1";
     document.getElementById("btnSaveMw").innerText = "💾 SIMPAN WILAYAH";
 
-    const inKecKode = document.getElementById("mw_kode_kec");
-    const inDesaKode = document.getElementById("mw_kode_desa");
-    const inDusunKode = document.getElementById("mw_kode_dusun");
-
-    if (inKecKode) { inKecKode.value = ""; inKecKode.readOnly = false; inKecKode.style.backgroundColor = "#ffffff"; }
-    if (inDesaKode) { inDesaKode.value = ""; inDesaKode.readOnly = false; inDesaKode.style.backgroundColor = "#ffffff"; }
-    if (inDusunKode) { inDusunKode.value = ""; inDusunKode.readOnly = false; inDusunKode.style.backgroundColor = "#ffffff"; }
-
-    const inKecNama = document.getElementById("mw_kecamatan_nama");
-    const inDesaNama = document.getElementById("mw_desa_nama");
-
-    if (inKecNama) { inKecNama.value = ""; inKecNama.readOnly = false; inKecNama.style.backgroundColor = "#ffffff"; }
-    if (inDesaNama) { inDesaNama.value = ""; inDesaNama.readOnly = false; inDesaNama.style.backgroundColor = "#ffffff"; }
-
     const inProvNama = document.getElementById("mw_provinsi_nama");
     const inProvKode = document.getElementById("mw_kode_prov");
-    const inKabNama = document.getElementById("mw_kabupaten_nama");
-    const inKabKode = document.getElementById("mw_kode_kab");    
+    const inKabNama  = document.getElementById("mw_kabupaten_nama");
+    const inKabKode  = document.getElementById("mw_kode_kab");
+    const inKecNama  = document.getElementById("mw_kecamatan_nama");
+    const inKecKode  = document.getElementById("mw_kode_kec");
+    const inDesaNama = document.getElementById("mw_desa_nama");
+    const inDesaKode = document.getElementById("mw_kode_desa");
+    const inDsnNama  = document.getElementById("mw_dusun_nama");
+    const inDsnKode  = document.getElementById("mw_kode_dusun");
 
-    // Ambil nama kabupaten dari cache jika ada
-    let namaKab = "";
-    if (userKodeKab && dataKabupaten[userKodeKab]) {
-      let kabObj = dataKabupaten[userKodeKab];
-      namaKab = typeof kabObj === 'object' ? Object.values(kabObj)[0] : kabObj;
+    // Helper: Hanya lock jika nilai (valNama & valKode) BENAR-BENAR ADA di master wilayah
+    const setFieldLock = (inputNama, inputKode, shouldLock, valNama = "", valKode = "") => {
+      // Jika disuruh lock tapi datanya kosong di DB -> BATALKAN lock agar user bisa input
+      const actuallyLock = Boolean(shouldLock && valNama && valKode);
+
+      if (valNama) inputNama.value = valNama;
+      if (valKode) inputKode.value = valKode;
+
+      inputNama.readOnly = actuallyLock;
+      inputKode.readOnly = actuallyLock;
+      inputNama.style.backgroundColor = actuallyLock ? "#e9ecef" : "#ffffff";
+      inputKode.style.backgroundColor = actuallyLock ? "#e9ecef" : "#ffffff";
+    };
+
+    // 1. Cek keberadaan data di master wilayah (cache)
+    let curKdProv = "52";
+    let curNamaProv = dataProvinsi[curKdProv] || "";
+
+    let curKdKab = userKodeKab || "";
+    let curNamaKab = "";
+    for (let p in dataKabupaten) {
+      if (dataKabupaten[p] && dataKabupaten[p][curKdKab]) {
+        curNamaKab = dataKabupaten[p][curKdKab];
+        curKdProv = p;
+        curNamaProv = dataProvinsi[p] || curNamaProv;
+        break;
+      }
     }
 
-    // Cek apakah data kecamatan untuk kode login ini sudah terdaftar di database/cache
-    let namaKec = "";
-    let isKecRegisteredInDB = false;
-    if (userKodeKab && dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
-      namaKec = dataKecamatan[userKodeKab][userKodeKec];
-      isKecRegisteredInDB = true;
+    let curKdKec = userKodeKec || "";
+    let curNamaKec = "";
+    if (curKdKab && dataKecamatan[curKdKab] && dataKecamatan[curKdKab][curKdKec]) {
+      curNamaKec = dataKecamatan[curKdKab][curKdKec];
     }
 
-    if (isKecRole() && isKecRegisteredInDB) {
-      // 1. Jika Admin Kecamatan DAN data kecamatannya SUDAH MASUK di DB -> Lock Provinsi s.d Kecamatan
-      inProvNama.readOnly = true; inProvKode.readOnly = true;
-      inProvNama.style.backgroundColor = "#e9ecef"; inProvKode.style.backgroundColor = "#e9ecef";
+    let curKdDesa = userKodeDesa || "";
+    let curNamaDesa = "";
+    if (curKdKec && dataDesa[curKdKec] && dataDesa[curKdKec][curKdDesa]) {
+      curNamaDesa = dataDesa[curKdKec][curKdDesa];
+    }
 
-      inKabNama.value = namaKab || "LOMBOK BARAT";
-      inKabKode.value = userKodeKab || "01";
-      inKabNama.readOnly = true; inKabKode.readOnly = true;
-      inKabNama.style.backgroundColor = "#e9ecef"; inKabKode.style.backgroundColor = "#e9ecef";
+    // 2. Evaluasi status ada/tidaknya data di database
+    const hasProv = Boolean(curNamaProv && curKdProv);
+    const hasKab  = Boolean(curNamaKab && curKdKab);
+    const hasKec  = Boolean(curNamaKec && curKdKec);
+    const hasDesa = Boolean(curNamaDesa && curKdDesa);
 
-      inKecNama.value = namaKec;
-      inKecKode.value = userKodeKec;
-      inKecNama.readOnly = true; inKecKode.readOnly = true;
-      inKecNama.style.backgroundColor = "#e9ecef"; inKecKode.style.backgroundColor = "#e9ecef";
+    // 3. Atur perilaku form:
+    if (isDesaRole()) {
+      // User Desa:
+      // Kunci HANYA jika datanya memang sudah tercatat di tabel master_wilayah.
+      // Jika belum ada di master wilayah, form tetap terbuka agar user/admin bisa mengisi awalnya.
+      setFieldLock(inProvNama, inProvKode, hasProv, curNamaProv, curKdProv);
+      setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab, curKdKab);
+      setFieldLock(inKecNama, inKecKode, hasKec, curNamaKec, curKdKec);
+      setFieldLock(inDesaNama, inDesaKode, hasDesa, curNamaDesa, curKdDesa);
+      setFieldLock(inDsnNama, inDsnKode, false, "", "");
 
-      inDesaNama.value = "";
-      inDesaKode.value = "";
-      inDesaNama.readOnly = false;
-      inDesaKode.readOnly = false;
-      inDesaNama.style.backgroundColor = "#ffffff";
-      inDesaKode.style.backgroundColor = "#ffffff";
+    } else if (isKecRole()) {
+      // Admin Kecamatan:
+      setFieldLock(inProvNama, inProvKode, hasProv, curNamaProv, curKdProv);
+      setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab, curKdKab);
+      // Kecamatan hanya terkunci jika sudah masuk master wilayah
+      setFieldLock(inKecNama, inKecKode, hasKec, curNamaKec, curKdKec);
+      // Desa & Dusun selalu terbuka untuk Admin Kec
+      setFieldLock(inDesaNama, inDesaKode, false, "", "");
+      setFieldLock(inDsnNama, inDsnKode, false, "", "");
 
     } else {
-      // 2. Jika Admin Kabupaten ATAU Admin Kecamatan TAPI data belum masuk di DB -> Biarkan KOSONG dan TERBUKA
-      inProvNama.readOnly = false; inProvKode.readOnly = false;
-      inProvNama.style.backgroundColor = "#ffffff"; inProvKode.style.backgroundColor = "#ffffff";
-
-      inKabNama.readOnly = false; inKabKode.readOnly = false;
-      inKabNama.style.backgroundColor = "#ffffff"; inKabKode.style.backgroundColor = "#ffffff";
-
-      inKecNama.readOnly = false; inKecKode.readOnly = false;
-      inKecNama.style.backgroundColor = "#ffffff"; inKecKode.style.backgroundColor = "#ffffff";
-
-      inDesaNama.readOnly = false; inDesaKode.readOnly = false;
-      inDesaNama.style.backgroundColor = "#ffffff"; inDesaKode.style.backgroundColor = "#ffffff";
-
-      inProvNama.value = "NUSA TENGGARA BARAT";
-      inProvKode.value = "52";
-      inKabNama.value = namaKab || "LOMBOK BARAT";
-      inKabKode.value = userKodeKab || "01";
-      
-      // Kosongkan nama dan kode kecamatan agar operator bisa mengisinya sendiri untuk pertama kali
-      inKecNama.value = "";
-      inKecKode.value = "";
-      inDesaNama.value = "";
-      inDesaKode.value = "";
+      // Admin Kabupaten:
+      // Provinsi & Kabupaten hanya terkunci jika sudah ada di DB
+      setFieldLock(inProvNama, inProvKode, hasKab, curNamaProv || "NUSA TENGGARA BARAT", curKdProv || "52");
+      setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab || "LOMBOK BARAT", curKdKab || "01");
+      // Kecamatan s.d. Dusun terbuka bebas untuk Admin Kab
+      setFieldLock(inKecNama, inKecKode, false, "", "");
+      setFieldLock(inDesaNama, inDesaKode, false, "", "");
+      setFieldLock(inDsnNama, inDsnKode, false, "", "");
     }
   }
   async function handleSaveMasterWilayah(event) {
@@ -4875,6 +4884,9 @@ function checkAndLockKbTable() {
     const item = allRegisteredWilayahData.find(w => String(w.id) === String(id));
     if (!item) return;
 
+    // Bersihkan dan atur status lock form terlebih dahulu
+    resetMwForm();
+
     document.getElementById("mw_id").value = item.id;
     document.getElementById("mw_provinsi_nama").value = item.provinsi;
     document.getElementById("mw_kode_prov").value = item.kode_prov;
@@ -4887,6 +4899,32 @@ function checkAndLockKbTable() {
     document.getElementById("mw_dusun_nama").value = item.dusun;
     document.getElementById("mw_kode_dusun").value = item.kode_dusun;
     document.getElementById("mw_jumlah_rt").value = item.jumlah_rt;
+
+    // Kunci tambahan saat mode edit agar wilayah induk tidak sengaja tertukar
+    const inProvNama = document.getElementById("mw_provinsi_nama");
+    const inProvKode = document.getElementById("mw_kode_prov");
+    const inKabNama  = document.getElementById("mw_kabupaten_nama");
+    const inKabKode  = document.getElementById("mw_kode_kab");
+    const inKecNama  = document.getElementById("mw_kecamatan_nama");
+    const inKecKode  = document.getElementById("mw_kode_kec");
+    const inDesaNama = document.getElementById("mw_desa_nama");
+    const inDesaKode = document.getElementById("mw_kode_desa");
+
+    // Provinsi & Kabupaten selalu terkunci saat mengedit baris yang sudah ada
+    inProvNama.readOnly = true; inProvKode.readOnly = true;
+    inProvNama.style.backgroundColor = "#e9ecef"; inProvKode.style.backgroundColor = "#e9ecef";
+    inKabNama.readOnly = true; inKabKode.readOnly = true;
+    inKabNama.style.backgroundColor = "#e9ecef"; inKabKode.style.backgroundColor = "#e9ecef";
+
+    if (isDesaRole()) {
+      inKecNama.readOnly = true; inKecKode.readOnly = true;
+      inKecNama.style.backgroundColor = "#e9ecef"; inKecKode.style.backgroundColor = "#e9ecef";
+      inDesaNama.readOnly = true; inDesaKode.readOnly = true;
+      inDesaNama.style.backgroundColor = "#e9ecef"; inDesaKode.style.backgroundColor = "#e9ecef";
+    } else if (isKecRole()) {
+      inKecNama.readOnly = true; inKecKode.readOnly = true;
+      inKecNama.style.backgroundColor = "#e9ecef"; inKecKode.style.backgroundColor = "#e9ecef";
+    }
 
     document.getElementById("btnSaveMw").innerText = "💾 PERBARUI WILAYAH";
     switchMwTab('form');
