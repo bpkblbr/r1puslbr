@@ -661,14 +661,14 @@
             </select>
           </div>
 
-          <!-- 2. PENCARIAN LANJUTAN & SUB DROPDOWN -->
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <select id="bnbaFilterAdvCategory" onchange="onBnbaAdvCategoryChange()" style="flex: 1; min-width: 200px;">
+          <!-- 2. PENCARIAN LANJUTAN & PANEL CHECKBOX GRID -->
+          <div>
+            <select id="bnbaFilterAdvCategory" onchange="onBnbaAdvCategoryChange()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: bold; color: #1e293b;">
               <option value="">-- PENCARIAN LANJUTAN --</option>
               <option value="JKN">JKN</option>
               <option value="KESERTAAN_KB">KESERTAAN KB</option>
               <option value="METODE_KONTRASEPSI">METODE KONTRASEPSI</option>
-              <option value="AKSEPTOR_KB_BARU">AKSEPTOR KB BARU</option> <!-- Opsi Baru -->
+              <option value="AKSEPTOR_KB_BARU">AKSEPTOR KB BARU</option>
               <option value="ALASAN_TIDAK_KB">ALASAN TIDAK BER KB</option>
               <option value="HAMIL">HAMIL</option>
               <option value="HAMIL_BARU">HAMIL BARU</option>
@@ -676,13 +676,21 @@
               <option value="MUTASI">MUTASI</option>
             </select>
 
-            <div id="bnbaFilterAdvValueWrapper" style="display: none; flex: 1; min-width: 220px; position: relative;">
-              <button type="button" id="btnAdvMultiSelect" onclick="toggleAdvMultiDropdown()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; background-color: #fff; font-size: 13px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                <span id="advMultiSelectedText">-- BERI CENTANG PADA PILIHAN --</span>
-                <span>▼</span>
-              </button>
-              
-              <div id="advMultiDropdownPanel" style="display: none; position: absolute; z-index: 50; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 200px; overflow-y: auto; padding: 8px; margin-top: 4px;">
+            <!-- PANEL PILIHAN SEPERTI GAMBAR -->
+            <div id="bnbaAdvCheckboxPanel" style="display: none; margin-top: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              <!-- Header Panel: Judul & Tombol Pilih/Hapus -->
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <span id="bnbaAdvPanelTitle" style="font-size: 11.5px; font-weight: bold; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">
+                  PILIH OPSI:
+                </span>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" onclick="setAllAdvCheckboxes(true)" style="background: #3b5998; color: white; border: none; border-radius: 12px; padding: 3px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">Pilih Semua</button>
+                  <button type="button" onclick="setAllAdvCheckboxes(false)" style="background: #334155; color: white; border: none; border-radius: 12px; padding: 3px 12px; font-size: 11px; font-weight: 600; cursor: pointer;">Hapus Semua</button>
+                </div>
+              </div>
+
+              <!-- Grid Checkbox (Responsif 4 Kolom) -->
+              <div id="bnbaAdvCheckboxGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px 16px;">
                 <!-- Opsi checkbox diisi oleh JavaScript -->
               </div>
             </div>
@@ -2204,12 +2212,20 @@ function checkAndLockKbTable() {
     }
   }
 
+  // Helper pilih/hapus semua checkbox
+  function setAllAdvCheckboxes(status) {
+    const checkboxes = document.querySelectorAll('input[name="bnba_adv_cb"]');
+    checkboxes.forEach(cb => cb.checked = status);
+  }
+
   function onBnbaAdvCategoryChange() {
     const cat = document.getElementById("bnbaFilterAdvCategory").value;
-    const wrapper = document.getElementById("bnbaFilterAdvValueWrapper");
-    const panel = document.getElementById("advMultiDropdownPanel");
+    const panel = document.getElementById("bnbaAdvCheckboxPanel");
+    const grid = document.getElementById("bnbaAdvCheckboxGrid");
+    const title = document.getElementById("bnbaAdvPanelTitle");
     const bulanSelect = document.getElementById("bnbaBulan");
 
+    // Sorot border merah pada bulan jika filter lanjutan aktif
     if (cat) {
       bulanSelect.style.border = "2px solid #ef4444";
       bulanSelect.setAttribute("title", "Wajib memilih bulan untuk pencarian lanjutan");
@@ -2218,36 +2234,49 @@ function checkAndLockKbTable() {
       bulanSelect.removeAttribute("title");
     }
 
-    panel.innerHTML = "";
-    wrapper.style.display = "none";
-    document.getElementById("advMultiSelectedText").innerText = "-- BERI CENTANG PADA PILIHAN --";
+    // Reset isi panel
+    grid.innerHTML = "";
+    panel.style.display = "none";
 
+    let labelJudul = "";
     let options = [];
 
     if (cat === "JKN") {
+      labelJudul = "PILIH KEPESERTAAN JKN:";
       options = ["PBI", "BUKAN PBI", "SWASTA", "TIDAK MEMILIKI"];
     } else if (cat === "KESERTAAN_KB") {
+      labelJudul = "PILIH STATUS KESERTAAN KB:";
       options = ["BER_KB", "TIDAK_BER_KB"];
-    } else if (cat === "METODE_KONTRASEPSI" || cat === "AKSEPTOR_KB_BARU") {
-      options = ["SUNTIK", "PIL", "KONDOM", "IMPLAN", "IUD", "MOW", "MOP"];
+    } else if (cat === "METODE_KONTRASEPSI") {
+      labelJudul = "PILIH METODE KONTRASEPSI:";
+      options = ["PIL", "SUNTIK", "KONDOM", "IMPLAN", "IUD", "MOW", "MOP"];
+    } else if (cat === "AKSEPTOR_KB_BARU") {
+      labelJudul = "PILIH METODE AKSEPTOR KB BARU:";
+      options = ["PIL", "SUNTIK", "KONDOM", "IMPLAN", "IUD", "MOW", "MOP"];
     } else if (cat === "ALASAN_TIDAK_KB") {
+      labelJudul = "PILIH ALASAN TIDAK BER-KB:";
       options = ["IAS", "IAT", "TIAL", "HAMIL", "TKI"];
     } else if (cat === "MUTASI") {
+      labelJudul = "PILIH JENIS MUTASI:";
       options = ["BERCERAI", "SUAMI/ISTRI MENINGGAL", "PINDAH"];
     }
 
+    // Tampilkan panel jika kategori memiliki sub-opsi
     if (options.length > 0) {
-      wrapper.style.display = "block";
+      title.innerText = labelJudul;
+      panel.style.display = "block";
+
       let html = "";
       options.forEach(opt => {
+        const displayText = (opt === "BER_KB") ? "BER-KB" : (opt === "TIDAK_BER_KB" ? "TIDAK BER-KB" : opt);
         html += `
-          <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 12px; margin-bottom: 6px; cursor: pointer; padding: 2px 4px;">
-            <input type="checkbox" name="bnba_adv_cb" value="${opt}" onchange="updateAdvMultiLabel()">
-            <span>${opt}</span>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; user-select: none;">
+            <input type="checkbox" name="bnba_adv_cb" value="${opt}" style="width: 16px; height: 16px; cursor: pointer; accent-color: #0284c7;">
+            <span>${displayText}</span>
           </label>
         `;
       });
-      panel.innerHTML = html;
+      grid.innerHTML = html;
     }
   }
 
@@ -2269,16 +2298,16 @@ function checkAndLockKbTable() {
     if (advCat) advCat.value = "";
     onBnbaAdvCategoryChange();
 
-    const wrapper = document.getElementById("bnbaFilterAdvValueWrapper");
-    if (wrapper) wrapper.style.display = "none";
-    const panel = document.getElementById("advMultiDropdownPanel");
-    if (panel) panel.innerHTML = "";
-    const lblSelected = document.getElementById("advMultiSelectedText");
-    if (lblSelected) lblSelected.innerText = "-- BERI CENTANG PADA PILIHAN --";
+    // ================= LETAKKAN DI SINI =================
+    const panel = document.getElementById("bnbaAdvCheckboxPanel");
+    if (panel) panel.style.display = "none";
+    const grid = document.getElementById("bnbaAdvCheckboxGrid");
+    if (grid) grid.innerHTML = "";
+    // ====================================================
 
     if (bln) {
-    bln.value = "";
-    bln.style.border = "1px solid #ccc";
+      bln.value = "";
+      bln.style.border = "1px solid #ccc";
     }
 
     const thead = document.getElementById("bnbaTableHeader");
