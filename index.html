@@ -23,6 +23,17 @@
     h2, h3 { text-align: center; color: #1f4e78; font-size: 18px; margin: 5px 0; }
     h3 { font-size: 14px; margin-bottom: 15px; }
     
+    @media (min-width: 601px) {
+      .br-mobile-only {
+        display: none;
+      }
+    }    
+    @media (max-width: 600px) {
+      .br-mobile-only {
+        display: inline;
+      }
+    }
+    
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2248,7 +2259,7 @@ function checkAndLockKbTable() {
       labelJudul = "PILIH JENIS MUTASI:";
       options = [
         { val: "BERCERAI", text: "BERCERAI" },
-        { val: "SUAMI/ISTRI MENINGGAL", text: "SUAMI/ISTRI<br>MENINGGAL" },
+        { val: "SUAMI/ISTRI MENINGGAL", text: 'SUAMI/ISTRI<br class="br-mobile-only"> MENINGGAL' },
         { val: "PINDAH", text: "PINDAH" }
       ];
     } else if (cat === "JKN") {
