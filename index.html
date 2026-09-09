@@ -3514,8 +3514,7 @@ function checkAndLockKbTable() {
     const tingkat = document.getElementById("bnbaTingkat").value;
     const tahun = parseInt(document.getElementById("bnbaTahun").value, 10);
     const bulanVal = document.getElementById("bnbaBulan").value;
-    const advCat = document.getElementById("bnbaFilterAdvCategory").value;
-    const advVal = document.getElementById("bnbaFilterAdvValue").value;
+    const advCat = document.getElementById("bnbaFilterAdvCategory") ? document.getElementById("bnbaFilterAdvCategory").value : "";
 
     if (!tingkat) {
       Swal.fire("Perhatian", "Silakan pilih Tingkat Wilayah terlebih dahulu!", "warning");
@@ -3626,7 +3625,6 @@ function checkAndLockKbTable() {
     }
 
     const hideNik = isDesaRole();
-
     const nikSuamiHeader = !hideNik ? `<th style="background:#1f4e78; color:white;">NIK SUAMI</th>` : ``;
     const nikIstriHeader = !hideNik ? `<th style="background:#1f4e78; color:white;">NIK ISTRI</th>` : ``;
 
@@ -3678,17 +3676,16 @@ function checkAndLockKbTable() {
           hasMore = false;
         }
       }
-      
+
+      // 1. SANITASI MUTASI & USIA 50+ (Hanya muncul sekali, setelahnya kosong)
       const mKeysAll = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
-      
       allData.forEach(r => {
-        let lockStartingIndex = 13;       
-        
+        let lockStartingIndex = 13;
         if (r.tgl_lahir_istri) {
           const dob = new Date(r.tgl_lahir_istri);
           if (!isNaN(dob.getTime())) {
             const birthYear = dob.getFullYear();
-            const birthMonth = dob.getMonth() + 1; // 1 - 12
+            const birthMonth = dob.getMonth() + 1;
             const yearTurning50 = birthYear + 50;
 
             if (tahun > yearTurning50) {
@@ -3698,12 +3695,12 @@ function checkAndLockKbTable() {
             }
           }
         }
-        
+
         let mutasiFound = false;
         mKeysAll.forEach((k, idx) => {
           const bulanKe = idx + 1;
           let val = String(r[k] || "").trim().toUpperCase();
-          
+
           if (bulanKe >= lockStartingIndex || mutasiFound) {
             r[k] = "";
           } else {
@@ -3713,19 +3710,16 @@ function checkAndLockKbTable() {
           }
         });
       });
-      
+
+      // 2. FILTER PENCARIAN LANJUTAN (MULTI-SELECT CHECKBOX)
       if (advCat) {
         const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
         const targetBulan = bulanVal ? parseInt(bulanVal, 10) : 1;
-
-        // Ambil SEMUA nilai yang dicentang pengguna ke dalam Array
         const selectedCbs = Array.from(document.querySelectorAll('input[name="bnba_adv_cb"]:checked')).map(cb => cb.value);
 
         allData = allData.filter(r => {
-          // Jika tidak ada yang dicentang, loloskan semua kategori tersebut
           const hasSpecificFilter = selectedCbs.length > 0;
 
-          // 1. KATEGORI JKN
           if (advCat === "JKN") {
             const rawJkn = String(r.peserta_jkn || "").toUpperCase();
             let mappedJkn = "TIDAK MEMILIKI";
@@ -3736,7 +3730,6 @@ function checkAndLockKbTable() {
             } else if (rawJkn.includes("SWASTA")) {
               mappedJkn = "SWASTA";
             }
-
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(mappedJkn);
           }
@@ -3744,48 +3737,40 @@ function checkAndLockKbTable() {
           const res = hitungStatusIndikator(r, targetBulan, mKeys);
           const cur = res.cur;
 
-          // 2. KATEGORI KESERTAAN KB
           if (advCat === "KESERTAAN_KB") {
             if (!hasSpecificFilter) return res.isPusAktif;
             let statusUser = (cur.type === "PESERTA_KB" && !res.isMutasiOr50) ? "BER_KB" : ((cur.type === "BUKAN_PESERTA" && !res.isMutasiOr50) ? "TIDAK_BER_KB" : "");
             return selectedCbs.includes(statusUser);
           }
 
-          // 3. KATEGORI METODE KONTRASEPSI
           if (advCat === "METODE_KONTRASEPSI") {
             if (cur.type !== "PESERTA_KB" || res.isMutasiOr50) return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.method);
           }
 
-          // 4. KATEGORI AKSEPTOR KB BARU
           if (advCat === "AKSEPTOR_KB_BARU") {
             if (!res.isKbBaru || res.isMutasiOr50) return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.method);
           }
 
-          // 5. KATEGORI ALASAN TIDAK KB
           if (advCat === "ALASAN_TIDAK_KB") {
             if (cur.type !== "BUKAN_PESERTA" || res.isMutasiOr50) return false;
             if (!hasSpecificFilter) return true;
             return selectedCbs.includes(cur.reason);
           }
 
-          // 6. KATEGORI MUTASI
           if (advCat === "MUTASI") {
             if (cur.type !== "BUKAN_PUS") return false;
             if (!hasSpecificFilter) return true;
-
             let catMutasi = "";
             if (cur.cat === "CERAI") catMutasi = "BERCERAI";
             else if (cur.cat === "MENINGGAL") catMutasi = "SUAMI/ISTRI MENINGGAL";
             else if (cur.cat === "PINDAH") catMutasi = "PINDAH";
-
             return selectedCbs.includes(catMutasi);
           }
 
-          // Kategori tunggal lainnya
           if (advCat === "HAMIL") return cur.type === "BUKAN_PESERTA" && cur.reason === "HAMIL" && !res.isMutasiOr50;
           if (advCat === "HAMIL_BARU") return res.isHamilBaru;
           if (advCat === "PUS_BARU") return res.isPusBaru;
@@ -3800,7 +3785,6 @@ function checkAndLockKbTable() {
       }
 
       const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
-
       let htmlRows = "";
       allData.forEach((r, idx) => {
         let kbRowTd = "";
@@ -3836,6 +3820,7 @@ function checkAndLockKbTable() {
         </tr>`;
       });
       tbody.innerHTML = htmlRows;
+
     } catch (err) {
       console.error("BNBA Fetch Error:", err);
       const totalCols = (targetBulanIdx ? 18 : 29) - (hideNik ? 2 : 0);
