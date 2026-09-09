@@ -678,7 +678,7 @@
 
             <div id="bnbaFilterAdvValueWrapper" style="display: none; flex: 1; min-width: 220px; position: relative;">
               <button type="button" id="btnAdvMultiSelect" onclick="toggleAdvMultiDropdown()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; background-color: #fff; font-size: 13px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                <span id="advMultiSelectedText">-- PILIH NILAI (BISA > 1) --</span>
+                <span id="advMultiSelectedText">-- BERI CENTANG PADA PILIHAN) --</span>
                 <span>▼</span>
               </button>
               
@@ -2196,7 +2196,7 @@ function checkAndLockKbTable() {
     if (!label) return;
 
     if (checked.length === 0) {
-      label.innerText = "-- PILIH NILAI (BISA > 1) --";
+      label.innerText = "-- BERI CENTANG PADA PILIHAN) --";
     } else if (checked.length === 1) {
       label.innerText = checked[0].value;
     } else {
@@ -2220,7 +2220,7 @@ function checkAndLockKbTable() {
 
     panel.innerHTML = "";
     wrapper.style.display = "none";
-    document.getElementById("advMultiSelectedText").innerText = "-- PILIH NILAI (BISA > 1) --";
+    document.getElementById("advMultiSelectedText").innerText = "-- BERI CENTANG PADA PILIHAN) --";
 
     let options = [];
 
@@ -2274,7 +2274,7 @@ function checkAndLockKbTable() {
     const panel = document.getElementById("advMultiDropdownPanel");
     if (panel) panel.innerHTML = "";
     const lblSelected = document.getElementById("advMultiSelectedText");
-    if (lblSelected) lblSelected.innerText = "-- PILIH NILAI (BISA > 1) --";
+    if (lblSelected) lblSelected.innerText = "-- BERI CENTANG PADA PILIHAN) --";
 
     if (bln) {
     bln.value = "";
