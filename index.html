@@ -5225,37 +5225,28 @@ function checkAndLockKbTable() {
 
   let allUsersData = [];
 
-  function openManageUsersModal() {
+  function openManageUsersModal() {    
+    if (!isKabRole() && !isKecRole()) {
+      Swal.fire("Akses Ditolak", "Anda tidak memiliki izin untuk mengelola akun pengguna!", "error");
+      return;
+    }
+
     switchUserTab('form');
     resetUserForm();
     populateUserKecDropdown();
 
-    const optKab = document.getElementById("optRoleKab");
     const roleSelect = document.getElementById("user_role_select");
 
-    // Sembunyikan opsi Admin Kab jika bukan level Kabupaten
-    if (optKab) {
-      optKab.style.display = isKabRole() ? "block" : "none";
-    }
-
-    // Jika yang login adalah User Desa, hanya boleh mengelola akun User Desa
     if (isKabRole()) {
       roleSelect.innerHTML = `
         <option value="">-- PILIH ROLE PENGGUNA --</option>
-        <option value="Admin Kab" id="optRoleKab">Admin Kab</option>
+        <option value="Admin Kab">Admin Kab</option>
         <option value="Admin Kec">Admin Kec</option>
         <option value="User Desa">User Desa</option>
       `;
     } else if (isKecRole()) {
-      // Admin Kec hanya mengelola Admin Kec dan User Desa (tetap urut dari atas)
       roleSelect.innerHTML = `
         <option value="">-- PILIH ROLE PENGGUNA --</option>
-        <option value="Admin Kec">Admin Kec</option>
-        <option value="User Desa">User Desa</option>
-      `;
-    } else {
-      // User Desa
-      roleSelect.innerHTML = `
         <option value="User Desa" selected>User Desa</option>
       `;
     }
@@ -5409,7 +5400,11 @@ function checkAndLockKbTable() {
     const dusunContainer = document.getElementById("userDusunContainer");
     if (dusunContainer) dusunContainer.innerHTML = "<small style='color: #64748b;'>Pilih Desa terlebih dahulu...</small>";
     const dusunRow = document.getElementById("userDusunRow");
-    if (dusunRow) dusunRow.style.display = "none";    
+    if (dusunRow) dusunRow.style.display = "none";
+
+    if (!isKecRole()) {
+      document.getElementById("user_role_select").disabled = false;
+    }
   }
 
   async function handleSaveUserAccount(event) {
@@ -5627,6 +5622,11 @@ function checkAndLockKbTable() {
     }
 
     document.getElementById("btnSaveUserAcc").innerText = "💾 PERBARUI AKUN";
+    if (isKecRole()) {
+      document.getElementById("user_role_select").disabled = true;
+    } else {
+      document.getElementById("user_role_select").disabled = false;
+    }
     switchUserTab('form');
   }
 
