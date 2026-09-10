@@ -5225,7 +5225,8 @@ function checkAndLockKbTable() {
 
   let allUsersData = [];
 
-  function openManageUsersModal() {    
+  function openManageUsersModal() {
+    // Kunci akses pintu: Hanya Admin Kab dan Admin Kec yang boleh masuk
     if (!isKabRole() && !isKecRole()) {
       Swal.fire("Akses Ditolak", "Anda tidak memiliki izin untuk mengelola akun pengguna!", "error");
       return;
@@ -5238,13 +5239,14 @@ function checkAndLockKbTable() {
     const roleSelect = document.getElementById("user_role_select");
 
     if (isKabRole()) {
+      // Admin Kabupaten HANYA bisa membuat akun di bawahnya: Admin Kec & User Desa
       roleSelect.innerHTML = `
         <option value="">-- PILIH ROLE PENGGUNA --</option>
-        <option value="Admin Kab">Admin Kab</option>
         <option value="Admin Kec">Admin Kec</option>
         <option value="User Desa">User Desa</option>
       `;
     } else if (isKecRole()) {
+      // Admin Kecamatan HANYA bisa membuat akun di bawahnya: User Desa
       roleSelect.innerHTML = `
         <option value="">-- PILIH ROLE PENGGUNA --</option>
         <option value="User Desa" selected>User Desa</option>
@@ -5521,7 +5523,6 @@ function checkAndLockKbTable() {
       return kdDesa;
     }
 
-    // Helper konversi kode dusun list ke nama dusun
     function getNamaDusunList(kdKec, kdDesa, kdDusunListStr, role) {
       if (role !== "User Desa") return "-";
       if (!kdDusunListStr || String(kdDusunListStr).trim() === "") {
@@ -5536,7 +5537,7 @@ function checkAndLockKbTable() {
         if (dsnMap && dsnMap[c]) {
           names.push(dsnMap[c].nama);
         } else {
-          names.push(c); // Fallback ke kode jika nama belum terdaftar di master
+          names.push(c);
         }
       });
 
@@ -5569,6 +5570,31 @@ function checkAndLockKbTable() {
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa);
       const nmDusunText = getNamaDusunList(item.kode_kec, item.kode_desa, item.kode_dusun_list, item.role);
 
+      // ==============================================================
+      // LOGIKA PEMBATASAN HAK AKSES TOMBOL EDIT & HAPUS
+      // ==============================================================
+      let canModify = false;
+      const targetRole = String(item.role || "").toUpperCase();
+
+      if (isKabRole()) {
+        // Admin Kab hanya boleh mengedit/menghapus akun di bawahnya (Admin Kec & User Desa)
+        if (!targetRole.includes("KAB") && targetRole !== "ADMIN") {
+          canModify = true;
+        }
+      } else if (isKecRole()) {
+        // Admin Kec HANYA boleh mengedit/menghapus akun di bawahnya (User Desa)
+        if (!targetRole.includes("KAB") && !targetRole.includes("KEC") && targetRole !== "ADMIN") {
+          canModify = true;
+        }
+      }
+
+      // Render tombol aksi jika memiliki izin, jika tidak tampilkan tanda strip (-)
+      const actionButtons = canModify ? `
+        <button type="button" class="btn-nav btn-warning" style="padding: 3px 6px; font-size: 11px;" onclick="populateUserToForm('${item.id}')" title="Edit Akun">✏️</button>
+        <button type="button" class="btn-nav btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="confirmDeleteUser('${item.id}', '${item.username}')" title="Hapus Akun">🗑️</button>
+      ` : `<span style="color: #94a3b8; font-size: 13px; font-weight: bold;">-</span>`;
+      // ==============================================================
+
       tr.innerHTML = `
         <td style="text-align:center;">${idx + 1}</td>
         <td><b>${item.nama_lengkap || '-'}</b></td>
@@ -5581,10 +5607,9 @@ function checkAndLockKbTable() {
         </td>
         <td>${nmKec}</td>
         <td>${nmDesa}</td>
-        <td style="font-size:11px;">${nmDusunText}</td>
+        <td style="font-size:11.5px;">${nmDusunText}</td>
         <td style="text-align:center; white-space:nowrap;">
-          <button type="button" class="btn-nav btn-warning" style="padding: 3px 6px; font-size: 11px;" onclick="populateUserToForm('${item.id}')">✏️</button>
-          <button type="button" class="btn-nav btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="confirmDeleteUser('${item.id}', '${item.username}')">🗑️</button>
+          ${actionButtons}
         </td>
       `;
       tbody.appendChild(tr);
@@ -6630,10 +6655,35 @@ function checkAndLockKbTable() {
           return;
         }
 
-        const payloadList = rows.slice(1).map(r => {
+        const payloadList = [];
+        let rejectedCount = 0;
+
+        rows.slice(1).forEach((r, idx) => {
+          const usernameVal = String(r[1] || "").trim();
+          if (!usernameVal) return;
+
           let roleVal = String(r[3] || "User Desa").trim();
-          
-          // Format sanitasi kode dusun list
+          const roleUpper = roleVal.toUpperCase();
+
+          // ==========================================================
+          // PROTEKSI HIERARKI PERAN DAN WILAYAH
+          // ==========================================================
+          if (isKecRole()) {
+            // Admin Kec DILARANG membuat Admin Kab, Admin Kec, atau peran selain User Desa
+            if (roleUpper.includes("KAB") || roleUpper.includes("KEC") || roleUpper === "ADMIN" || roleVal !== "User Desa") {
+              rejectedCount++;
+              return; // Lewati baris ini
+            }
+          } else if (isKabRole()) {
+            // Admin Kab DILARANG membuat akun sesama Admin Kab
+            if (roleUpper.includes("KAB") || roleUpper === "ADMIN") {
+              rejectedCount++;
+              return; // Lewati baris ini
+            }
+          }
+          // ==========================================================
+
+          // Sanitasi kode dusun list
           let rawDsn = String(r[7] || "").trim();
           let cleanDsnList = null;
           if (roleVal === "User Desa" && rawDsn) {
@@ -6644,22 +6694,46 @@ function checkAndLockKbTable() {
               .join(',');
           }
 
-          return {
-            nama_lengkap: String(r[0] || "").trim() || null, // Kolom 0: Nama Lengkap
-            username: String(r[1] || "").trim(),             // Kolom 1: Username
-            password_hash: String(r[2] || "").trim(),        // Kolom 2: Password
-            role: roleVal,                                   // Kolom 3: Role
-            kode_kab: String(r[4] || "01").trim().padStart(2, '0'),
-            kode_kec: String(r[5] || "").trim().padStart(2, '0'),
+          // Kunci wilayah: Jika Admin Kec mengunggah, paksa kode_kec sesuai kecamatannya
+          const finalKec = isKecRole() ? userKodeKec : String(r[5] || "").trim().padStart(2, '0');
+
+          payloadList.push({
+            nama_lengkap: String(r[0] || "").trim() || null,
+            username: usernameVal,
+            password_hash: String(r[2] || "").trim(),
+            role: roleVal,
+            kode_kab: String(r[4] || userKodeKab || "01").trim().padStart(2, '0'),
+            kode_kec: finalKec,
             kode_desa: String(r[6] || "").trim().padStart(4, '0'),
             kode_dusun_list: cleanDsnList
-          };
-        }).filter(item => item.username !== "");
+          });
+        });
+
+        if (payloadList.length === 0) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Tidak Ada Akun Valid',
+            text: rejectedCount > 0 
+              ? `Semua baris (${rejectedCount} data) ditolak karena peran di luar batas kewenangan Anda!` 
+              : 'Tidak ada baris akun yang valid untuk diunggah.'
+          });
+          return;
+        }
 
         const { error } = await db.from('users').upsert(payloadList, { onConflict: 'username' });
         if (error) throw error;
 
-        Swal.fire("Berhasil", `Sebanyak ${payloadList.length} akun pengguna berhasil disinkronkan!`, "success");
+        let pesanSukses = `Sebanyak <b>${payloadList.length}</b> akun pengguna berhasil disinkronkan!`;
+        if (rejectedCount > 0) {
+          pesanSukses += `<br><span style="color:#ef4444; font-size:12px;">(${rejectedCount} baris akun dilewati karena melebihi hak akses peran Anda)</span>`;
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          html: pesanSukses
+        });
+
         loadUsersList();
       } catch (err) {
         Swal.fire("Error", "Gagal memproses file pengguna: " + err.message, "error");
