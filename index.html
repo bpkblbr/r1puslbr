@@ -1473,15 +1473,20 @@
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
-        currentUser = parsed.currentUser;
-        currentNamaLengkap = parsed.currentNamaLengkap || "";
-        userRole = parsed.userRole;
-        userKodeKab = parsed.userKodeKab;
-        userKodeKec = parsed.userKodeKec;
-        userKodeDesa = parsed.userKodeDesa;
+        currentUser = parsed.currentUser || "";
+        currentNamaLengkap = parsed.currentNamaLengkap || ""; // Ambil nama lengkap tersimpan
+        userRole = parsed.userRole || "";
+        userKodeKab = parsed.userKodeKab || "";
+        userKodeKec = parsed.userKodeKec || "";
+        userKodeDesa = parsed.userKodeDesa || "";
         userKodeDusunList = parsed.userKodeDusunList || [];
 
-        // Ambil nama wilayah dinamis untuk ucapan selamat datang (greeting)
+        // 1. Tampilkan kontainer dashboard terlebih dahulu
+        document.getElementById("loginContainer").style.display = "none";
+        document.getElementById("appContainer").style.display = "block";
+        showDashboardView(); 
+
+        // 2. Ambil nama wilayah
         let namaWilayahDinamis = "";
         if (userRole.includes("KAB")) {
           for (let kdProv in dataKabupaten) {
@@ -1501,19 +1506,14 @@
           }
         }
 
-        setUserGreeting(userRole, namaWilayahDinamis, currentUser);
+        // 3. SETELAH showDashboardView() SELESAI, BARU SET GREETING
+        setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
 
-        // Buka dashboard secara otomatis
-        document.getElementById("loginContainer").style.display = "none";
-        document.getElementById("appContainer").style.display = "block";
-        showDashboardView();
       } catch (err) {
         console.error("Gagal membaca session:", err);
         localStorage.removeItem("pus_app_session");
         resetLoginForm();
       }
-    } else {
-      resetLoginForm();
     }
 
     // Registrasi Service Worker bawaan
