@@ -5530,7 +5530,7 @@ function checkAndLockKbTable() {
     function getNamaDusunList(kdKec, kdDesa, kdDusunListStr, role) {
       if (role !== "User Desa") return "-";
       if (!kdDusunListStr || String(kdDusunListStr).trim() === "") {
-        return "<span style="color:#059669; font-weight:600;">SEMUA DUSUN</span>";
+        return "<span style='color:#059669; font-weight:600;'>SEMUA DUSUN</span>";
       }
 
       const dsnMap = getDusunList(kdKec, kdDesa);
