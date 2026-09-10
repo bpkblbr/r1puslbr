@@ -1455,12 +1455,60 @@
     });
   }
 
-  window.onload = function() {
-    resetLoginForm();
-    loadMasterWilayahFromDB();
+  window.onload = async function() {
+    // 1. Muat database master wilayah & default tanggal terlebih dahulu
+    await loadMasterWilayahFromDB();
     setDefaultYearAndMonth();
 
-	if ('serviceWorker' in navigator) {
+    // 2. Cek apakah ada sesi login tersimpan di localStorage perangkat ini
+    const savedSession = localStorage.getItem("pus_app_session");
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        currentUser = parsed.currentUser;
+        userRole = parsed.userRole;
+        userKodeKab = parsed.userKodeKab;
+        userKodeKec = parsed.userKodeKec;
+        userKodeDesa = parsed.userKodeDesa;
+        userKodeDusunList = parsed.userKodeDusunList || [];
+
+        // Ambil nama wilayah dinamis untuk ucapan selamat datang (greeting)
+        let namaWilayahDinamis = "";
+        if (userRole.includes("KAB")) {
+          for (let kdProv in dataKabupaten) {
+            if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
+              namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
+              break;
+            }
+          }
+          if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
+        } else if (userRole.includes("KEC") || userRole === "ADMIN") {
+          if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
+            namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
+          }
+        } else {
+          if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
+            namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
+          }
+        }
+
+        setUserGreeting(userRole, namaWilayahDinamis, currentUser);
+
+        // Buka dashboard secara otomatis
+        document.getElementById("loginContainer").style.display = "none";
+        document.getElementById("appContainer").style.display = "block";
+        showDashboardView();
+      } catch (err) {
+        console.error("Gagal membaca session:", err);
+        localStorage.removeItem("pus_app_session");
+        resetLoginForm();
+      }
+    } else {
+      resetLoginForm();
+    }
+
+    // Registrasi Service Worker bawaan
+    if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then((reg) => {
@@ -2562,6 +2610,16 @@ function checkAndLockKbTable() {
     } else {
       userKodeDusunList = [];
     }
+
+    const sessionData = {
+      currentUser: data.username,
+      userRole: String(data.role || "User Desa").toUpperCase(),
+      userKodeKab: String(data.kode_kab || "").trim().padStart(2, '0'),
+      userKodeKec: String(data.kode_kec || "").trim().padStart(2, '0'),
+      userKodeDesa: String(data.kode_desa || "").trim().padStart(4, '0'),
+      userKodeDusunList: userKodeDusunList
+    };
+    localStorage.setItem("pus_app_session", JSON.stringify(sessionData));
 
     let namaWilayahDinamis = "";
     if (userRole.includes("KAB")) {
@@ -5780,6 +5838,8 @@ function checkAndLockKbTable() {
         userKodeKec = "";
         userKodeDesa = "";
         userKodeDusunList = [];
+
+        localStorage.removeItem("pus_app_session");
 
         // Reset seluruh modul dan form
         resetLoginForm();
