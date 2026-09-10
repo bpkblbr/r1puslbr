@@ -1234,7 +1234,7 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 12px;">
-          <label>Nama Lengkap :</label>
+          <label>Nama Lengkap (Opsional):</label>
           <input type="text" id="user_namalengkap_input" placeholder="Contoh: Punk Lee (Kosongkan jika ingin sebutan wilayah)" style="text-transform: none;">
         </div>
 
@@ -1306,6 +1306,7 @@
           <thead>
             <tr>
               <th style="background: #1f4e78; color: white;">NO</th>
+              <th style="background: #1f4e78; color: white;">NAMA LENGKAP</th>
               <th style="background: #1f4e78; color: white;">USERNAME</th>
               <th style="background: #1f4e78; color: white;">PASSWORD</th>
               <th style="background: #1f4e78; color: white;">ROLE</th>
@@ -1315,7 +1316,7 @@
             </tr>
           </thead>
           <tbody id="usersTbody">
-            <tr><td colspan="7" style="text-align: center; padding: 15px;">Memuat data...</td></tr>
+            <tr><td colspan="8" style="text-align: center; padding: 15px;">Memuat data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -5497,7 +5498,7 @@ function checkAndLockKbTable() {
 
     const { data, error } = await query;
     if (error || !data) {
-      tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align: center; padding: 15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="color:red; text-align: center; padding: 15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
       return;
     }
 
@@ -5527,14 +5528,15 @@ function checkAndLockKbTable() {
     const filtered = allUsersData.filter(item => {
       const nmKec = getNamaKec(item.kode_kec).toLowerCase();
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa).toLowerCase();
-      return (item.username || '').toLowerCase().includes(filter) ||
+      return (item.nama_lengkap || '').toLowerCase().includes(filter) ||
+             (item.username || '').toLowerCase().includes(filter) ||
              (item.role || '').toLowerCase().includes(filter) ||
              nmKec.includes(filter) ||
              nmDesa.includes(filter);
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 15px; color: #777;">Tidak ada akun ditemukan.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 15px; color: #777;">Tidak ada akun ditemukan.</td></tr>`;
       return;
     }
 
@@ -5551,7 +5553,8 @@ function checkAndLockKbTable() {
 
       tr.innerHTML = `
         <td style="text-align:center;">${idx + 1}</td>
-        <td><b>${item.username}</b></td>
+        <td><b>${item.nama_lengkap || '-'}</b></td>
+        <td>${item.username}</td>
         <td style="font-family: monospace; background:#f8fafc;">${item.password_hash || ''}</td>
         <td style="text-align:center;">
           <span style="padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; background: ${item.role === 'Admin Kab' ? '#fee2e2; color:#991b1b' : (item.role === 'Admin Kec' ? '#fef3c7; color:#92400e' : '#e0f2fe; color:#075985')}">
