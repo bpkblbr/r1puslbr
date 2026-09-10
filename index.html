@@ -2947,7 +2947,6 @@ function checkAndLockKbTable() {
   function hitungUmurIstri() {
   const tglLahirInput = document.getElementById("tgl_lahir_istri").value;
   const umurInput = document.getElementById("umur_istri");
-  const tahunPelaporan = parseInt(document.getElementById("tahun_input").value || new Date().getFullYear(), 10);
 
   if (!tglLahirInput) {
     umurInput.value = 0;
@@ -2955,52 +2954,48 @@ function checkAndLockKbTable() {
     return;
   }
 
-  // Parse YYYY-MM-DD secara manual agar kebal isu timezone
-  const parts = tglLahirInput.split("-");
-  if (parts.length !== 3) {
+  let birthYear, birthMonth, birthDay;
+
+  // Mendukung format YYYY-MM-DD maupun DD/MM/YYYY
+  if (tglLahirInput.includes("-")) {
+    const p = tglLahirInput.split("-");
+    if (p[0].length === 4) {
+      birthYear = parseInt(p[0], 10);
+      birthMonth = parseInt(p[1], 10);
+      birthDay = parseInt(p[2], 10);
+    } else {
+      birthYear = parseInt(p[2], 10);
+      birthMonth = parseInt(p[1], 10);
+      birthDay = parseInt(p[0], 10);
+    }
+  } else if (tglLahirInput.includes("/")) {
+    const p = tglLahirInput.split("/");
+    if (p[2].length === 4) {
+      birthYear = parseInt(p[2], 10);
+      birthMonth = parseInt(p[1], 10);
+      birthDay = parseInt(p[0], 10);
+    } else {
+      birthYear = parseInt(p[0], 10);
+      birthMonth = parseInt(p[1], 10);
+      birthDay = parseInt(p[2], 10);
+    }
+  }
+
+  if (!birthYear || isNaN(birthYear)) {
     umurInput.value = 0;
     applyMutationAndAgeLocks();
     return;
   }
 
-  const birthYear = parseInt(parts[0], 10);
-  const birthMonth = parseInt(parts[1], 10); // 1 - 12
-  const birthDay = parseInt(parts[2], 10);   // 1 - 31
-
-  if (isNaN(birthYear) || birthYear > tahunPelaporan) {
-    umurInput.value = 0;
-    applyMutationAndAgeLocks();
-    return;
-  }
-
+  // Patokan tanggal hari ini
   const today = new Date();
-  const currentRealYear = today.getFullYear();
-  const currentRealMonth = today.getMonth() + 1; // 1 - 12
-  const currentRealDay = today.getDate();
+  const curYear = today.getFullYear();
+  const curMonth = today.getMonth() + 1; // 1 - 12
+  const curDay = today.getDate();
 
-  let targetYear, targetMonth, targetDay;
-
-  // Jika input tahun pelaporan adalah tahun saat ini atau tahun lalu,
-  // patokan tanggal adalah hari ini
-  if (tahunPelaporan === currentRealYear) {
-    targetYear = currentRealYear;
-    targetMonth = currentRealMonth;
-    targetDay = currentRealDay;
-  } else if (tahunPelaporan < currentRealYear) {
-    // Untuk arsip tahun lampau, patokannya akhir tahun tersebut
-    targetYear = tahunPelaporan;
-    targetMonth = 12;
-    targetDay = 31;
-  } else {
-    // Jika tahun pelaporan di masa depan dibanding jam perangkat,
-    // gunakan tanggal & bulan hari ini pada tahun pelaporan tersebut
-    targetYear = tahunPelaporan;
-    targetMonth = currentRealMonth;
-    targetDay = currentRealDay;
-  }
-
-  let age = targetYear - birthYear;
-  if (targetMonth < birthMonth || (targetMonth === birthMonth && targetDay < birthDay)) {
+  let age = curYear - birthYear;
+  // Kurangi 1 tahun jika bulan belum sampai, atau bulan sama tapi tanggal belum sampai
+  if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
     age--;
   }
 
@@ -4694,7 +4689,7 @@ function checkAndLockKbTable() {
     document.getElementById("nama_istri").value = d.nama_istri;
     document.getElementById("nik_istri").value = d.nik_istri;
     document.getElementById("tgl_lahir_istri").value = d.tgl_lahir_istri;
-    document.getElementById("umur_istri").value = d.umur_istri;
+    hitungUmurIstri();
     document.getElementById("jumlah_anak").value = d.jumlah_anak;
     checkJumlahAnak();
     document.getElementById("umur_anak_terkecil").value = d.umur_anak_terkecil;
