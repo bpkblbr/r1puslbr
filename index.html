@@ -5592,7 +5592,7 @@ function checkAndLockKbTable() {
       const actionButtons = canModify ? `
         <button type="button" class="btn-nav btn-warning" style="padding: 3px 6px; font-size: 11px;" onclick="populateUserToForm('${item.id}')" title="Edit Akun">✏️</button>
         <button type="button" class="btn-nav btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="confirmDeleteUser('${item.id}', '${item.username}')" title="Hapus Akun">🗑️</button>
-      ` : `<span style="color: #94a3b8; font-size: 13px; font-weight: bold;">-</span>`;
+      ` : `<span style="color: #94a3b8; font-size: 12px; font-style: italic; user-select: none;">Terkunci</span>`;
       // ==============================================================
 
       tr.innerHTML = `
