@@ -1675,20 +1675,24 @@ function checkAndLockKbTable() {
     const tahunInput = parseInt(document.getElementById("tahun_input").value || new Date().getFullYear(), 10);
     
     let mutationTriggeredIndex = -1;
-    let age50StartIndex = 13;
+    let age50StartIndex = 13; // default: tidak terkunci (di luar 12 bulan)
 
-    // 1. Cek titik bulan usia 50 tahun
+    // 1. Cek titik bulan mencapai usia 50 tahun
     if (tglLahir) {
       const dob = new Date(tglLahir);
       if (!isNaN(dob.getTime())) {
         const birthYear = dob.getFullYear();
-        const birthMonth = dob.getMonth() + 1; // 1 - 12
-        const yearTurning50 = birthYear + 50;
+        const birthMonth = dob.getMonth() + 1; // 1 - 12 (Desember = 12)
+        const yearTurning50 = birthYear + 50;  // 1976 + 50 = 2026
 
         if (tahunInput > yearTurning50) {
+          // Jika tahun pelaporan sudah di atas tahun genap 50 (misal 2027), terkunci sejak Januari
           age50StartIndex = 1; 
         } else if (tahunInput === yearTurning50) {
-          age50StartIndex = birthMonth; 
+          // Genap 50 di tahun berjalan:
+          // Jika lahir 31 Desember, bulan 1 s.d. 12 masih bisa diisi, 
+          // kunci baru berlaku setelah bulan kelahirannya (bulan 13 / tidak terkunci di tahun 2026)
+          age50StartIndex = birthMonth + 1; 
         }
       }
     }
@@ -1701,11 +1705,11 @@ function checkAndLockKbTable() {
       
       if (val === "BERCERAI" || val === "SUAMI/ISTRI MENINGGAL" || val === "PINDAH") {
         mutationTriggeredIndex = i;
-        break; // Ambil kemunculan pertama saja
+        break;
       }
     }
 
-    // 3. Tentukan batas awal lock
+    // 3. Tentukan batas awal lock (prioritaskan yang terjadi lebih dulu)
     let lockStartingIndex = 13;
     let lockReason = "";
 
@@ -1733,10 +1737,9 @@ function checkAndLockKbTable() {
       const shouldLock = (lockStartingIndex !== 13 && i >= lockStartingIndex);
 
       if (shouldLock) {
-        // Otomatis kosongkan nilai jika bulan tersebut berada setelah bulan mutasi/usia 50+
         sel.value = ""; 
         sel.style.backgroundColor = "#e9ecef";
-        sel.style.pointerEvents = "none"; // Mencegah klik/pilihan
+        sel.style.pointerEvents = "none";
         sel.tabIndex = -1;
         sel.title = lockReason;
       } else {
@@ -2954,31 +2957,28 @@ function checkAndLockKbTable() {
 
   const dob = new Date(tglLahirInput);
   
-  // Validasi jika format tanggal rusak atau tahun lahir di atas tahun pelaporan
   if (isNaN(dob.getTime()) || dob.getFullYear() > tahunPelaporan) {
     umurInput.value = 0;
     applyMutationAndAgeLocks();
     return;
   }
 
-  const birthYear = dob.getFullYear();
-  const birthMonth = dob.getMonth(); 
-  const birthDay = dob.getDate();
-
-  // Patokan akhir tahun pelaporan (31 Desember)
-  const refDate = new Date(tahunPelaporan, 11, 31); 
-
-  let age = refDate.getFullYear() - birthYear;
-  const monthDiff = refDate.getMonth() - birthMonth;
-
-  if (monthDiff < 0 || (monthDiff === 0 && refDate.getDate() < birthDay)) {
-    age--;  
+  // Gunakan tanggal hari ini jika tahun pelaporan sama dengan tahun berjalan,
+  // atau gunakan akhir tahun pelaporan jika melihat tahun lalu/masa depan.
+  const today = new Date();
+  let refDate = today;
+  if (tahunPelaporan !== today.getFullYear()) {
+    refDate = new Date(tahunPelaporan, 11, 31);
   }
 
-  // Pastikan nilai batas bawah tidak pernah negatif
-  umurInput.value = Math.max(0, age);
+  let age = refDate.getFullYear() - dob.getFullYear();
+  const monthDiff = refDate.getMonth() - dob.getMonth();
 
-  // Perbarui status penguncian bulan berdasarkan umur
+  if (monthDiff < 0 || (monthDiff === 0 && refDate.getDate() < dob.getDate())) {
+    age--;
+  }
+
+  umurInput.value = Math.max(0, age);
   applyMutationAndAgeLocks();
 }
   
