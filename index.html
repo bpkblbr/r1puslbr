@@ -1234,6 +1234,11 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 12px;">
+          <label>Nama Lengkap (Opsional):</label>
+          <input type="text" id="user_namalengkap_input" placeholder="Contoh: Punk Lee (Kosongkan jika ingin sebutan wilayah)" style="text-transform: none;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
           <label>Password:</label>
           <input type="text" id="user_pass_input" placeholder="Masukkan Password" required style="text-transform: none;">
         </div>
@@ -1354,6 +1359,7 @@
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = "";
+  let currentNamaLengkap = "";
   let userRole = "";
   let userKodeKab = "";
   let userKodeKec = "";
@@ -1386,28 +1392,29 @@
     return "Selamat malam";
   }
 
-  function setUserGreeting(role, wilayahNama, username) {
+  function setUserGreeting(role, wilayahNama, username, namaLengkap) {
     const timeGreeting = getTimeGreeting();
     let identity = "";
-    const roleUpper = String(role || "").toUpperCase();
-
-    // Pastikan nama kabupaten bersih dan diformat UPPERCASE jika ada
-    let namaWilayah = String(wilayahNama || "").trim().toUpperCase();
-
-    if (roleUpper.includes("KAB")) {
-      // Jika nama kabupaten belum terisi dari DB, beri default LOMBOK BARAT
-      identity = "Admin Kabupaten " + (namaWilayah || "LOMBOK BARAT");
-    } else if (roleUpper.includes("KEC")) {
-      identity = "Admin Kecamatan " + (namaWilayah || "");
-    } else {
-      identity = "User Desa " + (namaWilayah || "");
-    }
-
-    identity = identity.trim();
     
-    // Jangan fallback ke format username jika Admin Kab sudah punya nama kabupaten
-    if (!namaWilayah && !roleUpper.includes("KAB")) {
-      identity = role + " (" + username + ")";
+    if (namaLengkap && String(namaLengkap).trim() !== "") {
+      identity = String(namaLengkap).trim();
+    } else {      
+      const roleUpper = String(role || "").toUpperCase();
+      let namaWilayah = String(wilayahNama || "").trim().toUpperCase();
+
+      if (roleUpper.includes("KAB")) {
+        identity = "Admin Kabupaten " + (namaWilayah || "LOMBOK BARAT");
+      } else if (roleUpper.includes("KEC")) {
+        identity = "Admin Kecamatan " + (namaWilayah || "");
+      } else {
+        identity = "User Desa " + (namaWilayah || "");
+      }
+
+      identity = identity.trim();
+      
+      if (!namaWilayah && !roleUpper.includes("KAB")) {
+        identity = role + " (" + username + ")";
+      }
     }
 
     const fullGreeting = `${timeGreeting}, ${identity}`;
@@ -1466,6 +1473,7 @@
       try {
         const parsed = JSON.parse(savedSession);
         currentUser = parsed.currentUser;
+        currentNamaLengkap = parsed.currentNamaLengkap || "";
         userRole = parsed.userRole;
         userKodeKab = parsed.userKodeKab;
         userKodeKec = parsed.userKodeKec;
@@ -2600,6 +2608,7 @@ function checkAndLockKbTable() {
     }
 
     currentUser = data.username;
+    currentNamaLengkap = data.nama_lengkap || "";
     userRole = String(data.role || "User Desa").toUpperCase();
     userKodeKab = String(data.kode_kab || "").trim().padStart(2, '0');
     userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
@@ -2613,30 +2622,27 @@ function checkAndLockKbTable() {
     } else {
       userKodeDusunList = [];
     }
-
+    
     const sessionData = {
       currentUser: data.username,
-      userRole: String(data.role || "User Desa").toUpperCase(),
-      userKodeKab: String(data.kode_kab || "").trim().padStart(2, '0'),
-      userKodeKec: String(data.kode_kec || "").trim().padStart(2, '0'),
-      userKodeDesa: String(data.kode_desa || "").trim().padStart(4, '0'),
+      currentNamaLengkap: currentNamaLengkap,
+      userRole: userRole,
+      userKodeKab: userKodeKab,
+      userKodeKec: userKodeKec,
+      userKodeDesa: userKodeDesa,
       userKodeDusunList: userKodeDusunList
     };
     localStorage.setItem("pus_app_session", JSON.stringify(sessionData));
 
     let namaWilayahDinamis = "";
     if (userRole.includes("KAB")) {
-      // Cari nama kabupaten di seluruh provinsi pada dataKabupaten
       for (let kdProv in dataKabupaten) {
         if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
           namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
           break;
         }
       }
-      // Fallback cadangan jika kode belum terdaftar di tabel master_wilayah
-      if (!namaWilayahDinamis) {
-        namaWilayahDinamis = "LOMBOK BARAT";
-      }
+      if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
     } else if (userRole.includes("KEC") || userRole === "ADMIN") {
       if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
         namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
@@ -2646,8 +2652,8 @@ function checkAndLockKbTable() {
         namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
       }
     }
-
-    setUserGreeting(data.role, namaWilayahDinamis, data.username);
+    
+    setUserGreeting(data.role, namaWilayahDinamis, data.username, currentNamaLengkap);
 
     document.getElementById("loginContainer").style.display = "none";
     document.getElementById("appContainer").style.display = "block";
@@ -5393,7 +5399,8 @@ function checkAndLockKbTable() {
   function resetUserForm() {
     document.getElementById("formUserAccount").reset();
     document.getElementById("user_id").value = "";
-    document.getElementById("user_name_input").readOnly = false;
+    document.getElementById("user_namalengkap_input").value = "";
+    document.getElementById("user_name_input").readOnly = false;    
     document.getElementById("btnSaveUserAcc").innerText = "💾 SIMPAN AKUN";
     onUserRoleChange();
     
@@ -5436,6 +5443,7 @@ function checkAndLockKbTable() {
 
     const payload = {
       username: document.getElementById("user_name_input").value.trim(),
+      nama_lengkap: document.getElementById("user_namalengkap_input").value.trim() || null,
       password_hash: document.getElementById("user_pass_input").value.trim(),
       role: roleVal,
       kode_kab: userKodeKab || "01",
@@ -5566,6 +5574,7 @@ function checkAndLockKbTable() {
     if (!item) return;
 
     document.getElementById("user_id").value = item.id;
+    document.getElementById("user_namalengkap_input").value = item.nama_lengkap || "";
     document.getElementById("user_name_input").value = item.username;
     document.getElementById("user_pass_input").value = item.password_hash;
     document.getElementById("user_role_select").value = item.role;
@@ -5854,6 +5863,7 @@ function checkAndLockKbTable() {
     }).then((result) => {
       if (result.isConfirmed) {
         currentUser = "";
+        currentNamaLengkap = "";
         userRole = "";
         userKodeKab = "";
         userKodeKec = "";
