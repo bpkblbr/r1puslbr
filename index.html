@@ -2030,6 +2030,14 @@ function checkAndLockKbTable() {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const currentMonthName = monthNames[monthIndex - 1];
 
+    let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
+    for (let kdKab in dataKecamatan) {
+      for (let kdKec in dataKecamatan[kdKab]) {
+        let cleanKd = String(kdKec).trim().padStart(2, '0');
+        kecOptions += `<option value="${cleanKd}">${dataKecamatan[kdKab][kdKec].toUpperCase()}</option>`;
+      }
+    }
+
     Swal.fire({
       title: 'Pilih Wilayah Tujuan',
       showCloseButton: true,
@@ -2105,7 +2113,6 @@ function checkAndLockKbTable() {
         document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
         document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
         
-        // Simpan dusun tujuan sementara di memory form
         window.tempMutasiDusunTujuan = mutRes.value.dusun || "";
         window.tempMutasiDusunNama = mutRes.value.dusunNama || "";
 
@@ -4750,7 +4757,6 @@ function checkAndLockKbTable() {
       if (userKodeDusunList && userKodeDusunList.length > 0 && !dsn) {
         query = query.in('kode_dusun', userKodeDusunList);
       }
-    }
     } else if (isKecRole()) {
       query = query.eq('kode_kec', userKodeKec);
       let des = document.getElementById("searchDesa").value;
@@ -4771,7 +4777,7 @@ function checkAndLockKbTable() {
       if (rt) query = query.eq('kode_rt', rt);
     }
 
-    const { data, error } = await query.order('id_pus', { ascending: true }).limit(25);
+    let { data, error } = await query.order('id_pus', { ascending: true }).limit(25);
     container.innerHTML = "";
 
     if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
