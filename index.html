@@ -3336,28 +3336,41 @@ function checkAndLockKbTable() {
     submitBtn.disabled = false;
     submitBtn.innerText = "SIMPAN DATA";
   }
-}    
-
-  // --- REKAPITULASI DENGAN FILTER TINGKAT ---
+}
+  
   async function fetchAllPusDataChunked(tahun, filterKec, filterDesa, filterDusun) {
     let allData = [];
     let from = 0;
     const step = 1000;
     let hasMore = true;
 
-    // Normalisasi format kode dengan padding standar
-    const cleanKec = filterKec ? String(filterKec).trim().padStart(2, '0') : "";
-    const cleanDesa = filterDesa ? String(filterDesa).trim().padStart(4, '0') : "";
-    const cleanDusun = (filterDusun && filterDusun !== "0000") ? String(filterDusun).trim().padStart(4, '0') : "";
+    // Bersihkan karakter non-digit agar pencocokan murni numerik
+    const cleanKecFilter = filterKec ? String(filterKec).trim().replace(/\D/g, "") : "";
+    const cleanDesaFilter = filterDesa ? String(filterDesa).trim().replace(/\D/g, "") : "";
+    const cleanDusunFilter = (filterDusun && filterDusun !== "0000") ? String(filterDusun).trim().replace(/\D/g, "") : "";
 
     while (hasMore) {
       let query = db.from('data_pus').select('*').eq('tahun', tahun);
+      
+      if (userKodeKab) {
+        query = query.eq('kode_kab', String(userKodeKab).trim().padStart(2, '0'));
+      }
+      
+      if (cleanKecFilter) {
+        const kecPad = cleanKecFilter.padStart(2, '0');
+        const kecNum = parseInt(cleanKecFilter, 10);
+        query = query.or(`kode_kec.eq.${kecPad},kode_kec.eq.${kecNum}`);
+      }
+      if (cleanDesaFilter) {
+        const desPad = cleanDesaFilter.padStart(4, '0');
+        const desNum = parseInt(cleanDesaFilter, 10);
+        query = query.or(`kode_desa.eq.${desPad},kode_desa.eq.${desNum}`);
+      }
+      if (cleanDusunFilter) {
+        const dsnPad = cleanDusunFilter.padStart(4, '0');
+        query = query.eq('kode_dusun', dsnPad);
+      }
 
-      if (cleanKec) query = query.eq('kode_kec', cleanKec);
-      if (cleanDesa) query = query.eq('kode_desa', cleanDesa);
-      if (cleanDusun) query = query.eq('kode_dusun', cleanDusun);
-
-      // Wajib pakai order agar pemotongan range (chunk) stabil dan tidak ada data hilang
       const { data, error } = await query.order('id_pus', { ascending: true }).range(from, from + step - 1);
       if (error) throw error;
 
@@ -3369,6 +3382,28 @@ function checkAndLockKbTable() {
         hasMore = false;
       }
     }
+    
+    if (cleanKecFilter) {
+      allData = allData.filter(r => {
+        const rKec = String(r.kode_kec || "").trim().replace(/\D/g, "");
+        return rKec !== "" && parseInt(rKec, 10) === parseInt(cleanKecFilter, 10);
+      });
+    }
+
+    if (cleanDesaFilter) {
+      allData = allData.filter(r => {
+        const rDesa = String(r.kode_desa || "").trim().replace(/\D/g, "");
+        return rDesa !== "" && parseInt(rDesa, 10) === parseInt(cleanDesaFilter, 10);
+      });
+    }
+
+    if (cleanDusunFilter) {
+      allData = allData.filter(r => {
+        const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
+        return rDsn === cleanDusunFilter.padStart(4, '0');
+      });
+    }    
+
     return allData;
   }
 
