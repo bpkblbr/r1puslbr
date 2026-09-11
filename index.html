@@ -22,6 +22,11 @@
     #loginContainer { max-width: 400px; margin-top: 10vh; }
     h2, h3 { text-align: center; color: #1f4e78; font-size: 18px; margin: 5px 0; }
     h3 { font-size: 14px; margin-bottom: 15px; }
+
+    #recapTingkat, #bnbaTingkat, #chartTingkat,
+    #recapTingkat option, #bnbaTingkat option, #chartTingkat option {
+      font-weight: bold !important;
+    }
     
     @media (min-width: 601px) {
       .br-mobile-only {
@@ -525,7 +530,7 @@
       <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
-            <select id="recapTingkat" onchange="onRecapTingkatChange()" style="font-weight: bold;">
+            <select id="recapTingkat" onchange="onRecapTingkatChange()">
               <option value="">-- PILIH LEVEL REKAP --</option>
               <option value="Kabupaten">REKAP KABUPATEN</option>
               <option value="Kecamatan">REKAP KECAMATAN</option>
@@ -632,7 +637,7 @@
       <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
-            <select id="bnbaTingkat" onchange="onBnbaTingkatChange()" style="font-weight: bold;">
+            <select id="bnbaTingkat" onchange="onBnbaTingkatChange()">
               <option value="">-- PILIH LEVEL BNBA --</option>
               <option value="Kabupaten">BNBA KABUPATEN</option>
               <option value="Kecamatan">BNBA KECAMATAN</option>
@@ -767,7 +772,7 @@
       <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
-            <select id="chartTingkat" onchange="onChartTingkatChange() "style="font-weight: bold;">
+            <select id="chartTingkat" onchange="onChartTingkatChange()">
               <option value="">-- PILIH LEVEL GRAFIK --</option>
               <option value="Kabupaten">GRAFIK KABUPATEN</option>
               <option value="Kecamatan">GRAFIK KECAMATAN</option>
