@@ -4756,6 +4756,7 @@ function checkAndLockKbTable() {
       
       if (userKodeDusunList && userKodeDusunList.length > 0 && !dsn) {
         query = query.in('kode_dusun', userKodeDusunList);      
+      }
     } else if (isKecRole()) {
       query = query.eq('kode_kec', userKodeKec);
       let des = document.getElementById("searchDesa").value;
