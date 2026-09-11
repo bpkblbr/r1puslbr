@@ -2983,14 +2983,14 @@ function checkAndLockKbTable() {
       const dusunSelect = document.getElementById("dusun");
       dusunSelect.disabled = false;
       for (let kode in dusunObj) {
-      let cleanKd = String(kode).trim().padStart(4, '0');
-      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-        if (!userKodeDusunList.includes(cleanKd)) {
-          continue;
+        let cleanKd = String(kode).trim().padStart(4, '0');
+        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+          if (!userKodeDusunList.includes(cleanKd)) {
+            continue;
+          }
         }
+        dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), cleanKd));
       }
-      dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), cleanKd));
-    }
       if (selectedVal) { setSelectValueCaseInsensitive("dusun", selectedVal); updateRT(); }
     }
   }
