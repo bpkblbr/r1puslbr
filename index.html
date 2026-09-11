@@ -382,6 +382,8 @@
         <input type="hidden" id="pindah_kec_tujuan" value="">
         <input type="hidden" id="pindah_desa_tujuan" value="">
         <input type="hidden" id="pindah_desa_nama" value="">
+        <input type="hidden" id="pindah_dusun_tujuan" value="">
+        <input type="hidden" id="pindah_dusun_nama" value="">
         <input type="hidden" id="original_id_pus" value="">
         <input type="hidden" id="original_kode_dusun" value="">
         <input type="hidden" id="original_kode_rt" value="">
@@ -2030,6 +2032,11 @@ function checkAndLockKbTable() {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const currentMonthName = monthNames[monthIndex - 1];
 
+    // Ambil wilayah asal akseptor saat ini
+    const curKdKec = String(document.getElementById("kode_kec").value || "").trim().padStart(2, '0');
+    const curKdDesa = String(document.getElementById("kode_desa").value || "").trim().padStart(4, '0');
+    const curKdDusun = String(document.getElementById("kode_dusun").value || "").trim().padStart(4, '0');
+
     let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
     for (let kdKab in dataKecamatan) {
       for (let kdKec in dataKecamatan[kdKab]) {
@@ -2039,23 +2046,30 @@ function checkAndLockKbTable() {
     }
 
     Swal.fire({
-      title: 'Pilih Wilayah Tujuan',
+      title: 'Tujuan Pindah Domisili',
       showCloseButton: true,
       html: `
-        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Kecamatan Tujuan:</div>
+        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Kecamatan Tujuan:</div>
         <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
           ${kecOptions}
         </select>
-        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Desa Tujuan:</div>
+        
+        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Desa Tujuan:</div>
         <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiDesaChange()">
           <option value="">-- PILIH DESA TUJUAN --</option>
         </select>
-        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Dusun Tujuan (Opsional/Jika Tahu):</div>
-        <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0;">
-          <option value="">-- SEMUA / BELUM TAHU DUSUN --</option>
-        </select>
+
+        <!-- Dropdown Dusun (Hanya muncul jika pindah dalam desa yang sama) -->
+        <div id="swalContainerDusunTujuan" style="display: none;">
+          <div style="text-align:left; font-size:13px; color:#0284c7; font-weight:bold; margin-bottom:6px;">
+            📍 Pilih Dusun Tujuan (Pindah Dalam Desa):
+          </div>
+          <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0; border-color: #0284c7;">
+            <option value="">-- PILIH DUSUN TUJUAN --</option>
+          </select>
+        </div>
       `,
-      icon: 'info',
+      icon: 'question',
       showCancelButton: true,
       cancelButtonText: 'Batal',
       confirmButtonColor: '#059669',
@@ -2065,9 +2079,13 @@ function checkAndLockKbTable() {
         window.onSwalMutasiKecChange = function() {
           const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
           const selDesa = document.getElementById('swalMutasiDesa');
+          const containerDsn = document.getElementById('swalContainerDusunTujuan');
           const selDsn = document.getElementById('swalMutasiDusun');
+          
           selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
-          selDsn.innerHTML = '<option value="">-- SEMUA / BELUM TAHU DUSUN --</option>';
+          selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
+          containerDsn.style.display = 'none';
+
           if (selKec && dataDesa[selKec]) {
             for (let kd in dataDesa[selKec]) {
               let cleanKdDesa = String(kd).trim().padStart(4, '0');
@@ -2075,19 +2093,35 @@ function checkAndLockKbTable() {
             }
           }
         };
+
         window.onSwalMutasiDesaChange = function() {
           const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
           const selDesa = String(document.getElementById('swalMutasiDesa').value || "").trim().padStart(4, '0');
+          const containerDsn = document.getElementById('swalContainerDusunTujuan');
           const selDsn = document.getElementById('swalMutasiDusun');
-          selDsn.innerHTML = '<option value="">-- SEMUA / BELUM TAHU DUSUN --</option>';
-          if (selKec && selDesa) {
+
+          selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
+
+          // Poin 2: Tampilkan HANYA jika Kecamatan dan Desa tujuan sama persis dengan wilayah asal
+          const isSameDesa = (selKec === curKdKec && selDesa === curKdDesa);
+
+          if (isSameDesa) {
             const dsnList = getDusunList(selKec, selDesa);
             if (dsnList) {
               for (let kd in dsnList) {
                 let cleanKdDsn = String(kd).trim().padStart(4, '0');
+                
+                // Poin 5: JANGAN tampilkan dusun asal sebagai pilihan tujuan
+                if (cleanKdDsn === curKdDusun) {
+                  continue;
+                }
+
                 selDsn.add(new Option(dsnList[kd].nama.toUpperCase(), cleanKdDsn));
               }
             }
+            containerDsn.style.display = 'block';
+          } else {
+            containerDsn.style.display = 'none';
           }
         };
       },
@@ -2096,15 +2130,30 @@ function checkAndLockKbTable() {
         const desaSelect = document.getElementById('swalMutasiDesa');
         const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
         const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
-        const dsnSelect = document.getElementById('swalMutasiDusun');
-        const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
-        const dsnNama = dsnSelect.value ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
 
         if (!kecTujuan || !desaTujuan) {
           Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
           return false;
         }
-        return { kec: kecTujuan, desa: desaTujuan, desaNama: desaNama, dusun: dsnTujuan, dusunNama: dsnNama };
+
+        const isSameDesa = (kecTujuan === curKdKec && desaTujuan === curKdDesa);
+        const dsnSelect = document.getElementById('swalMutasiDusun');
+        const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
+        const dsnNama = (dsnSelect.selectedIndex > 0) ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
+
+        // Jika pindah di dalam desa yang sama, wajib tentukan dusun tujuan baru
+        if (isSameDesa && (!dsnTujuan || dsnTujuan === "0000")) {
+          Swal.showValidationMessage('Pindah di dalam desa wajib memilih Dusun tujuan baru!');
+          return false;
+        }
+
+        return {
+          kec: kecTujuan,
+          desa: desaTujuan,
+          desaNama: desaNama,
+          dusun: isSameDesa ? dsnTujuan : "",
+          dusunNama: isSameDesa ? dsnNama : ""
+        };
       }
     }).then((mutRes) => {
       if (mutRes.isConfirmed) {
@@ -2112,11 +2161,17 @@ function checkAndLockKbTable() {
         document.getElementById("pindah_kec_tujuan").value = mutRes.value.kec;
         document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
         document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
-        
-        window.tempMutasiDusunTujuan = mutRes.value.dusun || "";
-        window.tempMutasiDusunNama = mutRes.value.dusunNama || "";
 
-        Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}${mutRes.value.dusunNama ? ' - ' + mutRes.value.dusunNama : ''}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
+        // Poin 1: Simpan ke hidden form input
+        document.getElementById("pindah_dusun_tujuan").value = mutRes.value.dusun;
+        document.getElementById("pindah_dusun_nama").value = mutRes.value.dusunNama;
+
+        let infoTujuan = `Desa ${mutRes.value.desaNama}`;
+        if (mutRes.value.dusunNama) {
+          infoTujuan += ` (Dusun ${mutRes.value.dusunNama})`;
+        }
+
+        Swal.fire('Tercatat', `Tujuan pindah: ${infoTujuan}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
       } else {
         BATalkanPilihanPindah(monthIndex);
       }
@@ -2125,15 +2180,19 @@ function checkAndLockKbTable() {
 
   function BATalkanPilihanPindah(monthIndex) {
     const sel = document.getElementById("kb_" + monthIndex);
-    if (sel) sel.value = ""; // Kosongkan dropdown status KB bulan tersebut
+    if (sel) sel.value = "";
     
     document.getElementById("is_pindah_dalam_kab").value = "false";
     document.getElementById("pindah_kec_tujuan").value = "";
     document.getElementById("pindah_desa_tujuan").value = "";
     document.getElementById("pindah_desa_nama").value = "";
     
+    // Reset hidden dusun tujuan
+    document.getElementById("pindah_dusun_tujuan").value = "";
+    document.getElementById("pindah_dusun_nama").value = "";
+    
     applyMutationAndAgeLocks();
-  }
+  }  
 
   // --- LOGIC DROPDOWN BERTINGKAT REKAP ---
   function onRecapTingkatChange() {
@@ -2885,36 +2944,48 @@ function checkAndLockKbTable() {
       const tr = document.createElement("tr");
       
       let canAccept = true;
-      const cleanTargetDusun = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
+      let lockReason = "";
+      const cleanTargetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
 
-      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-        // Jika tiket mutasi menunjuk dusun spesifik dan user tidak memegang dusun itu
-        if (cleanTargetDusun && cleanTargetDusun !== "0000") {
-          if (!userKodeDusunList.includes(cleanTargetDusun)) {
+      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {        
+        if (cleanTargetDsn && cleanTargetDusunValid(cleanTargetDsn)) {
+          if (!userKodeDusunList.includes(cleanTargetDsn)) {
             canAccept = false;
+            lockReason = `Khusus Kader Dusun ${item.dusun_tujuan || cleanTargetDsn}`;
           }
         }
       }
       
-      const labelDusunTujuan = cleanTargetDusun && cleanTargetDusun !== "0000" 
-        ? `<br><small style="color:#0284c7; font-weight:bold;">Tujuan: Dusun [${cleanTargetDusun}]</small>` 
-        : `<br><small style="color:#64748b;">(Dusun tujuan belum ditentukan)</small>`;
+      let infoDusunHtml = "";
+      if (cleanTargetDsn && cleanTargetDusunValid(cleanTargetDsn)) {
+        infoDusunHtml = `<br><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:bold;">Tujuan: Dusun ${item.dusun_tujuan || cleanTargetDsn}</span>`;
+      } else {
+        infoDusunHtml = `<br><span style="color:#64748b; font-size:10.5px;">(Pindahan Luar Desa - Dusun Ditentukan Kader Penerima)</span>`;
+      }
       
-      const actionButton = canAccept 
-        ? `<button type="button" class="btn-nav btn-action" style="padding: 4px 8px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>`
-        : `<span style="color:#94a3b8; font-size:11px; font-style:italic;">Dusun Kader Lain</span>`;
+      const actionHtml = canAccept 
+        ? `<button type="button" class="btn-nav btn-action" style="padding: 5px 10px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>`
+        : `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1; padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:600; display:inline-block;" title="${lockReason}">🔒 ${lockReason}</span>`;
 
       tr.innerHTML = `
         <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
         <td><b>Desa ${item.desa_asal}</b><br><small style="color:#64748b;">Kec: ${item.kode_kec_asal}</small></td>
-        <td>Istri: <b>${item.nama_istri}</b> (${item.nik_istri})<br>Suami: ${item.nama_suami}${labelDusunTujuan}</td>
+        <td>
+          Istri: <b>${item.nama_istri}</b> (${item.nik_istri})<br>
+          Suami: ${item.nama_suami}
+          ${infoDusunHtml}
+        </td>
         <td style="text-align:center; font-weight:bold; color:#0284c7;">${monthNames[(item.bulan_pindah || 1) - 1]} (${item.tahun})</td>
-        <td style="text-align:center;">
-          ${actionButton}
+        <td style="text-align:center; white-space:nowrap;">
+          ${actionHtml}
         </td>
       `;
       tbody.appendChild(tr);
     });
+  }
+  
+  function cleanTargetDusunValid(kd) {
+    return kd && kd !== "0000" && kd !== "null" && kd !== "undefined";
   }
 
   function acceptAndAutoFillMutasi(index) {
@@ -2967,7 +3038,12 @@ function checkAndLockKbTable() {
       }
     }
 
-    // Terapkan ulang penguncian form jika ada kondisi lain (misal umur 50+)
+    const targetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
+    if (cleanTargetDusunValid(targetDsn)) {
+      setSelectValueCaseInsensitive("dusun", targetDsn);
+      updateRT();
+    }
+    
     checkAndLockKbTable();
 
     Swal.fire({
@@ -2975,9 +3051,8 @@ function checkAndLockKbTable() {
       title: 'Data Mutasi Dimuat!',
       text: `Data PUS [${item.nama_istri}] berhasil disalin (status pindah telah dibersihkan untuk wilayah baru). Silakan lengkapi DUSUN dan RT di wilayah Anda, lalu klik SIMPAN DATA.`
     });
-  }  
-
-  // --- FORM INPUT DROPDOWN & SUBMIT ---
+  }
+  
   function updateKabupaten(selectedVal = "") {
     const kodeProv = document.getElementById("provinsi").value;
     document.getElementById("kode_prov").value = kodeProv;
@@ -3361,9 +3436,9 @@ function checkAndLockKbTable() {
         desa_asal: document.getElementById("desa").options[document.getElementById("desa").selectedIndex]?.text || "",
         kode_kec_tujuan: kdKecTujuan,
         kode_desa_tujuan: kdDesaTujuan,
-        desa_tujuan: document.getElementById("pindah_desa_nama").value,
-        kode_dusun_tujuan: window.tempMutasiDusunTujuan || null,
-        dusun_tujuan: window.tempMutasiDusunNama || null,
+        desa_tujuan: document.getElementById("pindah_desa_nama").value,        
+        kode_dusun_tujuan: document.getElementById("pindah_dusun_tujuan").value || null,
+        dusun_tujuan: document.getElementById("pindah_dusun_nama").value || null,
         nama_suami: document.getElementById("nama_suami").value.trim().toUpperCase(),
         nik_suami: document.getElementById("nik_suami").value.trim(),
         nama_istri: document.getElementById("nama_istri").value.trim().toUpperCase(),
