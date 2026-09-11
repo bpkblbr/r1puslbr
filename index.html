@@ -3362,7 +3362,8 @@ function checkAndLockKbTable() {
         kode_kec_tujuan: kdKecTujuan,
         kode_desa_tujuan: kdDesaTujuan,
         desa_tujuan: document.getElementById("pindah_desa_nama").value,
-        kode_dusun_tujuan: window.tempMutasiDusunTujuan || null, // 👈 Simpan target dusun
+        kode_dusun_tujuan: window.tempMutasiDusunTujuan || null,
+        dusun_tujuan: window.tempMutasiDusunNama || null,
         nama_suami: document.getElementById("nama_suami").value.trim().toUpperCase(),
         nik_suami: document.getElementById("nik_suami").value.trim(),
         nama_istri: document.getElementById("nama_istri").value.trim().toUpperCase(),
