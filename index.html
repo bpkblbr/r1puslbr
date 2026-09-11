@@ -686,33 +686,33 @@
               <option value="PUS_BARU">PUS BARU</option>
               <option value="MUTASI">MUTASI</option>
             </select>
-          <div>
+          </div>
 
           <!-- PANEL PILIHAN PERSIS SESUAI GAMBAR -->
           <div id="bnbaAdvCheckboxPanel" style="display: none; margin-top: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
             
-            <!-- Header: Judul Kiri & Tombol Aksi Kanan -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px;">
-              <span id="bnbaAdvPanelTitle" style="font-size: 11px; font-weight: 800; color: #075985; letter-spacing: 0.5px; text-transform: uppercase;">
-                PILIH METODE AKSEPTOR KB BARU:
-              </span>
-              <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                <button type="button" onclick="toggleAllAdvCheckboxes(true)" style="background-color: #334155; color: #ffffff; border: none; border-radius: 10px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.2; text-align: center;">
-                  Pilih<br>Semua
-                </button>
-                <button type="button" onclick="toggleAllAdvCheckboxes(false)" style="background-color: #334155; color: #ffffff; border: none; border-radius: 10px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.2; text-align: center;">
-                  Hapus<br>Semua
-                </button>
-              </div>              
-            </div>
+          <!-- Header: Judul Kiri & Tombol Aksi Kanan -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px;">
+            <span id="bnbaAdvPanelTitle" style="font-size: 11px; font-weight: 800; color: #075985; letter-spacing: 0.5px; text-transform: uppercase;">
+              PILIH METODE AKSEPTOR KB BARU:
+            </span>
+            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+              <button type="button" onclick="toggleAllAdvCheckboxes(true)" style="background-color: #334155; color: #ffffff; border: none; border-radius: 10px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.2; text-align: center;">
+                Pilih<br>Semua
+              </button>
+              <button type="button" onclick="toggleAllAdvCheckboxes(false)" style="background-color: #334155; color: #ffffff; border: none; border-radius: 10px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.2; text-align: center;">
+                Hapus<br>Semua
+              </button>
+            </div>              
+          </div>
 
             <!-- Garis Titik-Titik Halus (Dotted Divider) -->
             <div style="border-bottom: 1px dotted #cbd5e1; margin-bottom: 12px;"></div>
 
             <!-- Grid 4 Kolom Rata -->
             <div id="bnbaAdvCheckboxGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 10px 14px; align-items: flex-start;">
-			  <!-- Item Checkbox dirender oleh JS di atas -->
-			</div>
+            <!-- Item Checkbox dirender oleh JS di atas -->
+            </div>
           </div>
 
           <!-- 3. BULAN (DILETAKKAN DI BAWAH PENCARIAN LANJUTAN) -->
@@ -732,7 +732,8 @@
               <option value="11">NOVEMBER</option>
               <option value="12">DESEMBER</option>
             </select>
-          </div>        
+          </div>
+        </div>       
 
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
           <button type="button" class="btn-action" style="padding: 12px 20px; flex: 1; min-width: 160px;" onclick="fetchBnba()">📋 TAMPILKAN DATA BNBA</button>
