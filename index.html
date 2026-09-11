@@ -2634,7 +2634,16 @@ function checkAndLockKbTable() {
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     const dsn = getDusunList(kec, desa);
     if (dsn) {
-      for (let kd in dsn) sel.add(new Option(dsn[kd].nama.toUpperCase(), kd));
+      for (let kd in dsn) {
+        let cleanKd = String(kd).trim().padStart(4, '0');
+        // Kunci HANYA dusun binaannya jika user desa dibatasi
+        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+          if (!userKodeDusunList.includes(cleanKd)) {
+            continue;
+          }
+        }
+        sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
+      }
     }
   }
 
@@ -4736,7 +4745,12 @@ function checkAndLockKbTable() {
       let dsn = document.getElementById("searchDusun").value;
       let rt = document.getElementById("searchRt").value;
       if (dsn) query = query.eq('kode_dusun', dsn);
-      if (rt) query = query.eq('kode_rt', rt);
+      if (rt) query = query.eq('kode_rt', rt);      
+      
+      if (userKodeDusunList && userKodeDusunList.length > 0 && !dsn) {
+        query = query.in('kode_dusun', userKodeDusunList);
+      }
+    }
     } else if (isKecRole()) {
       query = query.eq('kode_kec', userKodeKec);
       let des = document.getElementById("searchDesa").value;
@@ -4759,6 +4773,13 @@ function checkAndLockKbTable() {
 
     const { data, error } = await query.order('id_pus', { ascending: true }).limit(25);
     container.innerHTML = "";
+
+    if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+      data = (data || []).filter(item => {
+        const dsnKd = String(item.kode_dusun || "").trim().padStart(4, '0');
+        return userKodeDusunList.includes(dsnKd);
+      });
+    }
 
     if (error || !data || data.length === 0) {
       container.innerHTML = "<p style='text-align:center; color:#ef4444; padding:20px;'>Data tidak ditemukan.</p>";
