@@ -3859,14 +3859,40 @@ function checkAndLockKbTable() {
     const step = 1000;
     let hasMore = true;
 
+    // Bersihkan nilai filter menjadi format standar (angka dan string tanpa spasi)
+    const cleanKecFilter = filterKec ? String(filterKec).trim().replace(/\D/g, "") : "";
+    const cleanDesaFilter = filterDesa ? String(filterDesa).trim().replace(/\D/g, "") : "";
+    const cleanDusunFilter = (filterDusun && filterDusun !== "0000") ? String(filterDusun).trim().replace(/\D/g, "") : "";
+    const cleanRtFilter = (filterRt && filterRt !== "000") ? String(filterRt).trim().replace(/\D/g, "") : "";
+
     try {
       while (hasMore) {
         let query = db.from('data_pus').select('*').eq('tahun', tahun);
 
-        if (filterKec) query = query.eq('kode_kec', filterKec);
-        if (filterDesa) query = query.eq('kode_desa', filterDesa);
-        if (filterDusun && filterDusun !== "0000") query = query.eq('kode_dusun', filterDusun);
-        if (filterRt && filterRt !== "000") query = query.eq('kode_rt', filterRt);
+        // Jika login sebagai Admin Kab atau peran dengan batasan kabupaten
+        if (userKodeKab) {
+          query = query.eq('kode_kab', String(userKodeKab).trim().padStart(2, '0'));
+        }
+
+        // Filter Query Database dengan toleransi format padding
+        if (cleanKecFilter) {
+          const kecPad = cleanKecFilter.padStart(2, '0');
+          const kecNum = parseInt(cleanKecFilter, 10);
+          query = query.or(`kode_kec.eq.${kecPad},kode_kec.eq.${kecNum}`);
+        }
+        if (cleanDesaFilter) {
+          const desPad = cleanDesaFilter.padStart(4, '0');
+          const desNum = parseInt(cleanDesaFilter, 10);
+          query = query.or(`kode_desa.eq.${desPad},kode_desa.eq.${desNum}`);
+        }
+        if (cleanDusunFilter) {
+          const dsnPad = cleanDusunFilter.padStart(4, '0');
+          query = query.eq('kode_dusun', dsnPad);
+        }
+        if (cleanRtFilter) {
+          const rtPad = cleanRtFilter.padStart(3, '0');
+          query = query.eq('kode_rt', rtPad);
+        }
 
         const { data: chunk, error } = await query.order('id_pus', { ascending: true }).range(from, from + step - 1);
         if (error) throw error;
@@ -3879,6 +3905,34 @@ function checkAndLockKbTable() {
           hasMore = false;
         }
       }
+      
+      if (cleanKecFilter) {
+        allData = allData.filter(r => {
+          const rKec = String(r.kode_kec || "").trim().replace(/\D/g, "");
+          return rKec !== "" && parseInt(rKec, 10) === parseInt(cleanKecFilter, 10);
+        });
+      }
+
+      if (cleanDesaFilter) {
+        allData = allData.filter(r => {
+          const rDesa = String(r.kode_desa || "").trim().replace(/\D/g, "");
+          return rDesa !== "" && parseInt(rDesa, 10) === parseInt(cleanDesaFilter, 10);
+        });
+      }
+
+      if (cleanDusunFilter) {
+        allData = allData.filter(r => {
+          const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
+          return rDsn === cleanDusunFilter.padStart(4, '0');
+        });
+      }
+
+      if (cleanRtFilter) {
+        allData = allData.filter(r => {
+          const rRt = String(r.kode_rt || "").trim().replace(/\D/g, "");
+          return rRt !== "" && parseInt(rRt, 10) === parseInt(cleanRtFilter, 10);
+        });
+      }      
 
       // 1. SANITASI MUTASI & USIA 50+ (Hanya muncul sekali, setelahnya kosong)
       const mKeysAll = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
@@ -6830,6 +6884,7 @@ function checkAndLockKbTable() {
       if (data) selectDataForEdit(data);
     }
   }
+
   function exitApp() {
     Swal.fire({
       title: 'Konfirmasi Tutup Aplikasi',
