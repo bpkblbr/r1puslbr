@@ -2219,17 +2219,18 @@ function checkAndLockKbTable() {
     const sel = document.getElementById("recapDusun");
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     if (kec && desa) {
-    const dsn = getDusunList(kec, desa);
-    if (dsn) {
-      for (let kd in dsn) {
-        let cleanKd = String(kd).trim().padStart(4, '0');
-        // Jika akun User Desa memiliki pembatasan dusun tertentu
-        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-          if (!userKodeDusunList.includes(cleanKd)) {
-            continue; // Lewati dusun yang bukan hak aksesnya
+      const dsn = getDusunList(kec, desa);
+      if (dsn) {
+        for (let kd in dsn) {
+          let cleanKd = String(kd).trim().padStart(4, '0');
+          // Jika akun User Desa memiliki pembatasan dusun tertentu
+          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+            if (!userKodeDusunList.includes(cleanKd)) {
+              continue; // Lewati dusun yang bukan hak aksesnya
+            }
           }
+          sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
-        sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
@@ -2483,16 +2484,17 @@ function checkAndLockKbTable() {
     rtSel.innerHTML = '<option value="">-- PILIH RT --</option>';
 
     if (kec && desa) {
-    const dsn = getDusunList(kec, desa);
-    if (dsn) {
-      for (let kd in dsn) {
-        let cleanKd = String(kd).trim().padStart(4, '0');
-        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-          if (!userKodeDusunList.includes(cleanKd)) {
-            continue;
+      const dsn = getDusunList(kec, desa);
+      if (dsn) {
+        for (let kd in dsn) {
+          let cleanKd = String(kd).trim().padStart(4, '0');
+          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+            if (!userKodeDusunList.includes(cleanKd)) {
+              continue;
+            }
           }
+          dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
-        dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
@@ -2597,17 +2599,18 @@ function checkAndLockKbTable() {
     const sel = document.getElementById("chartDusun");
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     if (kec && desa) {
-    const dsn = getDusunList(kec, desa);
-    if (dsn) {
-      for (let kd in dsn) {
-        let cleanKd = String(kd).trim().padStart(4, '0');
-        // Jika akun User Desa memiliki pembatasan dusun tertentu
-        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-          if (!userKodeDusunList.includes(cleanKd)) {
-            continue; // Lewati dusun yang bukan hak aksesnya
+      const dsn = getDusunList(kec, desa);
+      if (dsn) {
+        for (let kd in dsn) {
+          let cleanKd = String(kd).trim().padStart(4, '0');
+          // Jika akun User Desa memiliki pembatasan dusun tertentu
+          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+            if (!userKodeDusunList.includes(cleanKd)) {
+              continue; // Lewati dusun yang bukan hak aksesnya
+            }
           }
+          sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
-        sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
