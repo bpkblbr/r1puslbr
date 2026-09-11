@@ -526,11 +526,11 @@
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
             <select id="recapTingkat" onchange="onRecapTingkatChange()">
-              <option value="">-- PILIH TINGKAT WILAYAH --</option>
-              <option value="Kabupaten">KABUPATEN</option>
-              <option value="Kecamatan">KECAMATAN</option>
-              <option value="Desa">DESA</option>
-              <option value="Dusun">DUSUN</option>
+              <option value="">-- PILIH LEVEL REKAP --</option>
+              <option value="Kabupaten">REKAP KABUPATEN</option>
+              <option value="Kecamatan">REKAP KECAMATAN</option>
+              <option value="Desa">REKAP DESA</option>
+              <option value="Dusun">REKAP DUSUN</option>
             </select>
           </div>
           
@@ -633,12 +633,12 @@
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
             <select id="bnbaTingkat" onchange="onBnbaTingkatChange()">
-              <option value="">-- PILIH TINGKAT WILAYAH --</option>
-              <option value="Kabupaten">KABUPATEN</option>
-              <option value="Kecamatan">KECAMATAN</option>
-              <option value="Desa">DESA</option>
-              <option value="Dusun">DUSUN</option>
-              <option value="RT">RT</option>
+              <option value="">-- PILIH LEVEL BNBA --</option>
+              <option value="Kabupaten">BNBA KABUPATEN</option>
+              <option value="Kecamatan">BNBA KECAMATAN</option>
+              <option value="Desa">BNBA DESA</option>
+              <option value="Dusun">BNBA DUSUN</option>
+              <option value="RT">BNBA RT</option>
             </select>
           </div>
           
@@ -767,11 +767,11 @@
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div>
             <select id="chartTingkat" onchange="onChartTingkatChange()">
-              <option value="">-- PILIH TINGKAT WILAYAH --</option>
-              <option value="Kabupaten">KABUPATEN</option>
-              <option value="Kecamatan">KECAMATAN</option>
-              <option value="Desa">DESA</option>
-              <option value="Dusun">DUSUN</option>
+              <option value="">-- PILIH LEVEL GRAFIK --</option>
+              <option value="Kabupaten">GRAFIK KABUPATEN</option>
+              <option value="Kecamatan">GRAFIK KECAMATAN</option>
+              <option value="Desa">GRAFIK DESA</option>
+              <option value="Dusun">GRAFIK DUSUN</option>
             </select>
           </div>
           <div id="chartFilterKecContainer" style="display: none;">
@@ -2135,8 +2135,7 @@ function checkAndLockKbTable() {
     cDsn.style.display = "none";
 
     if (isDesaRole()) {
-      // User Desa: Kunci Kecamatan & Desa
-      cKec.style.display = "none";
+      // User Desa: Kunci Kecamatan & Desa ke wilayahnya
       populateDesaByKec(userKodeKec, "recapDesa");
       setSelectValueCaseInsensitive("recapDesa", userKodeDesa);
       selDes.disabled = true;
@@ -2147,7 +2146,7 @@ function checkAndLockKbTable() {
         onRecapDesaChange();
       }
     } else if (isKecRole()) {
-      // Admin Kecamatan: Kunci Kecamatan
+      // Admin Kecamatan: Kunci Kecamatan ke wilayahnya
       populateAllKecamatanDropdowns();
       setSelectValueCaseInsensitive("recapKecamatan", userKodeKec);
       selKec.disabled = true;
@@ -2164,9 +2163,15 @@ function checkAndLockKbTable() {
       // Admin Kabupaten
       selKec.disabled = false;
       selDes.disabled = false;
+
       cKec.style.display = (t === "Kecamatan" || t === "Desa" || t === "Dusun") ? "block" : "none";
       cDes.style.display = (t === "Desa" || t === "Dusun") ? "block" : "none";
       cDsn.style.display = (t === "Dusun") ? "block" : "none";
+
+      // Jika kecamatan sudah sempat dipilih, muat langsung desanya
+      if (selKec && selKec.value) {
+        populateDesaByKec(selKec.value, "recapDesa");
+      }
     }
 
     document.getElementById("recapTableBody").innerHTML = "<tr><td colspan='38' style='text-align:center; padding: 20px;'>Silakan atur filter dan klik Tampilkan Rekap</td></tr>";
@@ -2249,15 +2254,26 @@ function checkAndLockKbTable() {
         populateDesaByKec(userKodeKec, "bnbaDesa");
         selDes.disabled = false;
       }
-      if (t === "Dusun" || t === "RT") cDsn.style.display = "block";
-      if (t === "RT") cRt.style.display = "block";
+      if (t === "Dusun" || t === "RT") {
+        cDsn.style.display = "block";
+      }
+      if (t === "RT") {
+        cRt.style.display = "block";
+      }
     } else {
+      // Admin Kabupaten
       selKec.disabled = false;
       selDes.disabled = false;
+      
       cKec.style.display = (t === "Kecamatan" || t === "Desa" || t === "Dusun" || t === "RT") ? "block" : "none";
       cDes.style.display = (t === "Desa" || t === "Dusun" || t === "RT") ? "block" : "none";
       cDsn.style.display = (t === "Dusun" || t === "RT") ? "block" : "none";
       cRt.style.display = (t === "RT") ? "block" : "none";
+
+      // Jika ada kecamatan yang sudah dipilih sebelumnya, muat ulang desanya
+      if (selKec.value) {
+        populateDesaByKec(selKec.value, "bnbaDesa");
+      }
     }
   }
 
@@ -2507,13 +2523,22 @@ function checkAndLockKbTable() {
         populateDesaByKec(userKodeKec, "chartDesa");
         selDes.disabled = false;
       }
-      if (t === "Dusun") cDsn.style.display = "block";
+      if (t === "Dusun") {
+        cDsn.style.display = "block";
+      }
     } else {
+      // Admin Kabupaten
       selKec.disabled = false;
       selDes.disabled = false;
+
       cKec.style.display = (t === "Kecamatan" || t === "Desa" || t === "Dusun") ? "block" : "none";
       cDes.style.display = (t === "Desa" || t === "Dusun") ? "block" : "none";
       cDsn.style.display = (t === "Dusun") ? "block" : "none";
+
+      // Jika kecamatan sudah sempat dipilih, muat langsung desanya
+      if (selKec && selKec.value) {
+        populateDesaByKec(selKec.value, "chartDesa");
+      }
     }
   }
 
@@ -5696,23 +5721,23 @@ function checkAndLockKbTable() {
     const selTingkat = document.getElementById("recapTingkat");
     if (isDesaRole()) {
       selTingkat.innerHTML = `
-        <option value="Desa" selected>DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="Desa" selected>REKAP DESA</option>
+        <option value="Dusun">REKAP DUSUN</option>
       `;
     } else if (isKecRole()) {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="">-- PILIH LEVEL REKAP --</option>
+        <option value="Kecamatan">REKAP KECAMATAN</option>
+        <option value="Desa">REKAP DESA</option>
+        <option value="Dusun">REKAP DUSUN</option>
       `;
     } else {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kabupaten">KABUPATEN</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="">-- PILIH LEVEL REKAP --</option>
+        <option value="Kabupaten">REKAP KABUPATEN</option>
+        <option value="Kecamatan">REKAP KECAMATAN</option>
+        <option value="Desa">REKAP DESA</option>
+        <option value="Dusun">REKAP DUSUN</option>
       `;
     }
     onRecapTingkatChange();
@@ -5728,26 +5753,26 @@ function checkAndLockKbTable() {
     const selTingkat = document.getElementById("bnbaTingkat");
     if (isDesaRole()) {
       selTingkat.innerHTML = `
-        <option value="Desa" selected>DESA</option>
-        <option value="Dusun">DUSUN</option>
-        <option value="RT">RT</option>
+        <option value="Desa" selected>BNBA DESA</option>
+        <option value="Dusun">BNBA DUSUN</option>
+        <option value="RT">BNBA RT</option>
       `;
     } else if (isKecRole()) {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
-        <option value="RT">RT</option>
+        <option value="">-- PILIH LEVEL BNBA --</option>
+        <option value="Kecamatan">BNBA KECAMATAN</option>
+        <option value="Desa">BNBA DESA</option>
+        <option value="Dusun">BNBA DUSUN</option>
+        <option value="RT">BNBA RT</option>
       `;
     } else {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kabupaten">KABUPATEN</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
-        <option value="RT">RT</option>
+        <option value="">-- PILIH LEVEL BNBA --</option>
+        <option value="Kabupaten">BNBA KABUPATEN</option>
+        <option value="Kecamatan">BNBA KECAMATAN</option>
+        <option value="Desa">BNBA DESA</option>
+        <option value="Dusun">BNBA DUSUN</option>
+        <option value="RT">BNBA RT</option>
       `;
     }
     onBnbaTingkatChange();
@@ -5763,23 +5788,23 @@ function checkAndLockKbTable() {
     const selTingkat = document.getElementById("chartTingkat");
     if (isDesaRole()) {
       selTingkat.innerHTML = `
-        <option value="Desa" selected>DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="Desa" selected>GRAFIK DESA</option>
+        <option value="Dusun">GRAFIK DUSUN</option>
       `;
     } else if (isKecRole()) {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="">-- PILIH LEVEL GRAFIK --</option>
+        <option value="Kecamatan">GRAFIK KECAMATAN</option>
+        <option value="Desa">GRAFIK DESA</option>
+        <option value="Dusun">GRAFIK DUSUN</option>
       `;
     } else {
       selTingkat.innerHTML = `
-        <option value="">-- PILIH TINGKAT WILAYAH --</option>
-        <option value="Kabupaten">KABUPATEN</option>
-        <option value="Kecamatan">KECAMATAN</option>
-        <option value="Desa">DESA</option>
-        <option value="Dusun">DUSUN</option>
+        <option value="">-- PILIH LEVEL GRAFIK --</option>
+        <option value="Kabupaten">GRAFIK KABUPATEN</option>
+        <option value="Kecamatan">GRAFIK KECAMATAN</option>
+        <option value="Desa">GRAFIK DESA</option>
+        <option value="Dusun">GRAFIK DUSUN</option>
       `;
     }
     onChartTingkatChange();
