@@ -2031,81 +2031,85 @@ function checkAndLockKbTable() {
     const currentMonthName = monthNames[monthIndex - 1];
 
     Swal.fire({
-      title: 'Tujuan Pindah Domisili',
-      text: `Akseptor berstatus PINDAH pada bulan ${currentMonthName}. Ke mana tujuan pindah domisili?`,
-      icon: 'question',
+      title: 'Pilih Wilayah Tujuan',
+      showCloseButton: true,
+      html: `
+        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Kecamatan Tujuan:</div>
+        <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
+          ${kecOptions}
+        </select>
+        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Desa Tujuan:</div>
+        <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiDesaChange()">
+          <option value="">-- PILIH DESA TUJUAN --</option>
+        </select>
+        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Dusun Tujuan (Opsional/Jika Tahu):</div>
+        <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0;">
+          <option value="">-- SEMUA / BELUM TAHU DUSUN --</option>
+        </select>
+      `,
+      icon: 'info',
       showCancelButton: true,
-      confirmButtonColor: '#0284c7',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: '🏙️ Di Dalam Kabupaten',
-      cancelButtonText: '✈️ Ke Luar Kabupaten',
-      allowOutsideClick: false
-    }).then((result) => {
-      if (result.isConfirmed) {
-        let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
-        for (let kdKab in dataKecamatan) {
-          for (let kdKec in dataKecamatan[kdKab]) {
-            let cleanKd = String(kdKec).trim().padStart(2, '0');
-            kecOptions += `<option value="${cleanKd}">${dataKecamatan[kdKab][kdKec].toUpperCase()}</option>`;
-          }
-        }
-
-        Swal.fire({
-          title: 'Pilih Wilayah Tujuan',
-          showCloseButton: true,
-          html: `
-            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Kecamatan Tujuan:</div>
-            <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
-              ${kecOptions}
-            </select>
-            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:8px;">Desa Tujuan:</div>
-            <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0;">
-              <option value="">-- PILIH DESA TUJUAN --</option>
-            </select>
-          `,
-          icon: 'info',
-          showCancelButton: true,
-          cancelButtonText: 'Batal',
-          confirmButtonColor: '#059669',
-          confirmButtonText: '✅ Tetapkan Wilayah Tujuan',
-          allowOutsideClick: false,
-          didOpen: () => {
-            window.onSwalMutasiKecChange = function() {
-              const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
-              const selDesa = document.getElementById('swalMutasiDesa');
-              selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
-              if (selKec && dataDesa[selKec]) {
-                for (let kd in dataDesa[selKec]) {
-                  let cleanKdDesa = String(kd).trim().padStart(4, '0');
-                  selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
-                }
-              }
-            };
-          },
-          preConfirm: () => {
-            const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
-            const desaSelect = document.getElementById('swalMutasiDesa');
-            const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
-            const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
-
-            if (!kecTujuan || !desaTujuan) {
-              Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
-              return false;
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#059669',
+      confirmButtonText: '✅ Tetapkan Wilayah Tujuan',
+      allowOutsideClick: false,
+      didOpen: () => {
+        window.onSwalMutasiKecChange = function() {
+          const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+          const selDesa = document.getElementById('swalMutasiDesa');
+          const selDsn = document.getElementById('swalMutasiDusun');
+          selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
+          selDsn.innerHTML = '<option value="">-- SEMUA / BELUM TAHU DUSUN --</option>';
+          if (selKec && dataDesa[selKec]) {
+            for (let kd in dataDesa[selKec]) {
+              let cleanKdDesa = String(kd).trim().padStart(4, '0');
+              selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
             }
-            return { kec: kecTujuan, desa: desaTujuan, desaNama: desaNama };
           }
-        }).then((mutRes) => {
-          if (mutRes.isConfirmed) {
-            document.getElementById("is_pindah_dalam_kab").value = "true";
-            document.getElementById("pindah_kec_tujuan").value = mutRes.value.kec;
-            document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
-            document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
+        };
+        window.onSwalMutasiDesaChange = function() {
+          const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+          const selDesa = String(document.getElementById('swalMutasiDesa').value || "").trim().padStart(4, '0');
+          const selDsn = document.getElementById('swalMutasiDusun');
+          selDsn.innerHTML = '<option value="">-- SEMUA / BELUM TAHU DUSUN --</option>';
+          if (selKec && selDesa) {
+            const dsnList = getDusunList(selKec, selDesa);
+            if (dsnList) {
+              for (let kd in dsnList) {
+                let cleanKdDsn = String(kd).trim().padStart(4, '0');
+                selDsn.add(new Option(dsnList[kd].nama.toUpperCase(), cleanKdDsn));
+              }
+            }
+          }
+        };
+      },
+      preConfirm: () => {
+        const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+        const desaSelect = document.getElementById('swalMutasiDesa');
+        const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
+        const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
+        const dsnSelect = document.getElementById('swalMutasiDusun');
+        const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
+        const dsnNama = dsnSelect.value ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
 
-            Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
-          } else {
-            BATalkanPilihanPindah(monthIndex);
-          }
-        });
+        if (!kecTujuan || !desaTujuan) {
+          Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
+          return false;
+        }
+        return { kec: kecTujuan, desa: desaTujuan, desaNama: desaNama, dusun: dsnTujuan, dusunNama: dsnNama };
+      }
+    }).then((mutRes) => {
+      if (mutRes.isConfirmed) {
+        document.getElementById("is_pindah_dalam_kab").value = "true";
+        document.getElementById("pindah_kec_tujuan").value = mutRes.value.kec;
+        document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
+        document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
+        
+        // Simpan dusun tujuan sementara di memory form
+        window.tempMutasiDusunTujuan = mutRes.value.dusun || "";
+        window.tempMutasiDusunNama = mutRes.value.dusunNama || "";
+
+        Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}${mutRes.value.dusunNama ? ' - ' + mutRes.value.dusunNama : ''}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
       } else {
         BATalkanPilihanPindah(monthIndex);
       }
@@ -2863,13 +2867,34 @@ function checkAndLockKbTable() {
 
     cachedPendingMutasiList.forEach((item, idx) => {
       const tr = document.createElement("tr");
+      
+      let canAccept = true;
+      const cleanTargetDusun = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
+
+      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+        // Jika tiket mutasi menunjuk dusun spesifik dan user tidak memegang dusun itu
+        if (cleanTargetDusun && cleanTargetDusun !== "0000") {
+          if (!userKodeDusunList.includes(cleanTargetDusun)) {
+            canAccept = false;
+          }
+        }
+      }
+      
+      const labelDusunTujuan = cleanTargetDusun && cleanTargetDusun !== "0000" 
+        ? `<br><small style="color:#0284c7; font-weight:bold;">Tujuan: Dusun [${cleanTargetDusun}]</small>` 
+        : `<br><small style="color:#64748b;">(Dusun tujuan belum ditentukan)</small>`;
+      
+      const actionButton = canAccept 
+        ? `<button type="button" class="btn-nav btn-action" style="padding: 4px 8px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>`
+        : `<span style="color:#94a3b8; font-size:11px; font-style:italic;">Dusun Kader Lain</span>`;
+
       tr.innerHTML = `
         <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
         <td><b>Desa ${item.desa_asal}</b><br><small style="color:#64748b;">Kec: ${item.kode_kec_asal}</small></td>
-        <td>Istri: <b>${item.nama_istri}</b> (${item.nik_istri})<br>Suami: ${item.nama_suami}</td>
+        <td>Istri: <b>${item.nama_istri}</b> (${item.nik_istri})<br>Suami: ${item.nama_suami}${labelDusunTujuan}</td>
         <td style="text-align:center; font-weight:bold; color:#0284c7;">${monthNames[(item.bulan_pindah || 1) - 1]} (${item.tahun})</td>
         <td style="text-align:center;">
-          <button type="button" class="btn-nav btn-action" style="padding: 4px 8px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>
+          ${actionButton}
         </td>
       `;
       tbody.appendChild(tr);
@@ -3321,6 +3346,7 @@ function checkAndLockKbTable() {
         kode_kec_tujuan: kdKecTujuan,
         kode_desa_tujuan: kdDesaTujuan,
         desa_tujuan: document.getElementById("pindah_desa_nama").value,
+        kode_dusun_tujuan: window.tempMutasiDusunTujuan || null, // 👈 Simpan target dusun
         nama_suami: document.getElementById("nama_suami").value.trim().toUpperCase(),
         nik_suami: document.getElementById("nik_suami").value.trim(),
         nama_istri: document.getElementById("nama_istri").value.trim().toUpperCase(),
