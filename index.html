@@ -2219,9 +2219,17 @@ function checkAndLockKbTable() {
     const sel = document.getElementById("recapDusun");
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     if (kec && desa) {
-      const dsn = getDusunList(kec, desa);
-      if (dsn) {
-        for (let kd in dsn) sel.add(new Option(dsn[kd].nama.toUpperCase(), kd));
+    const dsn = getDusunList(kec, desa);
+    if (dsn) {
+      for (let kd in dsn) {
+        let cleanKd = String(kd).trim().padStart(4, '0');
+        // Jika akun User Desa memiliki pembatasan dusun tertentu
+        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+          if (!userKodeDusunList.includes(cleanKd)) {
+            continue; // Lewati dusun yang bukan hak aksesnya
+          }
+        }
+        sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
@@ -2475,9 +2483,16 @@ function checkAndLockKbTable() {
     rtSel.innerHTML = '<option value="">-- PILIH RT --</option>';
 
     if (kec && desa) {
-      const dsn = getDusunList(kec, desa);
-      if (dsn) {
-        for (let kd in dsn) dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), kd));
+    const dsn = getDusunList(kec, desa);
+    if (dsn) {
+      for (let kd in dsn) {
+        let cleanKd = String(kd).trim().padStart(4, '0');
+        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+          if (!userKodeDusunList.includes(cleanKd)) {
+            continue;
+          }
+        }
+        dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
@@ -2582,9 +2597,17 @@ function checkAndLockKbTable() {
     const sel = document.getElementById("chartDusun");
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     if (kec && desa) {
-      const dsn = getDusunList(kec, desa);
-      if (dsn) {
-        for (let kd in dsn) sel.add(new Option(dsn[kd].nama.toUpperCase(), kd));
+    const dsn = getDusunList(kec, desa);
+    if (dsn) {
+      for (let kd in dsn) {
+        let cleanKd = String(kd).trim().padStart(4, '0');
+        // Jika akun User Desa memiliki pembatasan dusun tertentu
+        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+          if (!userKodeDusunList.includes(cleanKd)) {
+            continue; // Lewati dusun yang bukan hak aksesnya
+          }
+        }
+        sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
     }
   }
@@ -2956,7 +2979,15 @@ function checkAndLockKbTable() {
     if (kodeDesa && dusunObj) {
       const dusunSelect = document.getElementById("dusun");
       dusunSelect.disabled = false;
-      for (let kode in dusunObj) dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), kode));
+      for (let kode in dusunObj) {
+      let cleanKd = String(kode).trim().padStart(4, '0');
+      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+        if (!userKodeDusunList.includes(cleanKd)) {
+          continue;
+        }
+      }
+      dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), cleanKd));
+    }
       if (selectedVal) { setSelectValueCaseInsensitive("dusun", selectedVal); updateRT(); }
     }
   }
@@ -3402,7 +3433,14 @@ function checkAndLockKbTable() {
         const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
         return rDsn === cleanDusunFilter.padStart(4, '0');
       });
-    }    
+    }
+
+    if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0 && !cleanDusunFilter) {
+      allData = allData.filter(r => {
+        const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
+        return userKodeDusunList.includes(rDsn);
+      });
+    }
 
     return allData;
   }
@@ -3967,7 +4005,14 @@ function checkAndLockKbTable() {
           const rRt = String(r.kode_rt || "").trim().replace(/\D/g, "");
           return rRt !== "" && parseInt(rRt, 10) === parseInt(cleanRtFilter, 10);
         });
-      }      
+      }
+
+      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0 && !cleanDusunFilter) {
+        allData = allData.filter(r => {
+          const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
+          return userKodeDusunList.includes(rDsn);
+        });
+      }
 
       // 1. SANITASI MUTASI & USIA 50+ (Hanya muncul sekali, setelahnya kosong)
       const mKeysAll = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
