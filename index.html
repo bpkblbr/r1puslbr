@@ -2032,147 +2032,175 @@ function checkAndLockKbTable() {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const currentMonthName = monthNames[monthIndex - 1];
 
-    // Ambil wilayah asal akseptor saat ini
     const curKdKec = String(document.getElementById("kode_kec").value || "").trim().padStart(2, '0');
     const curKdDesa = String(document.getElementById("kode_desa").value || "").trim().padStart(4, '0');
     const curKdDusun = String(document.getElementById("kode_dusun").value || "").trim().padStart(4, '0');
-
-    let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
-    for (let kdKab in dataKecamatan) {
-      for (let kdKec in dataKecamatan[kdKab]) {
-        let cleanKd = String(kdKec).trim().padStart(2, '0');
-        kecOptions += `<option value="${cleanKd}">${dataKecamatan[kdKab][kdKec].toUpperCase()}</option>`;
-      }
-    }
-
+    
     Swal.fire({
       title: 'Tujuan Pindah Domisili',
-      showCloseButton: true,
-      html: `
-        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Kecamatan Tujuan:</div>
-        <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
-          ${kecOptions}
-        </select>
-        
-        <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Desa Tujuan:</div>
-        <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiDesaChange()">
-          <option value="">-- PILIH DESA TUJUAN --</option>
-        </select>
-
-        <!-- Dropdown Dusun (Hanya muncul jika pindah dalam desa yang sama) -->
-        <div id="swalContainerDusunTujuan" style="display: none;">
-          <div style="text-align:left; font-size:13px; color:#0284c7; font-weight:bold; margin-bottom:6px;">
-            📍 Pilih Dusun Tujuan (Pindah Dalam Desa):
-          </div>
-          <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0; border-color: #0284c7;">
-            <option value="">-- PILIH DUSUN TUJUAN --</option>
-          </select>
-        </div>
-      `,
+      text: `Akseptor berstatus PINDAH pada bulan ${currentMonthName}. Ke mana tujuan pindah domisili?`,
       icon: 'question',
+      showCloseButton: true,
       showCancelButton: true,
-      cancelButtonText: 'Batal',
-      confirmButtonColor: '#059669',
-      confirmButtonText: '✅ Tetapkan Wilayah Tujuan',
-      allowOutsideClick: false,
-      didOpen: () => {
-        window.onSwalMutasiKecChange = function() {
-          const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
-          const selDesa = document.getElementById('swalMutasiDesa');
-          const containerDsn = document.getElementById('swalContainerDusunTujuan');
-          const selDsn = document.getElementById('swalMutasiDusun');
-          
-          selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
-          selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
-          containerDsn.style.display = 'none';
-
-          if (selKec && dataDesa[selKec]) {
-            for (let kd in dataDesa[selKec]) {
-              let cleanKdDesa = String(kd).trim().padStart(4, '0');
-              selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
-            }
+      confirmButtonColor: '#0284c7',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: '🏙️ Di Dalam Kabupaten',
+      cancelButtonText: '✈️ Ke Luar Kabupaten',
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {        
+        let kecOptions = `<option value="">-- PILIH KECAMATAN TUJUAN --</option>`;
+        for (let kdKab in dataKecamatan) {
+          for (let kdKec in dataKecamatan[kdKab]) {
+            let cleanKd = String(kdKec).trim().padStart(2, '0');
+            kecOptions += `<option value="${cleanKd}">${dataKecamatan[kdKab][kdKec].toUpperCase()}</option>`;
           }
-        };
+        }
 
-        window.onSwalMutasiDesaChange = function() {
-          const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
-          const selDesa = String(document.getElementById('swalMutasiDesa').value || "").trim().padStart(4, '0');
-          const containerDsn = document.getElementById('swalContainerDusunTujuan');
-          const selDsn = document.getElementById('swalMutasiDusun');
+        Swal.fire({
+          title: 'Pilih Wilayah Tujuan',
+          showCloseButton: true,
+          html: `
+            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Kecamatan Tujuan:</div>
+            <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
+              ${kecOptions}
+            </select>
+            
+            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Desa Tujuan:</div>
+            <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiDesaChange()">
+              <option value="">-- PILIH DESA TUJUAN --</option>
+            </select>
 
-          selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
+            <!-- Dropdown Dusun (Otomatis muncul HANYA jika pindah di dalam desa yang sama) -->
+            <div id="swalContainerDusunTujuan" style="display: none;">
+              <div style="text-align:left; font-size:13px; color:#0284c7; font-weight:bold; margin-bottom:6px;">
+                📍 Pilih Dusun Tujuan (Pindah Dalam Desa):
+              </div>
+              <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0; border-color: #0284c7;">
+                <option value="">-- PILIH DUSUN TUJUAN --</option>
+              </select>
+            </div>
+          `,
+          icon: 'info',
+          showCancelButton: true,
+          cancelButtonText: 'Batal',
+          confirmButtonColor: '#059669',
+          confirmButtonText: '✅ Tetapkan Wilayah Tujuan',
+          allowOutsideClick: false,
+          didOpen: () => {
+            window.onSwalMutasiKecChange = function() {
+              const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+              const selDesa = document.getElementById('swalMutasiDesa');
+              const containerDsn = document.getElementById('swalContainerDusunTujuan');
+              const selDsn = document.getElementById('swalMutasiDusun');
+              
+              selDesa.innerHTML = '<option value="">-- PILIH DESA TUJUAN --</option>';
+              selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
+              containerDsn.style.display = 'none';
 
-          // Poin 2: Tampilkan HANYA jika Kecamatan dan Desa tujuan sama persis dengan wilayah asal
-          const isSameDesa = (selKec === curKdKec && selDesa === curKdDesa);
-
-          if (isSameDesa) {
-            const dsnList = getDusunList(selKec, selDesa);
-            if (dsnList) {
-              for (let kd in dsnList) {
-                let cleanKdDsn = String(kd).trim().padStart(4, '0');
-                
-                // Poin 5: JANGAN tampilkan dusun asal sebagai pilihan tujuan
-                if (cleanKdDsn === curKdDusun) {
-                  continue;
+              if (selKec && dataDesa[selKec]) {
+                for (let kd in dataDesa[selKec]) {
+                  let cleanKdDesa = String(kd).trim().padStart(4, '0');
+                  selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
                 }
-
-                selDsn.add(new Option(dsnList[kd].nama.toUpperCase(), cleanKdDsn));
               }
+            };
+
+            window.onSwalMutasiDesaChange = function() {
+              const selKec = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+              const selDesa = String(document.getElementById('swalMutasiDesa').value || "").trim().padStart(4, '0');
+              const containerDsn = document.getElementById('swalContainerDusunTujuan');
+              const selDsn = document.getElementById('swalMutasiDusun');
+
+              selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
+
+              // Munculkan dusun tujuan jika kecamatan dan desa sama dengan wilayah asal
+              const isSameDesa = (selKec === curKdKec && selDesa === curKdDesa);
+
+              if (isSameDesa) {
+                const dsnList = getDusunList(selKec, selDesa);
+                if (dsnList) {
+                  for (let kd in dsnList) {
+                    let cleanKdDsn = String(kd).trim().padStart(4, '0');
+                    
+                    // Dusun asal tidak ditampilkan sebagai pilihan
+                    if (cleanKdDsn === curKdDusun) {
+                      continue;
+                    }
+
+                    selDsn.add(new Option(dsnList[kd].nama.toUpperCase(), cleanKdDsn));
+                  }
+                }
+                containerDsn.style.display = 'block';
+              } else {
+                containerDsn.style.display = 'none';
+              }
+            };
+          },
+          preConfirm: () => {
+            const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
+            const desaSelect = document.getElementById('swalMutasiDesa');
+            const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
+            const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
+
+            if (!kecTujuan || !desaTujuan) {
+              Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
+              return false;
             }
-            containerDsn.style.display = 'block';
-          } else {
-            containerDsn.style.display = 'none';
+
+            const isSameDesa = (kecTujuan === curKdKec && desaTujuan === curKdDesa);
+            const dsnSelect = document.getElementById('swalMutasiDusun');
+            const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
+            const dsnNama = (dsnSelect.selectedIndex > 0) ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
+
+            if (isSameDesa && (!dsnTujuan || dsnTujuan === "0000")) {
+              Swal.showValidationMessage('Pindah di dalam desa wajib memilih Dusun tujuan baru!');
+              return false;
+            }
+
+            return {
+              kec: kecTujuan,
+              desa: desaTujuan,
+              desaNama: desaNama,
+              dusun: isSameDesa ? dsnTujuan : "",
+              dusunNama: isSameDesa ? dsnNama : ""
+            };
           }
-        };
-      },
-      preConfirm: () => {
-        const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
-        const desaSelect = document.getElementById('swalMutasiDesa');
-        const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
-        const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
+        }).then((mutRes) => {
+          if (mutRes.isConfirmed) {
+            document.getElementById("is_pindah_dalam_kab").value = "true";
+            document.getElementById("pindah_kec_tujuan").value = mutRes.value.kec;
+            document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
+            document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
+            document.getElementById("pindah_dusun_tujuan").value = mutRes.value.dusun;
+            document.getElementById("pindah_dusun_nama").value = mutRes.value.dusunNama;
 
-        if (!kecTujuan || !desaTujuan) {
-          Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
-          return false;
-        }
+            let infoTujuan = `Desa ${mutRes.value.desaNama}`;
+            if (mutRes.value.dusunNama) {
+              infoTujuan += ` (Dusun ${mutRes.value.dusunNama})`;
+            }
 
-        const isSameDesa = (kecTujuan === curKdKec && desaTujuan === curKdDesa);
-        const dsnSelect = document.getElementById('swalMutasiDusun');
-        const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
-        const dsnNama = (dsnSelect.selectedIndex > 0) ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
+            Swal.fire('Tercatat', `Tujuan pindah: ${infoTujuan}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
+          } else {
+            BATalkanPilihanPindah(monthIndex);
+          }
+        });
 
-        // Jika pindah di dalam desa yang sama, wajib tentukan dusun tujuan baru
-        if (isSameDesa && (!dsnTujuan || dsnTujuan === "0000")) {
-          Swal.showValidationMessage('Pindah di dalam desa wajib memilih Dusun tujuan baru!');
-          return false;
-        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {        
+        document.getElementById("is_pindah_dalam_kab").value = "false";
+        document.getElementById("pindah_kec_tujuan").value = "";
+        document.getElementById("pindah_desa_tujuan").value = "";
+        document.getElementById("pindah_desa_nama").value = "";
+        document.getElementById("pindah_dusun_tujuan").value = "";
+        document.getElementById("pindah_dusun_nama").value = "";
 
-        return {
-          kec: kecTujuan,
-          desa: desaTujuan,
-          desaNama: desaNama,
-          dusun: isSameDesa ? dsnTujuan : "",
-          dusunNama: isSameDesa ? dsnNama : ""
-        };
-      }
-    }).then((mutRes) => {
-      if (mutRes.isConfirmed) {
-        document.getElementById("is_pindah_dalam_kab").value = "true";
-        document.getElementById("pindah_kec_tujuan").value = mutRes.value.kec;
-        document.getElementById("pindah_desa_tujuan").value = mutRes.value.desa;
-        document.getElementById("pindah_desa_nama").value = mutRes.value.desaNama;
+        Swal.fire({
+          icon: 'info',
+          title: 'Pindah Ke Luar Kabupaten',
+          text: 'Status PINDAH ke luar kabupaten tercatat. Data akseptor ini akan dinonaktifkan dari wilayah Anda saat form disimpan.'
+        });
 
-        // Poin 1: Simpan ke hidden form input
-        document.getElementById("pindah_dusun_tujuan").value = mutRes.value.dusun;
-        document.getElementById("pindah_dusun_nama").value = mutRes.value.dusunNama;
-
-        let infoTujuan = `Desa ${mutRes.value.desaNama}`;
-        if (mutRes.value.dusunNama) {
-          infoTujuan += ` (Dusun ${mutRes.value.dusunNama})`;
-        }
-
-        Swal.fire('Tercatat', `Tujuan pindah: ${infoTujuan}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
-      } else {
+      } else {        
         BATalkanPilihanPindah(monthIndex);
       }
     });
