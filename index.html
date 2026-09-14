@@ -1393,10 +1393,11 @@
     <div id="layananTabAntrean" style="display: block;">
       <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
         
-        <!-- BARIS 1: FILTER STATUS & KECAMATAN (KHUSUS ADMIN KAB) -->
+        <!-- BARIS 1: FILTER STATUS, TAHUN & PERIODE BULAN (MULAI - SAMPAI) -->
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 180px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Pilih Data:</label>
+          <!-- Filter Status Data -->
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Status:</label>
             <select id="filterStatusLayanan" onchange="loadAntreanLayananTable()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; width: 100%;">
               <option value="TERDAFTAR" selected>Calon Akseptor</option>
               <option value="SELESAI">Akseptor Terlayani</option>
@@ -1405,11 +1406,56 @@
             </select>
           </div>
 
-          <!-- Dropdown Kecamatan (Hanya muncul jika Admin Kab) -->
-          <div id="filterExpLayananKecContainer" style="display: none; flex: 1; min-width: 180px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Kecamatan:</label>
-            <select id="filterExpLayananKec" onchange="onLayananKecChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
-              <option value="">-- SEMUA KECAMATAN --</option>
+          <!-- Filter Tahun -->
+          <div style="flex: 1; min-width: 110px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Tahun:</label>
+            <select id="filterLayananTahun" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+              <option value="2029">2029</option>
+              <option value="2030">2030</option>
+            </select>
+          </div>
+
+          <!-- Bulan Mulai -->
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Bulan Mulai:</label>
+            <select id="filterLayananBulanMulai" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="">-- PILIH --</option>
+              <option value="1">JANUARI</option>
+              <option value="2">FEBRUARI</option>
+              <option value="3">MARET</option>
+              <option value="4">APRIL</option>
+              <option value="5">MEI</option>
+              <option value="6">JUNI</option>
+              <option value="7">JULI</option>
+              <option value="8">AGUSTUS</option>
+              <option value="9">SEPTEMBER</option>
+              <option value="10">OKTOBER</option>
+              <option value="11">NOVEMBER</option>
+              <option value="12">DESEMBER</option>
+            </select>
+          </div>
+
+          <!-- Bulan Sampai -->
+          <div style="flex: 1; min-width: 130px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Bulan Sampai:</label>
+            <select id="filterLayananBulanSampai" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="">-- PILIH --</option>
+              <option value="1">JANUARI</option>
+              <option value="2">FEBRUARI</option>
+              <option value="3">MARET</option>
+              <option value="4">APRIL</option>
+              <option value="5">MEI</option>
+              <option value="6">JUNI</option>
+              <option value="7">JULI</option>
+              <option value="8">AGUSTUS</option>
+              <option value="9">SEPTEMBER</option>
+              <option value="10">OKTOBER</option>
+              <option value="11">NOVEMBER</option>
+              <option value="12">DESEMBER</option>
             </select>
           </div>
 
@@ -1418,31 +1464,38 @@
           </div>
         </div>
 
-        <!-- BARIS 2: CHECKBOX FILTER DESA -->
-        <div id="filterExpLayananDesaWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Desa untuk Ekspor / Tampilan:</span>
-            <div style="display: flex; gap: 5px;">
-              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
-              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
-            </div>
+        <!-- KONTAINER FILTER WILAYAH (TERSEMBUNYI SECARA DEFAULT HINGGA PERIODE DIPILIH) -->
+        <div id="filterWilayahLayananWrapper" style="display: none; flex-direction: column; gap: 10px;">
+          <!-- Dropdown Kecamatan (Khusus Admin Kab) -->
+          <div id="filterExpLayananKecContainer" style="display: none; width: 100%; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Kecamatan:</label>
+            <select id="filterExpLayananKec" onchange="onLayananKecChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="">-- SEMUA KECAMATAN --</option>
+            </select>
           </div>
-          <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;">
-            <!-- Render oleh JS -->
-          </div>
-        </div>
 
-        <!-- BARIS 3: CHECKBOX FILTER DUSUN -->
-        <div id="filterExpLayananDusunWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Dusun untuk Ekspor / Tampilan:</span>
-            <div style="display: flex; gap: 5px;">
-              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
-              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
+          <!-- BARIS 2: CHECKBOX FILTER DESA -->
+          <div id="filterExpLayananDesaWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Desa untuk Ekspor / Tampilan:</span>
+              <div style="display: flex; gap: 5px;">
+                <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
+                <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
+              </div>
             </div>
+            <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;"></div>
           </div>
-          <div id="filterExpLayananDusunGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;">
-            <!-- Render oleh JS -->
+
+          <!-- BARIS 3: CHECKBOX FILTER DUSUN -->
+          <div id="filterExpLayananDusunWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Dusun untuk Ekspor / Tampilan:</span>
+              <div style="display: flex; gap: 5px;">
+                <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
+                <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
+              </div>
+            </div>
+            <div id="filterExpLayananDusunGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;"></div>
           </div>
         </div>
 
@@ -1455,8 +1508,27 @@
             📄 Ekspor PDF (.pdf)
           </button>
         </div>
-
       </div>
+
+      <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <table class="kb-table" style="font-size: 11.5px; width: 100%; margin-top: 0; white-space: nowrap;">
+          <thead>
+            <tr>
+              <th style="background:#1f4e78; color:white; width: 30px;">NO</th>
+              <th style="background:#1f4e78; color:white;">CALON AKSEPTOR</th>
+              <th style="background:#1f4e78; color:white;">RENCANA METODE</th>
+              <th style="background:#1f4e78; color:white;">RENCANA BULAN/TGL</th>
+              <th style="background:#1f4e78; color:white;">FASKES / CATATAN</th>
+              <th style="background:#1f4e78; color:white;">STATUS</th>
+              <th style="background:#1f4e78; color:white; width: 140px;">AKSI</th>
+            </tr>
+          </thead>
+          <tbody id="antreanLayananTbody">
+            <tr><td colspan="7" style="text-align: center; padding: 20px;">Silakan pilih periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
       <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
         <table class="kb-table" style="font-size: 11.5px; width: 100%; margin-top: 0; white-space: nowrap;">
@@ -7439,38 +7511,74 @@ function checkAndLockKbTable() {
   // =========================================================================
   let cachedAntreanLayanan = [];
 
-  function openPelayananKbModal() {
-    // 1. Tampilkan kontainer modal
+  function onLayananPeriodeChange() {
+    const bMulai = document.getElementById("filterLayananBulanMulai").value;
+    const bSampai = document.getElementById("filterLayananBulanSampai").value;
+    const wrapperWilayah = document.getElementById("filterWilayahLayananWrapper");
+
+    if (bMulai && bSampai) {
+      if (parseInt(bMulai, 10) > parseInt(bSampai, 10)) {
+        Swal.fire("Perhatian", "Bulan Mulai tidak boleh lebih besar dari Bulan Sampai!", "warning");
+        wrapperWilayah.style.display = "none";
+        return;
+      }
+      
+      // Tampilkan panel wilayah jika periode valid
+      wrapperWilayah.style.display = "flex";
+      initLayananWilayahFilter();
+    } else {
+      // Sembunyikan panel wilayah jika periode belum lengkap
+      wrapperWilayah.style.display = "none";
+      const tbody = document.getElementById("antreanLayananTbody");
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">Silakan pilih periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
+      }
+    }
+  }
+
+  function openPelayananKbModal() {    
     const modal = document.getElementById("modalPelayananKb");
     if (modal) {
       modal.style.display = "block";
     }
-
-    // 2. Arahkan tab default ke tab antrean pelayanan
+    
     if (typeof switchLayananTab === "function") {
       switchLayananTab('antrean');
     }
-
-    // 3. Reset form pendaftaran agar bersih saat dibuka kembali
+    
     if (typeof resetFormPendaftaranLayanan === "function") {
       resetFormPendaftaranLayanan();
     }
-
-    // 4. Set bulan rencana default ke bulan berjalan
+    
     const currentMonth = new Date().getMonth() + 1;
     const blnEl = document.getElementById("reg_bulan_rencana");
     if (blnEl) {
       blnEl.value = String(currentMonth);
     }
-
-    // 5. Pastikan box Nama Kader benar-benar kosong (tidak mengambil username/nama login)
+    
     const kaderInput = document.getElementById("reg_nama_kader");
     if (kaderInput) {
       kaderInput.value = "";
     }
+    
+    const tahunEl = document.getElementById("filterLayananTahun");
+    if (tahunEl) {
+      tahunEl.value = String(new Date().getFullYear());
+    }
 
-    if (typeof initLayananWilayahFilter === "function") {
-      initLayananWilayahFilter();
+    const bMulaiEl = document.getElementById("filterLayananBulanMulai");
+    const bSampaiEl = document.getElementById("filterLayananBulanSampai");
+    if (bMulaiEl) bMulaiEl.value = "";
+    if (bSampaiEl) bSampaiEl.value = "";
+    
+    const wrapperWilayah = document.getElementById("filterWilayahLayananWrapper");
+    if (wrapperWilayah) {
+      wrapperWilayah.style.display = "none";
+    }
+    
+    const tbody = document.getElementById("antreanLayananTbody");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">Silakan pilih periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
     }
   }
 
@@ -7495,10 +7603,26 @@ function checkAndLockKbTable() {
   // 1. Ambil & Tampilkan Daftar Antrean
   async function loadAntreanLayananTable() {
     const tbody = document.getElementById("antreanLayananTbody");
+    const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
+    const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
+
+    // Jika periode belum ditentukan lengkap, jangan muat data
+    if (!bMulai || !bSampai) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Silakan tentukan periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
+      return;
+    }
+
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px;">Memuat antrean...</td></tr>`;
 
     const statusFilter = document.getElementById("filterStatusLayanan").value;
-    let query = db.from('pendaftaran_layanan_kb').select('*').order('created_at', { ascending: false });
+    const tahunFilter = parseInt(document.getElementById("filterLayananTahun").value, 10);
+
+    let query = db.from('pendaftaran_layanan_kb')
+      .select('*')
+      .eq('tahun', tahunFilter)
+      .gte('bulan_rencana', parseInt(bMulai, 10))
+      .lte('bulan_rencana', parseInt(bSampai, 10))
+      .order('created_at', { ascending: false });
 
     // 1. Filter Status
     if (statusFilter !== "SEMUA") {
@@ -7509,16 +7633,11 @@ function checkAndLockKbTable() {
     if (isDesaRole() || isKecRole()) {
       query = query.eq('kode_kec', String(userKodeKec).padStart(2, '0'));
     } else {
-      // Role Admin Kabupaten:
       const selKec = document.getElementById("filterExpLayananKec")?.value;
       if (selKec) {
-        // Jika memilih salah satu kecamatan
         query = query.eq('kode_kec', String(selKec).padStart(2, '0'));
-      } else {
-        // Jika -- SEMUA KECAMATAN --, ikat ke kabupaten akunnya jika ada
-        if (userKodeKab) {
-          query = query.eq('kode_kab', String(userKodeKab).padStart(2, '0'));
-        }
+      } else if (userKodeKab) {
+        query = query.eq('kode_kab', String(userKodeKab).padStart(2, '0'));
       }
     }
 
@@ -7527,8 +7646,6 @@ function checkAndLockKbTable() {
       query = query.eq('kode_desa', String(userKodeDesa).padStart(4, '0'));
     } else {
       const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => String(cb.value).padStart(4, '0'));
-      // Jika dicentang -> ambil desa terpilih
-      // Jika kosong -> ambil seluruh desa di bawah kecamatan/kabupaten tersebut
       if (checkedDesa.length > 0) {
         query = query.in('kode_desa', checkedDesa);
       }
@@ -7542,7 +7659,6 @@ function checkAndLockKbTable() {
       query = query.in('kode_dusun', userKodeDusunList);
     }
 
-    // 5. Eksekusi Query
     const { data, error } = await query;
     if (error || !data) {
       tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center; padding:15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
@@ -7550,7 +7666,6 @@ function checkAndLockKbTable() {
     }
 
     cachedAntreanLayanan = data;
-
     const pendingCount = data.filter(d => d.status === 'TERDAFTAR').length;
     const badge = document.getElementById("badgeAntreanLayanan");
     if (badge) {
