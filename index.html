@@ -359,6 +359,14 @@
           <div class="card-title">Mutasi Masuk (Inbox)</div>
           <div class="card-desc">Cek dan input otomatis data PUS pindahan dari wilayah lain.</div>
         </div>
+
+        <!-- KARTU MENU PELAYANAN KB -->
+        <div class="dashboard-card" onclick="openPelayananKbModal()" style="position: relative;">
+          <span id="badgeAntreanLayanan" style="display: none; position: absolute; top: 12px; right: 12px; background: #2563eb; color: white; border-radius: 50%; padding: 4px 8px; font-size: 11px; font-weight: bold;">0</span>
+          <div class="card-icon" style="background-color: #e0e7ff; color: #4338ca;">💉</div>
+          <div class="card-title">Pelayanan KB</div>
+          <div class="card-desc">Daftarkan calon akseptor & input otomatis realisasi tindakan KB.</div>
+        </div>
       </div>
     </div>
 
@@ -1367,6 +1375,283 @@
   </div>
 </div>
 
+<!-- MODAL PENDAFTARAN & PELAYANAN KB -->
+<div id="modalPelayananKb" class="modal">
+  <div class="modal-content" style="max-width: 850px; width: 95%; max-height: 90vh; overflow-y: auto;">
+    <span class="close" onclick="closePelayananKbModal()">&times;</span>
+    <h3 style="margin-top:0; color:#1f4e78; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+      💉 PENDAFTARAN & PELAYANAN KB
+    </h3>
+
+    <!-- TAB SWITCHER -->
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">
+      <button type="button" id="tabBtnLayananAntrean" class="btn-nav btn-action" onclick="switchLayananTab('antrean')">📋 Antrean Pelayanan</button>
+      <button type="button" id="tabBtnLayananDaftar" class="btn-nav btn-secondary" onclick="switchLayananTab('daftar')">➕ Daftarkan Calon Akseptor</button>
+    </div>
+
+    <!-- TAB 1: DAFTAR ANTREAN & REALISASI LAYANAN -->
+    <div id="layananTabAntrean" style="display: block;">
+      <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
+        
+        <!-- BARIS 1: FILTER STATUS & KECAMATAN (KHUSUS ADMIN KAB) -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Pilih Data:</label>
+            <select id="filterStatusLayanan" onchange="loadAntreanLayananTable()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; width: 100%;">
+              <option value="TERDAFTAR" selected>Calon Akseptor</option>
+              <option value="SELESAI">Akseptor Terlayani</option>
+              <option value="BATAL">Batal</option>
+              <option value="SEMUA">Semua Status</option>
+            </select>
+          </div>
+
+          <!-- Dropdown Kecamatan (Hanya muncul jika Admin Kab) -->
+          <div id="filterExpLayananKecContainer" style="display: none; flex: 1; min-width: 180px;">
+            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Kecamatan:</label>
+            <select id="filterExpLayananKec" onchange="onLayananKecChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="">-- SEMUA KECAMATAN --</option>
+            </select>
+          </div>
+
+          <div style="align-self: flex-end;">
+            <button type="button" class="btn-nav btn-secondary" style="padding: 7px 12px; font-size: 12px;" onclick="loadAntreanLayananTable()">🔄 Segarkan</button>
+          </div>
+        </div>
+
+        <!-- BARIS 2: CHECKBOX FILTER DESA -->
+        <div id="filterExpLayananDesaWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Desa untuk Ekspor / Tampilan:</span>
+            <div style="display: flex; gap: 5px;">
+              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
+              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
+            </div>
+          </div>
+          <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;">
+            <!-- Render oleh JS -->
+          </div>
+        </div>
+
+        <!-- BARIS 3: CHECKBOX FILTER DUSUN -->
+        <div id="filterExpLayananDusunWrapper" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: bold; color: #0369a1; text-transform: uppercase;">Pilih Dusun untuk Ekspor / Tampilan:</span>
+            <div style="display: flex; gap: 5px;">
+              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', true)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Pilih Semua</button>
+              <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
+            </div>
+          </div>
+          <div id="filterExpLayananDusunGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;">
+            <!-- Render oleh JS -->
+          </div>
+        </div>
+
+        <!-- BARIS 4: TOMBOL DOWNLOAD EXCEL & PDF -->
+        <div style="display: flex; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 4px;">
+          <button type="button" class="btn-nav btn-warning" style="flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; font-weight: bold;" onclick="exportLayananToExcel()">
+            📥 Ekspor Excel (.xlsx)
+          </button>
+          <button type="button" class="btn-nav btn-danger" style="flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; font-weight: bold;" onclick="exportLayananToPDF()">
+            📄 Ekspor PDF (.pdf)
+          </button>
+        </div>
+
+      </div>
+
+      <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <table class="kb-table" style="font-size: 11.5px; width: 100%; margin-top: 0; white-space: nowrap;">
+          <thead>
+            <tr>
+              <th style="background:#1f4e78; color:white; width: 30px;">NO</th>
+              <th style="background:#1f4e78; color:white;">CALON AKSEPTOR</th>
+              <th style="background:#1f4e78; color:white;">RENCANA METODE</th>
+              <th style="background:#1f4e78; color:white;">RENCANA BULAN/TGL</th>
+              <th style="background:#1f4e78; color:white;">FASKES / CATATAN</th>
+              <th style="background:#1f4e78; color:white;">STATUS</th>
+              <th style="background:#1f4e78; color:white; width: 140px;">AKSI</th>
+            </tr>
+          </thead>
+          <tbody id="antreanLayananTbody">
+            <tr><td colspan="7" style="text-align: center; padding: 20px;">Memuat antrean pelayanan...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: FORM DAFTARKAN CALON AKSEPTOR DARI DATABASE PUS -->
+    <div id="layananTabDaftar" style="display: none;">
+      <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #0284c7;">
+        <div style="font-size: 12.5px; color: #334155; font-weight: bold; margin-bottom: 6px;">Cari Calon Akseptor dari Database</div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="cariPusLayananInput" placeholder="KETIK NAMA ISTRI, NIK, ATAU ID PUS..." oninput="this.value = this.value.toUpperCase()" style="flex: 1; padding: 10px 12px; font-size: 13px; text-transform: uppercase; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <button type="button" class="btn-action" style="padding: 8px 16px; font-size: 12px;" onclick="cariPusUntukLayanan()">🔍 Cari PUS</button>
+        </div>
+        <div id="hasilPencarianPusLayanan" style="max-height: 240px; overflow-y: auto; margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 6px; display: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
+      </div>
+
+      <form id="formPendaftaranLayanan" onsubmit="handleSimpanPendaftaranLayanan(event)">
+        <input type="hidden" id="reg_id_pus" value="">
+        <input type="hidden" id="reg_tahun" value="">
+        <input type="hidden" id="reg_kode_kec" value="">
+        <input type="hidden" id="reg_kode_desa" value="">
+        <input type="hidden" id="reg_kode_dusun" value="">
+
+        <!-- KARTU A: RINGKASAN IDENTITAS PUS TERPILIH -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+          <div style="font-size: 12px; font-weight: 800; color: #1e293b; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <span style="background: #0284c7; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">1</span>
+            Data Identitas Calon Akseptor
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Nama Istri:</label>
+              <input type="text" id="reg_nama_istri" readonly placeholder="PILIH PUS TERLEBIH DAHULU" style="background: #e2e8f0; font-weight: bold; color: #0f172a; border-color: #cbd5e1; cursor: not-allowed;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">NIK Istri:</label>
+              <input type="text" id="reg_nik_istri" readonly placeholder="-" style="background: #e2e8f0; font-family: monospace; color: #334155; border-color: #cbd5e1; cursor: not-allowed;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Nama Suami:</label>
+              <input type="text" id="reg_nama_suami" readonly placeholder="-" style="background: #e2e8f0; color: #334155; border-color: #cbd5e1; cursor: not-allowed;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">Wilayah Domisili:</label>
+              <input type="text" id="reg_info_wilayah" readonly placeholder="-" style="background: #e2e8f0; font-size: 12px; color: #334155; border-color: #cbd5e1; cursor: not-allowed;">
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTU B: FORM RENCANA PELAYANAN MEDIS -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);">
+          
+          <!-- Header Sub-Bagian -->
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="background: #0284c7; color: #ffffff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">2</span>
+              <span style="font-size: 13px; font-weight: 800; color: #1e293b; letter-spacing: 0.3px; text-transform: uppercase;">
+                Rencana Pelayanan & Tindakan KB
+              </span>
+            </div>
+            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">* Wajib diisi</span>
+          </div>
+
+          <!-- Baris 1: Metode Kontrasepsi & Jenis Akseptor (Simetris 2 Kolom) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            
+            <!-- Kolom Metode Kontrasepsi -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_rencana_metode" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Metode Kontrasepsi <span style="color: #ef4444;">*</span>
+              </label>
+              <select id="reg_rencana_metode" onchange="evaluasiOtomatisJenisAkseptor()" required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #0369a1; background-color: #ffffff; font-size: 13px; box-sizing: border-box; transition: border-color 0.2s;">
+                <option value="">-- PILIH METODE KB --</option>
+                <option value="IMPLAN">IMPLAN</option>
+                <option value="IUD">IUD</option>
+                <option value="SUNTIK">SUNTIK</option>
+                <option value="PIL">PIL</option>
+                <option value="KONDOM">KONDOM</option>
+                <option value="MOW">MOW</option>
+                <option value="MOP">MOP</option>
+              </select>
+            </div>
+
+            <!-- Kolom Jenis Akseptor (Otomatis & Terkunci) -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Jenis Akseptor <span style="font-size: 10px; color: #0284c7; font-weight: 800;">(OTOMATIS)</span>
+              </label>
+              <input type="hidden" id="reg_jenis_akseptor" value="">
+              <div id="badgeJenisAkseptorDisplay" style="height: 42px; width: 100%; padding: 0 14px; border-radius: 6px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 12.5px; font-weight: 700; color: #94a3b8; display: flex; align-items: center; box-sizing: border-box; user-select: none;">
+                Menunggu pemilihan metode...
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Keterangan Deteksi Cerdas Riwayat KB -->
+          <div style="margin-top: -8px; margin-bottom: 16px;">
+            <small id="infoRiwayatKb" style="font-size: 11px; font-weight: 600; color: #64748b; display: block; line-height: 1.4;"></small>
+          </div>
+
+          <!-- Baris 2: Bulan Pelayanan & Tanggal Rencana (Simetris 2 Kolom) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_bulan_rencana" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Bulan Pelayanan <span style="color: #ef4444;">*</span>
+              </label>
+              <select id="reg_bulan_rencana" onchange="evaluasiOtomatisJenisAkseptor()" required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 600; color: #1e293b; background-color: #ffffff; font-size: 13px; box-sizing: border-box;">
+                <option value="1">JANUARI</option>
+                <option value="2">FEBRUARI</option>
+                <option value="3">MARET</option>
+                <option value="4">APRIL</option>
+                <option value="5">MEI</option>
+                <option value="6">JUNI</option>
+                <option value="7">JULI</option>
+                <option value="8">AGUSTUS</option>
+                <option value="9">SEPTEMBER</option>
+                <option value="10">OKTOBER</option>
+                <option value="11">NOVEMBER</option>
+                <option value="12">DESEMBER</option>
+              </select>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_tgl_rencana" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Tanggal Rencana Tindakan:
+              </label>
+              <input type="date" id="reg_tgl_rencana" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; color: #1e293b; background-color: #ffffff; box-sizing: border-box;">
+            </div>
+
+          </div>
+
+          <!-- Baris 3: Fasilitas Pelayanan & Kader Pendamping (Simetris 2 Kolom) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_faskes_tujuan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Tempat / Fasilitas Pelayanan:
+              </label>
+              <input type="text" id="reg_faskes_tujuan" placeholder="CONTOH: PUSKESMAS / PMB / BAKSOS" oninput="this.value = this.value.toUpperCase()" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: uppercase; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_nama_kader" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Nama Kader Pendamping <span style="color: #ef4444;">*</span>
+              </label>
+              <input type="text" id="reg_nama_kader" required placeholder="NAMA LENGKAP KADER" oninput="this.value = this.value.toUpperCase()" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; font-weight: 600; text-transform: uppercase; box-sizing: border-box;">
+            </div>
+
+          </div>
+
+          <!-- Baris 4: Catatan Tambahan (Full Width 1 Kolom) -->
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label for="reg_catatan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+              Catatan Tambahan (Opsional):
+            </label>
+            <input type="text" id="reg_catatan" placeholder="Contoh: Riwayat tensi tinggi, ganti dari suntik 3 bulanan, dll." style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: none; box-sizing: border-box;">
+          </div>
+        </div>          
+
+        <!-- TOMBOL AKSI -->
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" id="btnSimpanPendaftaranLayanan" class="btn-submit" style="margin-top: 0; flex: 2; background-color: #0284c7; padding: 13px; font-size: 14px; cursor: pointer;">
+            💾 DAFTARKAN CALON AKSEPTOR
+          </button>
+          <button type="button" class="btn-nav btn-secondary" style="flex: 1; justify-content: center; padding: 13px; font-size: 14px;" onclick="resetFormPendaftaranLayanan()">
+            Bersihkan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div> <!-- /modal-content -->
+</div> <!-- /modal -->
+
 <!-- JAVASCRIPT LOGIC DENGAN SUPABASE INTEGRATION -->
 <script>
   const SUPABASE_URL = 'https://fxtffszvtyrtllugxlxe.supabase.co';
@@ -1439,6 +1724,30 @@
     }
   }
 
+  function refreshGreeting() {
+    if (!currentUser) return;
+
+    let namaWilayahDinamis = "";
+    if (userRole.includes("KAB")) {
+      for (let kdProv in dataKabupaten) {
+        if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
+          namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
+          break;
+        }
+      }
+      if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
+    } else if (userRole.includes("KEC") || userRole === "ADMIN") {
+      if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
+        namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
+      }
+    } else {
+      if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
+        namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
+      }
+    }
+
+    setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
+  }
   
   function setSelectValueCaseInsensitive(selectId, targetValue) {
     const select = document.getElementById(selectId);
@@ -2758,89 +3067,88 @@ function checkAndLockKbTable() {
 
   // --- LOGIN & DASHBOARD VIEW LOGIC ---
   async function handleLogin(event) {
-  event.preventDefault();
-  const btn = document.getElementById("btnLogin");
-  const user = document.getElementById("login_username").value.trim();
-  const pass = document.getElementById("login_password").value.trim();
+    event.preventDefault();
+    const btn = document.getElementById("btnLogin");
+    const user = document.getElementById("login_username").value.trim();
+    const pass = document.getElementById("login_password").value.trim();
 
-  btn.disabled = true;
-  btn.innerText = "Memverifikasi...";
+    btn.disabled = true;
+    btn.innerText = "Memverifikasi...";
 
-  try {
-    // Memanggil Secure RPC function di backend Supabase (kredensial tabel terlindungi)
-    const { data, error } = await db.rpc('login_user_app', {
-      p_username: user,
-      p_password: pass
-    });
+    try {
+      // Memanggil Secure RPC function di backend Supabase (kredensial tabel terlindungi)
+      const { data, error } = await db.rpc('login_user_app', {
+        p_username: user,
+        p_password: pass
+      });
 
-    if (error || !data || !data.success) {
-      Swal.fire('Gagal Masuk', (data && data.message) ? data.message : 'Kredensial tidak valid!', 'warning');
-      return;
-    }
+      if (error || !data || !data.success) {
+        Swal.fire('Gagal Masuk', (data && data.message) ? data.message : 'Kredensial tidak valid!', 'warning');
+        return;
+      }
 
-    currentUser = data.username;
-    currentNamaLengkap = data.nama_lengkap || "";
-    userRole = String(data.role || "User Desa").toUpperCase();
-    userKodeKab = String(data.kode_kab || "").trim().padStart(2, '0');
-    userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
-    userKodeDesa = String(data.kode_desa || "").trim().padStart(4, '0');
+      currentUser = data.username;
+      currentNamaLengkap = data.nama_lengkap || "";
+      userRole = String(data.role || "User Desa").toUpperCase();
+      userKodeKab = String(data.kode_kab || "").trim().padStart(2, '0');
+      userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
+      userKodeDesa = String(data.kode_desa || "").trim().padStart(4, '0');
 
-    if (data.kode_dusun_list) {
-      userKodeDusunList = data.kode_dusun_list
-        .split(',')
-        .map(k => k.trim().padStart(4, '0'))
-        .filter(k => k !== "");
-    } else {
-      userKodeDusunList = [];
-    }
-    
-    const sessionData = {
-      currentUser: data.username,
-      currentNamaLengkap: currentNamaLengkap,
-      userRole: userRole,
-      userKodeKab: userKodeKab,
-      userKodeKec: userKodeKec,
-      userKodeDesa: userKodeDesa,
-      userKodeDusunList: userKodeDusunList
-    };
-    localStorage.setItem("pus_app_session", JSON.stringify(sessionData));
+      if (data.kode_dusun_list) {
+        userKodeDusunList = data.kode_dusun_list
+          .split(',')
+          .map(k => k.trim().padStart(4, '0'))
+          .filter(k => k !== "");
+      } else {
+        userKodeDusunList = [];
+      }
+      
+      const sessionData = {
+        currentUser: data.username,
+        currentNamaLengkap: currentNamaLengkap,
+        userRole: userRole,
+        userKodeKab: userKodeKab,
+        userKodeKec: userKodeKec,
+        userKodeDesa: userKodeDesa,
+        userKodeDusunList: userKodeDusunList
+      };
+      localStorage.setItem("pus_app_session", JSON.stringify(sessionData));
 
-    let namaWilayahDinamis = "";
-    if (userRole.includes("KAB")) {
-      for (let kdProv in dataKabupaten) {
-        if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
-          namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
-          break;
+      let namaWilayahDinamis = "";
+      if (userRole.includes("KAB")) {
+        for (let kdProv in dataKabupaten) {
+          if (dataKabupaten[kdProv] && dataKabupaten[kdProv][userKodeKab]) {
+            namaWilayahDinamis = dataKabupaten[kdProv][userKodeKab];
+            break;
+          }
+        }
+        if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
+      } else if (userRole.includes("KEC") || userRole === "ADMIN") {
+        if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
+          namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
+        }
+      } else {
+        if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
+          namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
         }
       }
-      if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
-    } else if (userRole.includes("KEC") || userRole === "ADMIN") {
-      if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
-        namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
-      }
-    } else {
-      if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
-        namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
-      }
+      
+      setUserGreeting(data.role, namaWilayahDinamis, data.username, currentNamaLengkap);
+
+      document.getElementById("loginContainer").style.display = "none";
+      document.getElementById("appContainer").style.display = "block";
+      
+      showDashboardView();
+
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "MASUK";
     }
-    
-    setUserGreeting(data.role, namaWilayahDinamis, data.username, currentNamaLengkap);
-
-    document.getElementById("loginContainer").style.display = "none";
-    document.getElementById("appContainer").style.display = "block";
-    
-    showDashboardView();
-
-  } catch (err) {
-    Swal.fire('Error', err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "MASUK";
   }
-}
 
   function showDashboardView() {
-    // Reset otomatis filter modul-modul laporan saat ditutup / kembali ke dashboard
     if (typeof resetRecapFilters === "function") resetRecapFilters();
     if (typeof resetBnbaFilters === "function") resetBnbaFilters();
     if (typeof resetChartFilters === "function") resetChartFilters();
@@ -2852,7 +3160,6 @@ function checkAndLockKbTable() {
     document.getElementById("bnbaSection").style.display = "none";
     document.getElementById("chartSection").style.display = "none";
 
-    // Visibilitas tombol admin dashboard
     const adminBox = document.getElementById("adminSyncContainer");
     const btnTambahTahun = document.getElementById("btnAdminTambahTahun");
 
@@ -2864,7 +3171,9 @@ function checkAndLockKbTable() {
     }
 
     checkPendingMutasiNotifications();
-  }  
+    if (typeof loadAntreanLayananTable === "function") loadAntreanLayananTable();
+    if (typeof refreshGreeting === "function") refreshGreeting();
+  }
 
   /// =========================================================================
   // FUNGSI INBOX & NOTIFIKASI MUTASI MASUK (BERDIRI SENDIRI DI TOP-LEVEL)
@@ -7122,6 +7431,1017 @@ function checkAndLockKbTable() {
         .maybeSingle();
 
       if (data) selectDataForEdit(data);
+    }
+  }
+
+  // =========================================================================
+  // MODUL FITUR PENDAFTARAN & REALISASI PELAYANAN KB
+  // =========================================================================
+  let cachedAntreanLayanan = [];
+
+  function openPelayananKbModal() {
+    // 1. Tampilkan kontainer modal
+    const modal = document.getElementById("modalPelayananKb");
+    if (modal) {
+      modal.style.display = "block";
+    }
+
+    // 2. Arahkan tab default ke tab antrean pelayanan
+    if (typeof switchLayananTab === "function") {
+      switchLayananTab('antrean');
+    }
+
+    // 3. Reset form pendaftaran agar bersih saat dibuka kembali
+    if (typeof resetFormPendaftaranLayanan === "function") {
+      resetFormPendaftaranLayanan();
+    }
+
+    // 4. Set bulan rencana default ke bulan berjalan
+    const currentMonth = new Date().getMonth() + 1;
+    const blnEl = document.getElementById("reg_bulan_rencana");
+    if (blnEl) {
+      blnEl.value = String(currentMonth);
+    }
+
+    // 5. Pastikan box Nama Kader benar-benar kosong (tidak mengambil username/nama login)
+    const kaderInput = document.getElementById("reg_nama_kader");
+    if (kaderInput) {
+      kaderInput.value = "";
+    }
+
+    if (typeof initLayananWilayahFilter === "function") {
+      initLayananWilayahFilter();
+    }
+  }
+
+  function closePelayananKbModal() {
+    document.getElementById("modalPelayananKb").style.display = "none";
+    resetFormPendaftaranLayanan();
+  }
+
+  function switchLayananTab(tab) {
+    const isAntrean = (tab === 'antrean');
+    document.getElementById("layananTabAntrean").style.display = isAntrean ? "block" : "none";
+    document.getElementById("layananTabDaftar").style.display = isAntrean ? "none" : "block";
+
+    document.getElementById("tabBtnLayananAntrean").className = isAntrean ? "btn-nav btn-action" : "btn-nav btn-secondary";
+    document.getElementById("tabBtnLayananDaftar").className = isAntrean ? "btn-nav btn-secondary" : "btn-nav btn-action";
+
+    if (isAntrean) {
+      loadAntreanLayananTable();
+    }
+  }
+
+  // 1. Ambil & Tampilkan Daftar Antrean
+  async function loadAntreanLayananTable() {
+    const tbody = document.getElementById("antreanLayananTbody");
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px;">Memuat antrean...</td></tr>`;
+
+    const statusFilter = document.getElementById("filterStatusLayanan").value;
+    let query = db.from('pendaftaran_layanan_kb').select('*').order('created_at', { ascending: false });
+
+    // 1. Filter Status
+    if (statusFilter !== "SEMUA") {
+      query = query.eq('status', statusFilter);
+    }
+
+    // 2. Filter Wilayah Tingkat Kabupaten / Kecamatan
+    if (isDesaRole() || isKecRole()) {
+      query = query.eq('kode_kec', String(userKodeKec).padStart(2, '0'));
+    } else {
+      // Role Admin Kabupaten:
+      const selKec = document.getElementById("filterExpLayananKec")?.value;
+      if (selKec) {
+        // Jika memilih salah satu kecamatan
+        query = query.eq('kode_kec', String(selKec).padStart(2, '0'));
+      } else {
+        // Jika -- SEMUA KECAMATAN --, ikat ke kabupaten akunnya jika ada
+        if (userKodeKab) {
+          query = query.eq('kode_kab', String(userKodeKab).padStart(2, '0'));
+        }
+      }
+    }
+
+    // 3. Filter Level Desa
+    if (isDesaRole()) {
+      query = query.eq('kode_desa', String(userKodeDesa).padStart(4, '0'));
+    } else {
+      const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => String(cb.value).padStart(4, '0'));
+      // Jika dicentang -> ambil desa terpilih
+      // Jika kosong -> ambil seluruh desa di bawah kecamatan/kabupaten tersebut
+      if (checkedDesa.length > 0) {
+        query = query.in('kode_desa', checkedDesa);
+      }
+    }
+
+    // 4. Filter Level Dusun
+    const checkedDusun = Array.from(document.querySelectorAll('input[name="cb_layanan_dusun"]:checked')).map(cb => String(cb.value).padStart(4, '0'));
+    if (checkedDusun.length > 0) {
+      query = query.in('kode_dusun', checkedDusun);
+    } else if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+      query = query.in('kode_dusun', userKodeDusunList);
+    }
+
+    // 5. Eksekusi Query
+    const { data, error } = await query;
+    if (error || !data) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center; padding:15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
+      return;
+    }
+
+    cachedAntreanLayanan = data;
+
+    const pendingCount = data.filter(d => d.status === 'TERDAFTAR').length;
+    const badge = document.getElementById("badgeAntreanLayanan");
+    if (badge) {
+      badge.innerText = pendingCount;
+      badge.style.display = pendingCount > 0 ? "inline-block" : "none";
+    }
+
+    renderAntreanLayananTable();
+  }
+
+  function renderAntreanLayananTable() {
+    const tbody = document.getElementById("antreanLayananTbody");
+    tbody.innerHTML = "";
+
+    // 1. Kondisi jika data kosong
+    if (cachedAntreanLayanan.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Tidak ada data antrean pelayanan.</td></tr>`;
+      return;
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+
+    // 2. Looping data antrean (di sinilah variabel 'item' berada)
+    cachedAntreanLayanan.forEach((item, idx) => {
+      const tr = document.createElement("tr");
+
+      let badgeStatus = "";
+      if (item.status === 'TERDAFTAR') {
+        badgeStatus = `<span style="background:#dbeafe; color:#1d4ed8; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">TERDAFTAR</span>`;
+      } else if (item.status === 'SELESAI') {
+        badgeStatus = `<span style="background:#dcfce7; color:#15803d; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">SELESAI (${item.metode_realisasi || item.rencana_metode})</span>`;
+      } else {
+        badgeStatus = `<span style="background:#fee2e2; color:#b91c1c; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">BATAL</span>`;
+      }
+
+      let aksiHtml = "-";
+      if (item.status === 'TERDAFTAR') {
+        const cleanNamaIstri = (item.nama_istri || '').replace(/['"\\]/g, ' ');
+        const cleanMetode = (item.rencana_metode || '').replace(/['"\\]/g, ' ');
+
+        aksiHtml = `
+          <button type="button" class="btn-nav btn-action" style="padding: 4px 8px; font-size: 11px; background-color:#16a34a;" onclick="promptSelesaikanPelayanan('${item.id}', '${item.id_pus}', ${item.tahun || new Date().getFullYear()}, ${item.bulan_rencana || 1}, '${cleanMetode}', '${cleanNamaIstri}')" title="Catat Tindakan Selesai">
+            💉 Layani
+          </button>
+          <button type="button" class="btn-nav btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="batalkanAntreanLayanan('${item.id}', '${cleanNamaIstri}')" title="Batalkan Pendaftaran">
+            ❌
+          </button>
+        `;
+      }
+
+      // Susun baris tabel lengkap (Nama Kader ditaruh di kolom kedua)
+      tr.innerHTML = `
+        <td style="text-align:center;">${idx + 1}</td>
+        <td>
+          <b>${item.nama_istri}</b> (${item.nik_istri || '-' })<br>
+          <small style="color:#64748b;">Suami: ${item.nama_suami || '-'} | ID: ${item.id_pus}</small>
+          ${item.nama_kader ? `<br><span style="background:#fef3c7; color:#92400e; padding:1px 5px; border-radius:3px; font-size:10.5px; font-weight:bold;">Kader: ${item.nama_kader}</span>` : ''}
+        </td>
+        <td style="text-align:center; font-weight:bold; color:#0284c7;">${item.rencana_metode}</td>
+        <td style="text-align:center;">
+          <b>${monthNames[(item.bulan_rencana || 1) - 1]} ${item.tahun}</b>
+          ${item.tgl_rencana_layanan ? `<br><small style="color:#64748b;">${item.tgl_rencana_layanan}</small>` : ''}
+        </td>
+        <td>
+          <b>${item.faskes_tujuan || '-'}</b>
+          ${item.catatan ? `<br><small style="color:#64748b;">${item.catatan}</small>` : ''}
+        </td>
+        <td style="text-align:center;">${badgeStatus}</td>
+        <td style="text-align:center; white-space:nowrap;">${aksiHtml}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 2. Pencarian PUS dari Database untuk Didaftarkan (Tampilan Identik Cari PUS)
+  async function cariPusUntukLayanan() {
+    const keywordInput = document.getElementById("cariPusLayananInput").value.trim();
+    const keyword = keywordInput.toUpperCase();
+    const resultBox = document.getElementById("hasilPencarianPusLayanan");
+    
+    if (!keyword) {
+      Swal.fire("Perhatian", "Ketik nama istri, NIK, atau ID PUS untuk mencari!", "warning");
+      return;
+    }
+
+    resultBox.style.display = "block";
+    resultBox.innerHTML = "<div style='padding:12px; font-size:12px; color:#64748b; text-align:center;'>Mencari data PUS...</div>";
+
+    let inputYear = document.getElementById("tahun_input") ? document.getElementById("tahun_input").value : "";
+    let currentYear = inputYear ? parseInt(inputYear, 10) : new Date().getFullYear();
+
+    let query = db.from('data_pus').select('*').eq('tahun', currentYear);
+    query = query.or(`id_pus.ilike.%${keyword}%,nama_istri.ilike.%${keyword}%,nik_istri.ilike.%${keyword}%,nama_suami.ilike.%${keyword}%`);
+
+    if (isDesaRole()) {
+      const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
+      const cleanDesa = String(userKodeDesa || "").replace(/\D/g, "");
+
+      if (cleanKec) {
+        query = query.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
+      }
+      if (cleanDesa) {
+        query = query.or(`kode_desa.eq.${cleanDesa.padStart(4, '0')},kode_desa.eq.${parseInt(cleanDesa, 10)}`);
+      }
+    } else if (isKecRole()) {
+      const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
+      if (cleanKec) {
+        query = query.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
+      }
+    }
+
+    let { data, error } = await query.limit(15);
+
+    // Fallback jika tahun berjalan belum terisi data
+    if ((!data || data.length === 0) && !error) {
+      let fallbackQuery = db.from('data_pus').select('*')
+        .or(`id_pus.ilike.%${keyword}%,nama_istri.ilike.%${keyword}%,nik_istri.ilike.%${keyword}%,nama_suami.ilike.%${keyword}%`);
+
+      if (isDesaRole()) {
+        const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
+        const cleanDesa = String(userKodeDesa || "").replace(/\D/g, "");
+        if (cleanKec) fallbackQuery = fallbackQuery.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
+        if (cleanDesa) fallbackQuery = fallbackQuery.or(`kode_desa.eq.${cleanDesa.padStart(4, '0')},kode_desa.eq.${parseInt(cleanDesa, 10)}`);
+      } else if (isKecRole()) {
+        const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
+        if (cleanKec) fallbackQuery = fallbackQuery.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
+      }
+
+      const fallbackRes = await fallbackQuery.order('tahun', { ascending: false }).limit(15);
+      if (fallbackRes.data && fallbackRes.data.length > 0) {
+        data = fallbackRes.data;
+      }
+    }
+
+    resultBox.innerHTML = "";
+
+    if (error) {
+      resultBox.innerHTML = `<div style='padding:12px; font-size:12px; color:#ef4444; text-align:center;'>Gagal memuat: ${error.message}</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      resultBox.innerHTML = `
+        <div style='padding:15px; font-size:12.5px; color:#ef4444; text-align:center;'>
+          Data PUS dengan kata kunci "<b>${keywordInput}</b>" tidak ditemukan.
+        </div>`;
+      return;
+    }
+
+    // Render kartu hasil pencarian persis format kartu Cari PUS
+    data.forEach(item => {
+      const hlId = highlightText(item.id_pus, keywordInput);
+      const hlIstri = highlightText(item.nama_istri, keywordInput);
+      const hlNikIstri = highlightText(item.nik_istri, keywordInput);
+      const hlSuami = highlightText(item.nama_suami, keywordInput);
+      const hlNikSuami = highlightText(item.nik_suami, keywordInput);
+
+      const itemDiv = document.createElement("div");
+      itemDiv.className = "search-result-item";
+      itemDiv.style.cssText = "padding: 10px 12px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; background: #ffffff;";
+      
+      itemDiv.onmouseover = () => itemDiv.style.backgroundColor = "#f1f5f9";
+      itemDiv.onmouseout = () => itemDiv.style.backgroundColor = "#ffffff";
+
+      itemDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-weight: bold; color: #1f4e78; font-size: 13px; display: flex; align-items: center; gap: 4px;">
+            <span style="background: #7c3aed; color: #ffffff; font-size: 10px; font-weight: 800; padding: 1px 4px; border-radius: 3px;">ID</span>
+            ${hlId} (${item.tahun})
+          </span>
+          <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 4px; font-weight: bold;">
+            RT ${item.kode_rt || '-'} / DSN ${item.dusun_nama || '-'}
+          </span>
+        </div>
+        <div style="font-size: 12.5px; color: #334155; line-height: 1.45;">
+          🧕 <b>Istri:</b> ${hlIstri} <span style="font-family: monospace; color: #64748b;">(${hlNikIstri})</span><br>
+          👱 <b>Suami:</b> ${hlSuami} <span style="font-family: monospace; color: #64748b;">(${hlNikSuami})</span>
+        </div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">
+          📍 Kec. ${item.kecamatan_nama || '-'} | Desa ${item.desa_nama || '-'}
+        </div>
+      `;
+
+      itemDiv.onclick = () => pilihPusUntukLayanan(item);
+      resultBox.appendChild(itemDiv);
+    });
+  }  
+
+  let pusTerpilihDataLayanan = null;
+
+  function pilihPusUntukLayanan(item) {
+    pusTerpilihDataLayanan = item;
+
+    const resultBox = document.getElementById("hasilPencarianPusLayanan");
+    if (resultBox) resultBox.style.display = "none";
+    
+    document.getElementById("cariPusLayananInput").value = item.nama_istri || "";
+
+    document.getElementById("reg_id_pus").value = item.id_pus || "";
+    document.getElementById("reg_tahun").value = item.tahun || "";
+    document.getElementById("reg_kode_kec").value = item.kode_kec || "";
+    document.getElementById("reg_kode_desa").value = item.kode_desa || "";
+    document.getElementById("reg_kode_dusun").value = item.kode_dusun || "";
+
+    document.getElementById("reg_nama_istri").value = item.nama_istri || "";
+    document.getElementById("reg_nik_istri").value = item.nik_istri || "";
+    document.getElementById("reg_nama_suami").value = item.nama_suami || "";
+    document.getElementById("reg_info_wilayah").value = `Kec. ${item.kecamatan_nama || '-'}, Desa ${item.desa_nama || '-'}, Dusun ${item.dusun_nama || '-'} (RT ${item.kode_rt || '-'})`;
+
+    // Kosongkan metode & jenis akseptor terlebih dahulu
+    document.getElementById("reg_rencana_metode").value = "";
+    document.getElementById("reg_jenis_akseptor").value = "";
+    const infoText = document.getElementById("infoRiwayatKb");
+    if (infoText) infoText.innerText = "Silakan pilih metode kontrasepsi di samping...";
+  }
+
+  // 2. Fungsi Deteksi Cerdas Jenis Akseptor
+  function evaluasiOtomatisJenisAkseptor() {
+    const jenisInput = document.getElementById("reg_jenis_akseptor");
+    const badgeDisplay = document.getElementById("badgeJenisAkseptorDisplay");
+    const infoText = document.getElementById("infoRiwayatKb");
+
+    const metodeBaru = (document.getElementById("reg_rencana_metode")?.value || "").trim().toUpperCase();
+
+    // Jika metode kontrasepsi belum dipilih
+    if (!metodeBaru) {
+      if (jenisInput) jenisInput.value = "";
+      if (badgeDisplay) {
+        badgeDisplay.innerText = "Menunggu pemilihan metode...";
+        badgeDisplay.style.background = "#f1f5f9";
+        badgeDisplay.style.color = "#64748b";
+        badgeDisplay.style.borderColor = "#cbd5e1";
+      }
+      if (infoText) infoText.innerText = "";
+      return;
+    }
+
+    // Jika calon PUS belum dipilih
+    if (!pusTerpilihDataLayanan) {
+      if (jenisInput) jenisInput.value = "";
+      if (badgeDisplay) {
+        badgeDisplay.innerText = "Pilih Calon PUS terlebih dahulu";
+        badgeDisplay.style.background = "#fef2f2";
+        badgeDisplay.style.color = "#dc2626";
+        badgeDisplay.style.borderColor = "#fecaca";
+      }
+      if (infoText) infoText.innerText = "⚠️ Pilih calon PUS terlebih dahulu pada Langkah 1.";
+      return;
+    }
+
+    const bulanRencana = parseInt(document.getElementById("reg_bulan_rencana")?.value || (new Date().getMonth() + 1), 10);
+    const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
+
+    // Cari status terakhir yang terisi sebelum bulan rencana
+    let statusTerakhirRaw = "";
+    for (let i = bulanRencana - 2; i >= 0; i--) {
+      let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
+      if (val && val !== "-" && val !== "--KOSONG--" && val !== "NULL") {
+        statusTerakhirRaw = val;
+        break;
+      }
+    }
+
+    // Jika sebelum bulan rencana belum ada data, cari di seluruh bulan
+    if (!statusTerakhirRaw) {
+      for (let i = 0; i < 12; i++) {
+        let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
+        if (val && val !== "-" && val !== "--KOSONG--" && val !== "NULL") {
+          statusTerakhirRaw = val;
+          break;
+        }
+      }
+    }
+
+    // Cek apakah pernah ber-KB sebelumnya
+    let pernahKbSebelumnya = false;
+    for (let i = 0; i < 12; i++) {
+      let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
+      let st = evaluateKbStatus(val);
+      if (st.type === "PESERTA_KB") {
+        pernahKbSebelumnya = true;
+        break;
+      }
+    }
+
+    // Klasifikasi jenis akseptor
+    let hasilDeteksi = "KB BARU (MURNI)";
+    let keterangan = statusTerakhirRaw ? `Status riwayat: ${statusTerakhirRaw}` : "Belum ada riwayat KB tercatat";
+
+    if (statusTerakhirRaw) {
+      const parsed = evaluateKbStatus(statusTerakhirRaw);
+
+      if (parsed.type === "PESERTA_KB") {
+        if (metodeBaru === parsed.method) {
+          hasilDeteksi = "KB ULANGAN";
+        } else {
+          hasilDeteksi = "GANTI CARA";
+        }
+      } else if (parsed.type === "BUKAN_PESERTA") {
+        if (parsed.reason === "HAMIL") {
+          hasilDeteksi = "KB BARU (KBPP)";
+        } else if (pernahKbSebelumnya) {
+          hasilDeteksi = "KB BARU (PASCA DO)";
+        } else {
+          hasilDeteksi = "KB BARU (MURNI)";
+        }
+      }
+    }
+
+    // Set nilai ke input hidden & perbarui tampilan badge teks
+    if (jenisInput) jenisInput.value = hasilDeteksi;
+    if (badgeDisplay) {
+      badgeDisplay.innerText = hasilDeteksi;
+      badgeDisplay.style.background = "#f0fdf4";
+      badgeDisplay.style.color = "#166534";
+      badgeDisplay.style.borderColor = "#86efac";
+    }
+
+    if (infoText) {
+      infoText.innerText = `💡 Terdeteksi: ${hasilDeteksi} (${keterangan})`;
+    }
+  }
+
+  function resetFormPendaftaranLayanan() {
+    document.getElementById("formPendaftaranLayanan").reset();
+    document.getElementById("reg_id_pus").value = "";
+    document.getElementById("reg_tahun").value = "";
+    document.getElementById("reg_kode_kec").value = "";
+    document.getElementById("reg_kode_desa").value = "";
+    document.getElementById("reg_kode_dusun").value = "";
+    document.getElementById("reg_info_wilayah").value = "";
+    document.getElementById("cariPusLayananInput").value = "";
+    document.getElementById("hasilPencarianPusLayanan").style.display = "none";
+    document.getElementById("hasilPencarianPusLayanan").innerHTML = "";
+
+    const currentMonth = new Date().getMonth() + 1;
+    const blnEl = document.getElementById("reg_bulan_rencana");
+    if (blnEl) blnEl.value = String(currentMonth);
+    
+    const kaderInput = document.getElementById("reg_nama_kader");
+    if (kaderInput) {
+      kaderInput.value = (currentNamaLengkap || currentUser || "").toUpperCase();
+    }
+
+    pusTerpilihDataLayanan = null;
+    const infoText = document.getElementById("infoRiwayatKb");
+    if (infoText) infoText.innerText = "";
+    const jenisInput = document.getElementById("reg_jenis_akseptor");
+    if (jenisInput) jenisInput.value = "";
+
+    const badgeDisplay = document.getElementById("badgeJenisAkseptorDisplay");
+    if (badgeDisplay) {
+      badgeDisplay.innerText = "Menunggu pemilihan metode...";
+      badgeDisplay.style.background = "#f1f5f9";
+      badgeDisplay.style.color = "#64748b";
+      badgeDisplay.style.borderColor = "#cbd5e1";
+    }
+  }
+
+  // 3. Simpan Pendaftaran ke Tabel pendaftaran_layanan_kb
+  async function handleSimpanPendaftaranLayanan(event) {
+    event.preventDefault();
+
+    const errors = [];
+
+    // Validasi Bagian 1: Identitas Calon Akseptor
+    const idPus = (document.getElementById("reg_id_pus")?.value || "").trim();
+    const namaIstri = (document.getElementById("reg_nama_istri")?.value || "").trim();
+    const nikIstri = (document.getElementById("reg_nik_istri")?.value || "").trim();
+
+    if (!idPus || !namaIstri || !nikIstri) {
+      errors.push("Calon Akseptor belum dipilih (Lakukan pencarian dan klik salah satu PUS pada Langkah 1)");
+    }
+
+    // Validasi Bagian 2: Rencana Pelayanan & Tindakan KB
+    const rencanaMetode = (document.getElementById("reg_rencana_metode")?.value || "").trim();
+    const bulanRencana = (document.getElementById("reg_bulan_rencana")?.value || "").trim();
+    const namaKader = (document.getElementById("reg_nama_kader")?.value || "").trim();
+
+    if (!rencanaMetode) {
+      errors.push("Metode Kontrasepsi belum dipilih");
+    }
+    
+    const jenisAkseptor = (document.getElementById("reg_jenis_akseptor")?.value || "").trim();
+    if (!jenisAkseptor) {
+      errors.push("Jenis Akseptor belum dipilih");
+    }
+    
+    if (!bulanRencana) {
+      errors.push("Bulan Pelayanan belum dipilih");
+    }
+    if (!namaKader) {
+      errors.push("Nama Kader / Petugas Pendamping wajib diisi");
+    }
+
+    // Pengecekan error form
+    if (errors.length > 0) {
+      const errorListHtml = errors.map(err => `<li style="margin-bottom: 5px;">${err}</li>`).join("");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Form Belum Lengkap!',
+        html: `
+          <div style="text-align: left; font-size: 13px; color: #333;">
+            <p style="margin-bottom: 8px;">Silakan lengkapi bagian berikut sebelum menyimpan pendaftaran:</p>
+            <ul style="margin: 0; padding-left: 20px; color: #dc2626; font-weight: 600;">
+              ${errorListHtml}
+            </ul>
+          </div>
+        `,
+        confirmButtonColor: '#0284c7'
+      });
+      return;
+    }
+
+    const btn = document.getElementById("btnSimpanPendaftaranLayanan");
+    btn.disabled = true;
+    btn.innerText = "Mendaftarkan...";
+    
+    const payload = {
+      id_pus: idPus,
+      tahun: parseInt(document.getElementById("reg_tahun").value, 10),
+      bulan_rencana: parseInt(bulanRencana, 10),
+      tgl_rencana_layanan: document.getElementById("reg_tgl_rencana").value || null,
+      nama_istri: namaIstri,
+      nik_istri: nikIstri,
+      nama_suami: document.getElementById("reg_nama_suami").value,
+      kode_kec: document.getElementById("reg_kode_kec").value,
+      kode_desa: document.getElementById("reg_kode_desa").value,
+      kode_dusun: document.getElementById("reg_kode_dusun").value,
+      rencana_metode: rencanaMetode,
+      jenis_akseptor: jenisAkseptor, // <-- Properti disimpan di sini
+      faskes_tujuan: document.getElementById("reg_faskes_tujuan").value.trim() || null,
+      nama_kader: namaKader.toUpperCase(),
+      catatan: document.getElementById("reg_catatan").value.trim() || null,
+      status: 'TERDAFTAR',
+      created_by: currentUser || "Kader"
+    };
+
+    try {
+      const { error } = await db.from('pendaftaran_layanan_kb').insert([payload]);
+      if (error) throw error;
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Calon Akseptor Terdaftar!',
+        text: `PUS [${payload.nama_istri}] berhasil didaftarkan oleh Kader ${payload.nama_kader}.`,
+        timer: 1600,
+        showConfirmButton: false
+      });
+
+      resetFormPendaftaranLayanan();
+      switchLayananTab('antrean');
+
+    } catch (err) {
+      Swal.fire("Gagal Mendaftar", err.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "💾 DAFTARKAN CALON AKSEPTOR";
+    }
+  }
+
+  // 4. Konfirmasi Pelayanan & OTOMATIS MERUBAH TABEL data_pus
+  function promptSelesaikanPelayanan(tiketId, idPus, tahun, bulanRencana, rencanaMetode, namaIstri) {
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    Swal.fire({
+      title: 'Konfirmasi Pelayanan KB',
+      html: `
+        <div style="text-align:left; font-size:13px; color:#333;">
+          <p style="margin-bottom:8px;">Calon Akseptor: <b>${namaIstri}</b> (ID: ${idPus})</p>
+          <div style="margin-bottom:10px;">
+            <label style="font-weight:bold; font-size:12px;">Metode Kontrasepsi yang Diberikan:</label>
+            <select id="swalMetodeRealisasi" class="swal2-input" style="width:100%; margin:4px 0 0 0; font-size:13px; padding:8px;">
+              <option value="IMPLAN" ${rencanaMetode === 'IMPLAN' ? 'selected' : ''}>IMPLAN</option>
+              <option value="IUD" ${rencanaMetode === 'IUD' ? 'selected' : ''}>IUD</option>
+              <option value="SUNTIK" ${rencanaMetode === 'SUNTIK' ? 'selected' : ''}>SUNTIK</option>
+              <option value="PIL" ${rencanaMetode === 'PIL' ? 'selected' : ''}>PIL</option>
+              <option value="KONDOM" ${rencanaMetode === 'KONDOM' ? 'selected' : ''}>KONDOM</option>
+              <option value="MOW" ${rencanaMetode === 'MOW' ? 'selected' : ''}>MOW</option>
+              <option value="MOP" ${rencanaMetode === 'MOP' ? 'selected' : ''}>MOP</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-weight:bold; font-size:12px;">Bulan Efektif Ber-KB:</label>
+            <select id="swalBulanRealisasi" class="swal2-input" style="width:100%; margin:4px 0 0 0; font-size:13px; padding:8px;">
+              ${monthNames.map((m, idx) => `<option value="${idx+1}" ${idx+1 === bulanRencana ? 'selected' : ''}>${m.toUpperCase()}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-weight:bold; font-size:12px;">Tanggal Realisasi Tindakan:</label>
+            <input type="date" id="swalTglRealisasi" class="swal2-input" value="${todayStr}" style="width:100%; margin:4px 0 0 0; font-size:13px; padding:8px;">
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: '✅ Simpan & Update Database',
+      cancelButtonText: 'Batal',
+      preConfirm: () => {
+        return {
+          metode: document.getElementById("swalMetodeRealisasi").value,
+          bulan: parseInt(document.getElementById("swalBulanRealisasi").value, 10),
+          tgl: document.getElementById("swalTglRealisasi").value
+        };
+      }
+    }).then(async (res) => {
+      if (res.isConfirmed && res.value) {
+        await eksekusiUpdateDataPusPelayanan(tiketId, idPus, tahun, res.value.bulan, res.value.metode, res.value.tgl);
+      }
+    });
+  }
+
+  async function eksekusiUpdateDataPusPelayanan(tiketId, idPus, tahun, bulan, metode, tgl) {
+    const monthColumns = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
+    const targetCol = monthColumns[bulan - 1];
+
+    Swal.fire({
+      title: 'Memproses...',
+      text: 'Menyimpan realisasi & memperbarui data PUS...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    try {
+      // 1. Update status di tabel pendaftaran_layanan_kb menjadi SELESAI
+      const { error: errTiket } = await db.from('pendaftaran_layanan_kb')
+        .update({
+          status: 'SELESAI',
+          metode_realisasi: metode,
+          tgl_layanan_realisasi: tgl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', tiketId);
+
+      if (errTiket) throw errTiket;
+
+      // 2. OTOMATIS MERUBAH DATA DI TABEL data_pus
+      const updateDataPus = {};
+      updateDataPus[targetCol] = metode; // misal: IMPLAN, IUD, SUNTIK
+      updateDataPus['timestamp'] = new Date().toISOString();
+
+      const { error: errPus } = await db.from('data_pus')
+        .update(updateDataPus)
+        .eq('id_pus', idPus)
+        .eq('tahun', tahun);
+
+      if (errPus) throw errPus;
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Pelayanan Berhasil Dicatat!',
+        text: `Status PUS ${idPus} otomatis diperbarui menjadi "${metode}" pada bulan ${monthColumns[bulan-1].replace('kb_', '').toUpperCase()}.`
+      });
+
+      loadAntreanLayananTable();
+
+    } catch (err) {
+      console.error("Gagal realisasi layanan:", err);
+      Swal.fire("Gagal", "Terjadi kesalahan: " + err.message, "error");
+    }
+  }
+
+  // 5. Pembatalan Antrean Layanan
+  function batalkanAntreanLayanan(tiketId, namaIstri) {
+    Swal.fire({
+      title: 'Batalkan Pendaftaran?',
+      text: `Yakin ingin membatalkan antrean pelayanan untuk ${namaIstri}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Batalkan'
+    }).then(async (res) => {
+      if (res.isConfirmed) {
+        const { error } = await db.from('pendaftaran_layanan_kb')
+          .update({ status: 'BATAL', updated_at: new Date().toISOString() })
+          .eq('id', tiketId);
+
+        if (error) {
+          Swal.fire("Gagal", error.message, "error");
+        } else {
+          Swal.fire("Dibatalkan", "Pendaftaran telah dibatalkan.", "success");
+          loadAntreanLayananTable();
+        }
+      }
+    });
+  }
+
+  // =========================================================================
+  // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
+  // =========================================================================
+  function getCleanLayananExportData() {
+    if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
+      return null;
+    }
+
+    const currentFilter = document.getElementById("filterStatusLayanan").value;
+    const isPelayananKb = (currentFilter === "SELESAI");
+
+    let judulTabel = isPelayananKb ? "TABEL PELAYANAN KB" : "TABEL CALON AKSEPTOR";
+    let filePrefix = isPelayananKb ? "TABEL_PELAYANAN_KB" : "TABEL_CALON_AKSEPTOR";
+    if (currentFilter === "BATAL") {
+      judulTabel = "TABEL CALON AKSEPTOR (BATAL)";
+      filePrefix = "TABEL_AKSEPTOR_BATAL";
+    }
+
+    const getNmKec = (kd) => (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][kd]) ? dataKecamatan[userKodeKab][kd] : kd || "-";
+    const getNmDesa = (kdKec, kdDesa) => (dataDesa[kdKec] && dataDesa[kdKec][kdDesa]) ? dataDesa[kdKec][kdDesa] : kdDesa || "-";
+    const getNmDsn = (kdKec, kdDesa, kdDsn) => {
+      const dsnMap = getDusunList(kdKec, kdDesa);
+      return (dsnMap && dsnMap[kdDsn]) ? dsnMap[kdDsn].nama : kdDsn || "-";
+    };
+
+    const headers = [
+      "NO.", "KECAMATAN", "DESA", "DUSUN", "RT",
+      "NAMA SUAMI", "NIK SUAMI", "NAMA ISTRI", "NIK ISTRI",
+      "JENIS ALKON", "JENIS AKSEPTOR",
+      isPelayananKb ? "TANGGAL PELAYANAN" : "TANGGAL RENCANA PELAYANAN"
+    ];
+
+    const rows = cachedAntreanLayanan.map((item, idx) => {
+      const alkon = isPelayananKb ? (item.metode_realisasi || item.rencana_metode || "-") : (item.rencana_metode || "-");
+      const tgl = isPelayananKb ? (item.tgl_layanan_realisasi || item.tgl_rencana_layanan || "-") : (item.tgl_rencana_layanan || "-");
+
+      return [
+        idx + 1,
+        getNmKec(item.kode_kec),
+        getNmDesa(item.kode_kec, item.kode_desa),
+        getNmDsn(item.kode_kec, item.kode_desa, item.kode_dusun),
+        item.kode_rt || "-",
+        item.nama_suami || "-",
+        String(item.nik_suami || "-"),
+        item.nama_istri || "-",
+        String(item.nik_istri || "-"),
+        alkon,
+        item.jenis_akseptor || "-",
+        tgl
+      ];
+    });
+
+    return { judulTabel, filePrefix, headers, rows };
+  }
+
+  // =========================================================================
+  // LOGIKA KONTROL WILAYAH BERTINGKAT UNTUK PELAYANAN KB
+  // =========================================================================
+  function initLayananWilayahFilter() {
+    const cKec = document.getElementById("filterExpLayananKecContainer");
+    const selKec = document.getElementById("filterExpLayananKec");
+    const wDesa = document.getElementById("filterExpLayananDesaWrapper");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    wDesa.style.display = "none";
+    wDusun.style.display = "none";
+
+    if (isDesaRole()) {
+      cKec.style.display = "none";
+      renderLayananDusunCheckboxes(userKodeKec, userKodeDesa);
+    } else if (isKecRole()) {
+      cKec.style.display = "none";
+      renderLayananDesaCheckboxes(userKodeKec);
+    } else {
+      // Admin Kabupaten: Tampilkan dropdown kecamatan
+      cKec.style.display = "block";
+      selKec.innerHTML = '<option value="" selected>-- SEMUA KECAMATAN --</option>';
+
+      // Muat kecamatan khusus kabupaten akun tersebut
+      const addedKec = {};
+      for (let kdKab in dataKecamatan) {
+        if (!userKodeKab || kdKab === userKodeKab) {
+          for (let kd in dataKecamatan[kdKab]) {
+            let cleanKd = String(kd).padStart(2, '0');
+            if (!addedKec[cleanKd]) {
+              addedKec[cleanKd] = true;
+              selKec.add(new Option(dataKecamatan[kdKab][kd].toUpperCase(), cleanKd));
+            }
+          }
+        }
+      }
+      
+      // Muat seluruh antrean se-kabupaten secara default
+      loadAntreanLayananTable();
+    }
+  }
+
+  function onLayananKecChange() {
+    const kdKec = document.getElementById("filterExpLayananKec").value;
+    if (kdKec) {
+      renderLayananDesaCheckboxes(kdKec);
+    } else {
+      document.getElementById("filterExpLayananDesaWrapper").style.display = "none";
+      document.getElementById("filterExpLayananDusunWrapper").style.display = "none";
+      loadAntreanLayananTable();
+    }
+  }
+
+  function renderLayananDesaCheckboxes(kdKec) {
+    const wrapper = document.getElementById("filterExpLayananDesaWrapper");
+    const grid = document.getElementById("filterExpLayananDesaGrid");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+    
+    grid.innerHTML = "";
+    wDusun.style.display = "none";
+
+    let cleanKec = String(kdKec).padStart(2, '0');
+    let desas = dataDesa[cleanKec] || {};
+
+    let listDesaKeys = Object.keys(desas);
+    if (listDesaKeys.length === 0) {
+      wrapper.style.display = "none";
+      loadAntreanLayananTable();
+      return;
+    }
+
+    wrapper.style.display = "block";
+    listDesaKeys.forEach(kd => {
+      const cleanKd = String(kd).padStart(4, '0');
+      const label = document.createElement("label");
+      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      // DIBUAT KOSONG (tanpa atribut checked)
+      label.innerHTML = `
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}')" style="accent-color: #0284c7;">
+        <span>${desas[kd]}</span>
+      `;
+      grid.appendChild(label);
+    });
+
+    loadAntreanLayananTable();
+  }
+
+  function onLayananDesaCheckboxChange(kdKec) {
+    const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => cb.value);
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    // Jika tepat memilih 1 desa, munculkan checkbox dusun
+    if (checkedDesa.length === 1) {
+      renderLayananDusunCheckboxes(kdKec, checkedDesa[0]);
+    } else {
+      wDusun.style.display = "none";
+      loadAntreanLayananTable();
+    }
+  }
+
+  function renderLayananDusunCheckboxes(kdKec, kdDesa) {
+    const wrapper = document.getElementById("filterExpLayananDusunWrapper");
+    const grid = document.getElementById("filterExpLayananDusunGrid");
+    grid.innerHTML = "";
+
+    const dsnMap = getDusunList(kdKec, kdDesa);
+    if (!dsnMap || Object.keys(dsnMap).length === 0) {
+      wrapper.style.display = "none";
+      loadAntreanLayananTable();
+      return;
+    }
+
+    wrapper.style.display = "block";
+    for (let kd in dsnMap) {
+      let cleanKd = String(kd).padStart(4, '0');
+
+      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+        if (!userKodeDusunList.includes(cleanKd)) {
+          continue;
+        }
+      }
+
+      const label = document.createElement("label");
+      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      // DIBUAT KOSONG (tanpa atribut checked)
+      label.innerHTML = `
+        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="accent-color: #0284c7;">
+        <span>${dsnMap[kd].nama}</span>
+      `;
+      grid.appendChild(label);
+    }
+
+    loadAntreanLayananTable();
+  }
+
+  function toggleAllLayananCheckboxes(name, status) {
+    const boxes = document.querySelectorAll(`input[name="${name}"]`);
+    boxes.forEach(cb => cb.checked = status);
+    
+    if (name === 'cb_layanan_desa') {
+      const kec = isKecRole() ? userKodeKec : document.getElementById("filterExpLayananKec").value;
+      onLayananDesaCheckboxChange(kec);
+    } else {
+      loadAntreanLayananTable();
+    }
+  }
+
+  // 1. Ekspor Excel (.xlsx) dengan Header Judul Tabel
+  function exportLayananToExcel() {
+    const data = getCleanLayananExportData();
+    if (!data) {
+      Swal.fire("Data Kosong", "Tidak ada data antrean/pelayanan untuk diunduh.", "warning");
+      return;
+    }
+
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Buat struktur sheet yang diawali Judul Tabel di baris pertama
+      const sheetContent = [
+        [data.judulTabel],
+        [`Tanggal Unduh: ${new Date().toLocaleDateString('id-ID')}`],
+        [], // baris kosong pemisah
+        data.headers,
+        ...data.rows
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(sheetContent);
+
+      // Kunci kolom NIK Suami (kolom index 6) dan NIK Istri (index 8) sebagai teks
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = 3; R <= range.e.r; ++R) {
+        for (let C of [6, 8]) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (ws[cellRef]) {
+            ws[cellRef].t = 's';
+          }
+        }
+      }
+
+      // Atur lebar kolom agar rapi
+      ws['!cols'] = [
+        { wch: 5 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 8 },
+        { wch: 22 }, { wch: 20 }, { wch: 22 }, { wch: 20 },
+        { wch: 16 }, { wch: 22 }, { wch: 22 }
+      ];
+
+      const sheetName = data.filePrefix.substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+      const fileName = `${data.filePrefix}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+    } catch (err) {
+      Swal.fire("Error", "Gagal mengekspor file Excel: " + err.message, "error");
+    }
+  }
+
+  // 2. Ekspor PDF (.pdf) dengan Judul Tabel Jelas
+  function exportLayananToPDF() {
+    const data = getCleanLayananExportData();
+    if (!data) {
+      Swal.fire("Data Kosong", "Tidak ada data antrean/pelayanan untuk diekspor ke PDF.", "warning");
+      return;
+    }
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape', 'pt', 'a4');
+
+      // Judul Utama Tabel
+      doc.setFontSize(14);
+      doc.setTextColor(31, 78, 120);
+      doc.setFont(undefined, 'bold');
+      doc.text(data.judulTabel, 40, 35);
+
+      // Sub-judul
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Waktu Cetak: ${new Date().toLocaleString('id-ID')}`, 40, 50);
+
+      // Render Tabel
+      doc.autoTable({
+        head: [data.headers],
+        body: data.rows,
+        startY: 60,
+        styles: { fontSize: 7.5, cellPadding: 3.5, halign: 'left' },
+        headStyles: { fillColor: [31, 78, 120], textColor: 255, halign: 'center' },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 25 },
+          4: { halign: 'center', cellWidth: 25 },
+          6: { halign: 'center' },
+          8: { halign: 'center' },
+          9: { halign: 'center', fontStyle: 'bold' },
+          10: { halign: 'center' },
+          11: { halign: 'center' }
+        },
+        theme: 'grid'
+      });
+
+      const fileName = `${data.filePrefix}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+    } catch (err) {
+      Swal.fire("Error", "Gagal mengekspor PDF: " + err.message, "error");
     }
   }
 
