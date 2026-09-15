@@ -1547,6 +1547,7 @@
         <input type="hidden" id="reg_kode_kec" value="">
         <input type="hidden" id="reg_kode_desa" value="">
         <input type="hidden" id="reg_kode_dusun" value="">
+        <input type="hidden" id="reg_kode_rt" value="">
         <input type="hidden" id="reg_nik_suami" value="">
 
         <!-- KARTU A: RINGKASAN IDENTITAS PUS TERPILIH -->
@@ -7850,7 +7851,7 @@ function checkAndLockKbTable() {
     document.getElementById("reg_kode_kec").value = item.kode_kec || "";
     document.getElementById("reg_kode_desa").value = item.kode_desa || "";
     document.getElementById("reg_kode_dusun").value = item.kode_dusun || "";
-
+    document.getElementById("reg_kode_rt").value = item.kode_rt || "";
     document.getElementById("reg_nik_suami").value = item.nik_suami || "";
 
     document.getElementById("reg_nama_istri").value = item.nama_istri || "";
@@ -8080,6 +8081,7 @@ function checkAndLockKbTable() {
       kode_kec: document.getElementById("reg_kode_kec").value,
       kode_desa: document.getElementById("reg_kode_desa").value,
       kode_dusun: document.getElementById("reg_kode_dusun").value,
+      kode_rt: document.getElementById("reg_kode_rt").value || null,
       rencana_metode: rencanaMetode,
       jenis_akseptor: jenisAkseptor, // <-- Properti disimpan di sini
       faskes_tujuan: document.getElementById("reg_faskes_tujuan").value.trim() || null,
