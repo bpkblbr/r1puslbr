@@ -1134,53 +1134,78 @@
       <form id="formMasterWilayah" onsubmit="handleSaveMasterWilayah(event)">
         <input type="hidden" id="mw_id" value="">
 
+        <!-- BARIS 1: PROVINSI & KABUPATEN -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Provinsi & Kode (2 Digit):</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="mw_provinsi_nama" value="NUSA TENGGARA BARAT" required placeholder="NAMA PROVINSI" style="flex: 1;">
-              <input type="text" id="mw_kode_prov" value="52" maxlength="2" required placeholder="KODE" style="width: 70px; text-align: center; background-color: #f8fafc;">
+          <!-- Kolom Provinsi -->
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">PROVINSI</label>
+              <input type="text" id="mw_provinsi_nama" value="NUSA TENGGARA BARAT" required placeholder="NAMA PROVINSI" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="width: 75px; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KODE PROV</label>
+              <input type="text" id="mw_kode_prov" value="52" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
             </div>
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Kabupaten & Kode (2 Digit):</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="mw_kabupaten_nama" value="LOMBOK BARAT" required placeholder="NAMA KABUPATEN" style="flex: 1;">
-              <input type="text" id="mw_kode_kab" value="01" maxlength="2" required placeholder="KODE" style="width: 70px; text-align: center; background-color: #f8fafc;">
+
+          <!-- Kolom Kabupaten -->
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KABUPATEN</label>
+              <input type="text" id="mw_kabupaten_nama" value="LOMBOK BARAT" required placeholder="NAMA KABUPATEN" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="width: 75px; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KODE KAB</label>
+              <input type="text" id="mw_kode_kab" value="01" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
             </div>
           </div>
         </div>
 
+        <!-- BARIS 2: KECAMATAN & DESA -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Kecamatan & Kode (2 Digit):</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="mw_kecamatan_nama" required placeholder="NAMA KECAMATAN" style="flex: 1;">
-              <input type="text" id="mw_kode_kec" maxlength="2" required placeholder="KODE" style="width: 70px; text-align: center;">
+          <!-- Kolom Kecamatan -->
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KECAMATAN</label>
+              <input type="text" id="mw_kecamatan_nama" required placeholder="NAMA KECAMATAN" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="width: 75px; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KODE KEC</label>
+              <input type="text" id="mw_kode_kec" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; box-sizing: border-box;">
             </div>
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Desa & Kode (4 Digit):</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="mw_desa_nama" required placeholder="NAMA DESA" style="flex: 1;">
-              <input type="text" id="mw_kode_desa" maxlength="4" required placeholder="K0DE" style="width: 70px; text-align: center;">
+
+          <!-- Kolom Desa -->
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">DESA</label>
+              <input type="text" id="mw_desa_nama" required placeholder="NAMA DESA" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="width: 75px; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KODE DESA</label>
+              <input type="text" id="mw_kode_desa" maxlength="4" required placeholder="KODE" style="width: 100%; text-align: center; box-sizing: border-box;">
             </div>
           </div>
         </div>
 
+        <!-- BARIS 3: DUSUN & JUMLAH RT -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;">
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Dusun & Kode Dusun (4 Digit):</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" id="mw_dusun_nama" required placeholder="NAMA DUSUN" style="flex: 1;">
-              <input type="text" id="mw_kode_dusun" maxlength="4" required placeholder="KODE" style="width: 70px; text-align: center;">
+          <!-- Kolom Dusun -->
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">DUSUN</label>
+              <input type="text" id="mw_dusun_nama" required placeholder="NAMA DUSUN" style="width: 100%; box-sizing: border-box;">
+            </div>
+            <div style="width: 75px; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KODE DSN</label>
+              <input type="text" id="mw_kode_dusun" maxlength="4" required placeholder="KODE" style="width: 100%; text-align: center; box-sizing: border-box;">
             </div>
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: bold;">Jumlah RT:</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="number" id="mw_jumlah_rt" min="1" value="1" required placeholder="Jml" style="width: 100px; text-align: center;">
-            </div>
+
+          <!-- Kolom Jumlah RT -->
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">JUMLAH RT</label>
+            <input type="number" id="mw_jumlah_rt" min="1" value="1" required placeholder="Jml" style="width: 100%; text-align: center; box-sizing: border-box;">
           </div>
         </div>
 
