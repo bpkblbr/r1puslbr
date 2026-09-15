@@ -1594,27 +1594,33 @@
             <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">* Wajib diisi</span>
           </div>
 
-          <!-- Baris 1: Metode Kontrasepsi & Jenis Akseptor (Simetris 2 Kolom) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <!-- Baris 1: Jenis Pelayanan, Metode Kontrasepsi & Jenis Akseptor (Grid 3 Kolom) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;">
             
-            <!-- Kolom Metode Kontrasepsi -->
+            <!-- 1. Dropdown Jenis Pelayanan -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label for="reg_jenis_pelayanan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+                Jenis Pelayanan <span style="color: #ef4444;">*</span>
+              </label>
+              <select id="reg_jenis_pelayanan" onchange="onJenisPelayananChange()" required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #1e293b; background-color: #ffffff; font-size: 13px; box-sizing: border-box;">
+                <option value="">-- PILIH PELAYANAN --</option>
+                <option value="PEMASANGAN/PEMAKAIAN">PEMASANGAN / PEMAKAIAN</option>
+                <option value="CABUT/LEPAS">CABUT / LEPAS</option>
+                <option value="BONGKAR PASANG">BONGKAR PASANG</option>
+              </select>
+            </div>
+
+            <!-- 2. Dropdown Metode Kontrasepsi (Awalnya disabled dan kosong) -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
               <label for="reg_rencana_metode" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
                 Metode Kontrasepsi <span style="color: #ef4444;">*</span>
               </label>
-              <select id="reg_rencana_metode" onchange="evaluasiOtomatisJenisAkseptor()" required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #0369a1; background-color: #ffffff; font-size: 13px; box-sizing: border-box; transition: border-color 0.2s;">
-                <option value="">-- PILIH METODE KB --</option>
-                <option value="IMPLAN">IMPLAN</option>
-                <option value="IUD">IUD</option>
-                <option value="SUNTIK">SUNTIK</option>
-                <option value="PIL">PIL</option>
-                <option value="KONDOM">KONDOM</option>
-                <option value="MOW">MOW</option>
-                <option value="MOP">MOP</option>
+              <select id="reg_rencana_metode" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #0369a1; background-color: #e9ecef; font-size: 13px; box-sizing: border-box;">
+                <option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>
               </select>
             </div>
 
-            <!-- Kolom Jenis Akseptor (Otomatis & Terkunci) -->
+            <!-- 3. Jenis Akseptor (Otomatis & Terkunci) -->
             <div style="display: flex; flex-direction: column; gap: 6px;">
               <label style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
                 Jenis Akseptor <span style="font-size: 10px; color: #0284c7; font-weight: 800;">(OTOMATIS)</span>
@@ -1624,7 +1630,6 @@
                 Menunggu pemilihan metode...
               </div>
             </div>
-
           </div>
 
           <!-- Keterangan Deteksi Cerdas Riwayat KB -->
@@ -7866,19 +7871,53 @@ function checkAndLockKbTable() {
     if (infoText) infoText.innerText = "Silakan pilih metode kontrasepsi di samping...";
   }
 
-  // 2. Fungsi Deteksi Cerdas Jenis Akseptor
+  // 1. Logika saat Jenis Pelayanan dipilih
+  function onJenisPelayananChange() {
+    const jenisLayanan = document.getElementById("reg_jenis_pelayanan").value;
+    const selMetode = document.getElementById("reg_rencana_metode");
+
+    selMetode.innerHTML = '<option value="">-- PILIH METODE KB --</option>';
+
+    if (!jenisLayanan) {
+      selMetode.disabled = true;
+      selMetode.style.backgroundColor = "#e9ecef";
+      selMetode.innerHTML = '<option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>';
+      evaluasiOtomatisJenisAkseptor();
+      return;
+    }
+
+    selMetode.disabled = false;
+    selMetode.style.backgroundColor = "#ffffff";
+
+    let opsiMetode = [];
+
+    if (jenisLayanan === "PEMASANGAN/PEMAKAIAN") {
+      // Semua ALKON
+      opsiMetode = ["IMPLAN", "IUD", "SUNTIK", "PIL", "KONDOM", "MOW", "MOP"];
+    } else if (jenisLayanan === "CABUT/LEPAS" || jenisLayanan === "BONGKAR PASANG") {
+      // Khusus MKJP / Metode Tindakan Medis
+      opsiMetode = ["IMPLAN", "IUD", "MOW", "MOP"];
+    }
+
+    opsiMetode.forEach(m => {
+      selMetode.add(new Option(m, m));
+    });
+
+    evaluasiOtomatisJenisAkseptor();
+  }
+
+  // 2. Evaluasi Jenis Akseptor
   function evaluasiOtomatisJenisAkseptor() {
+    const jenisLayanan = (document.getElementById("reg_jenis_pelayanan")?.value || "").trim();
+    const metodeBaru = (document.getElementById("reg_rencana_metode")?.value || "").trim().toUpperCase();
     const jenisInput = document.getElementById("reg_jenis_akseptor");
     const badgeDisplay = document.getElementById("badgeJenisAkseptorDisplay");
     const infoText = document.getElementById("infoRiwayatKb");
 
-    const metodeBaru = (document.getElementById("reg_rencana_metode")?.value || "").trim().toUpperCase();
-
-    // Jika metode kontrasepsi belum dipilih
-    if (!metodeBaru) {
+    if (!jenisLayanan || !metodeBaru) {
       if (jenisInput) jenisInput.value = "";
       if (badgeDisplay) {
-        badgeDisplay.innerText = "Menunggu pemilihan metode...";
+        badgeDisplay.innerText = "Menunggu pemilihan pelayanan & metode...";
         badgeDisplay.style.background = "#f1f5f9";
         badgeDisplay.style.color = "#64748b";
         badgeDisplay.style.borderColor = "#cbd5e1";
@@ -7887,7 +7926,6 @@ function checkAndLockKbTable() {
       return;
     }
 
-    // Jika calon PUS belum dipilih
     if (!pusTerpilihDataLayanan) {
       if (jenisInput) jenisInput.value = "";
       if (badgeDisplay) {
@@ -7903,7 +7941,7 @@ function checkAndLockKbTable() {
     const bulanRencana = parseInt(document.getElementById("reg_bulan_rencana")?.value || (new Date().getMonth() + 1), 10);
     const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
 
-    // Cari status terakhir yang terisi sebelum bulan rencana
+    // Ambil status KB sebelum bulan rencana
     let statusTerakhirRaw = "";
     for (let i = bulanRencana - 2; i >= 0; i--) {
       let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
@@ -7913,7 +7951,7 @@ function checkAndLockKbTable() {
       }
     }
 
-    // Jika sebelum bulan rencana belum ada data, cari di seluruh bulan
+    // Fallback jika sebelum bulan rencana kosong
     if (!statusTerakhirRaw) {
       for (let i = 0; i < 12; i++) {
         let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
@@ -7924,42 +7962,54 @@ function checkAndLockKbTable() {
       }
     }
 
-    // Cek apakah pernah ber-KB sebelumnya
-    let pernahKbSebelumnya = false;
-    for (let i = 0; i < 12; i++) {
-      let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
-      let st = evaluateKbStatus(val);
-      if (st.type === "PESERTA_KB") {
-        pernahKbSebelumnya = true;
-        break;
-      }
-    }
-
-    // Klasifikasi jenis akseptor
+    const parsed = evaluateKbStatus(statusTerakhirRaw);
     let hasilDeteksi = "KB BARU (MURNI)";
-    let keterangan = statusTerakhirRaw ? `Status riwayat: ${statusTerakhirRaw}` : "Belum ada riwayat KB tercatat";
+    let keterangan = statusTerakhirRaw ? `Alkon sebelumnya: ${statusTerakhirRaw}` : "Belum ada riwayat KB tercatat";
 
-    if (statusTerakhirRaw) {
-      const parsed = evaluateKbStatus(statusTerakhirRaw);
-
-      if (parsed.type === "PESERTA_KB") {
-        if (metodeBaru === parsed.method) {
-          hasilDeteksi = "KB ULANGAN";
-        } else {
-          hasilDeteksi = "GANTI CARA";
+    // --- LOGIKA ATURAN JENIS PELAYANAN ---
+    if (jenisLayanan === "CABUT/LEPAS") {
+      hasilDeteksi = "CABUT/LEPAS";
+      keterangan = `Pencabutan alkon ${metodeBaru}`;
+    } else if (jenisLayanan === "BONGKAR PASANG") {
+      // Jika alkon sebelumnya sama -> ULANGAN, jika beda -> GANTI CARA
+      if (parsed.type === "PESERTA_KB" && parsed.method === metodeBaru) {
+        hasilDeteksi = "KB ULANGAN";
+        keterangan = `Bongkar pasang alkon yang sama (${metodeBaru})`;
+      } else {
+        hasilDeteksi = "GANTI CARA";
+        keterangan = `Bongkar pasang ganti alkon (sebelumnya: ${parsed.method || statusTerakhirRaw || 'Non-KB'})`;
+      }
+    } else {
+      // PEMASANGAN/PEMAKAIAN BARU
+      let pernahKbSebelumnya = false;
+      for (let i = 0; i < 12; i++) {
+        let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
+        let st = evaluateKbStatus(val);
+        if (st.type === "PESERTA_KB") {
+          pernahKbSebelumnya = true;
+          break;
         }
-      } else if (parsed.type === "BUKAN_PESERTA") {
-        if (parsed.reason === "HAMIL") {
-          hasilDeteksi = "KB BARU (KBPP)";
-        } else if (pernahKbSebelumnya) {
-          hasilDeteksi = "KB BARU (PASCA DO)";
-        } else {
-          hasilDeteksi = "KB BARU (MURNI)";
+      }
+
+      if (statusTerakhirRaw) {
+        if (parsed.type === "PESERTA_KB") {
+          if (metodeBaru === parsed.method) {
+            hasilDeteksi = "KB ULANGAN";
+          } else {
+            hasilDeteksi = "GANTI CARA";
+          }
+        } else if (parsed.type === "BUKAN_PESERTA") {
+          if (parsed.reason === "HAMIL") {
+            hasilDeteksi = "KB BARU (KBPP)";
+          } else if (pernahKbSebelumnya) {
+            hasilDeteksi = "KB BARU (PASCA DO)";
+          } else {
+            hasilDeteksi = "KB BARU (MURNI)";
+          }
         }
       }
     }
 
-    // Set nilai ke input hidden & perbarui tampilan badge teks
     if (jenisInput) jenisInput.value = hasilDeteksi;
     if (badgeDisplay) {
       badgeDisplay.innerText = hasilDeteksi;
@@ -7973,6 +8023,7 @@ function checkAndLockKbTable() {
     }
   }
 
+  // 3. Update Reset Form Pendaftaran
   function resetFormPendaftaranLayanan() {
     document.getElementById("formPendaftaranLayanan").reset();
     document.getElementById("reg_id_pus").value = "";
@@ -7980,15 +8031,27 @@ function checkAndLockKbTable() {
     document.getElementById("reg_kode_kec").value = "";
     document.getElementById("reg_kode_desa").value = "";
     document.getElementById("reg_kode_dusun").value = "";
+    document.getElementById("reg_kode_rt").value = "";
+    document.getElementById("reg_nik_suami").value = "";
     document.getElementById("reg_info_wilayah").value = "";
     document.getElementById("cariPusLayananInput").value = "";
     document.getElementById("hasilPencarianPusLayanan").style.display = "none";
     document.getElementById("hasilPencarianPusLayanan").innerHTML = "";
 
+    const jenisLayananEl = document.getElementById("reg_jenis_pelayanan");
+    if (jenisLayananEl) jenisLayananEl.value = "";
+
+    const selMetode = document.getElementById("reg_rencana_metode");
+    if (selMetode) {
+      selMetode.innerHTML = '<option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>';
+      selMetode.disabled = true;
+      selMetode.style.backgroundColor = "#e9ecef";
+    }
+
     const currentMonth = new Date().getMonth() + 1;
     const blnEl = document.getElementById("reg_bulan_rencana");
     if (blnEl) blnEl.value = String(currentMonth);
-    
+
     const kaderInput = document.getElementById("reg_nama_kader");
     if (kaderInput) {
       kaderInput.value = (currentNamaLengkap || currentUser || "").toUpperCase();
@@ -8002,7 +8065,7 @@ function checkAndLockKbTable() {
 
     const badgeDisplay = document.getElementById("badgeJenisAkseptorDisplay");
     if (badgeDisplay) {
-      badgeDisplay.innerText = "Menunggu pemilihan metode...";
+      badgeDisplay.innerText = "Menunggu pemilihan pelayanan & metode...";
       badgeDisplay.style.background = "#f1f5f9";
       badgeDisplay.style.color = "#64748b";
       badgeDisplay.style.borderColor = "#cbd5e1";
@@ -8022,6 +8085,11 @@ function checkAndLockKbTable() {
 
     if (!idPus || !namaIstri || !nikIstri) {
       errors.push("Calon Akseptor belum dipilih (Lakukan pencarian dan klik salah satu PUS pada Langkah 1)");
+    }
+
+    const jenisPelayanan = (document.getElementById("reg_jenis_pelayanan")?.value || "").trim();
+    if (!jenisPelayanan) {
+      errors.push("Jenis Pelayanan belum dipilih");
     }
 
     // Validasi Bagian 2: Rencana Pelayanan & Tindakan KB
@@ -8082,6 +8150,7 @@ function checkAndLockKbTable() {
       kode_desa: document.getElementById("reg_kode_desa").value,
       kode_dusun: document.getElementById("reg_kode_dusun").value,
       kode_rt: document.getElementById("reg_kode_rt").value || null,
+      jenis_pelayanan: jenisPelayanan,
       rencana_metode: rencanaMetode,
       jenis_akseptor: jenisAkseptor, // <-- Properti disimpan di sini
       faskes_tujuan: document.getElementById("reg_faskes_tujuan").value.trim() || null,
