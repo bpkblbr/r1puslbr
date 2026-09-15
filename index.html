@@ -3230,7 +3230,7 @@ function checkAndLockKbTable() {
     }
 
     checkPendingMutasiNotifications();
-    if (typeof loadAntreanLayananTable === "function") loadAntreanLayananTable();
+    if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
     if (typeof refreshGreeting === "function") refreshGreeting();
   }
 
@@ -7595,11 +7595,15 @@ function checkAndLockKbTable() {
 
     // Jika periode belum ditentukan lengkap, jangan muat data
     if (!bMulai || !bSampai) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Silakan tentukan periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Silakan tentukan periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
+      }
       return;
     }
 
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px;">Memuat antrean...</td></tr>`;
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px;">Memuat antrean...</td></tr>`;
+    }
 
     const statusFilter = document.getElementById("filterStatusLayanan").value;
     const tahunFilter = parseInt(document.getElementById("filterLayananTahun").value, 10);
@@ -7648,19 +7652,56 @@ function checkAndLockKbTable() {
 
     const { data, error } = await query;
     if (error || !data) {
-      tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center; padding:15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center; padding:15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
+      }
       return;
     }
 
     cachedAntreanLayanan = data;
-    const pendingCount = data.filter(d => d.status === 'TERDAFTAR').length;
-    const badge = document.getElementById("badgeAntreanLayanan");
-    if (badge) {
-      badge.innerText = pendingCount;
-      badge.style.display = pendingCount > 0 ? "inline-block" : "none";
-    }
-
     renderAntreanLayananTable();
+  }
+
+  async function updateDashboardBadgeLayanan() {
+    if (!currentUser) return;
+
+    try {
+      const currentYear = new Date().getFullYear();
+      let query = db.from('pendaftaran_layanan_kb')
+        .select('id, kode_dusun', { count: 'exact', head: false })
+        .eq('status', 'TERDAFTAR')
+        .eq('tahun', currentYear);
+
+      // 1. Batasan Wilayah Berdasarkan Hak Login
+      if (isDesaRole()) {
+        query = query.eq('kode_kec', String(userKodeKec).padStart(2, '0'))
+                     .eq('kode_desa', String(userKodeDesa).padStart(4, '0'));
+                     
+        // Jika akun kader dibatasi dusun tertentu
+        if (userKodeDusunList && userKodeDusunList.length > 0) {
+          query = query.in('kode_dusun', userKodeDusunList);
+        }
+      } else if (isKecRole()) {
+        query = query.eq('kode_kec', String(userKodeKec).padStart(2, '0'));
+      } else if (userKodeKab) {
+        query = query.eq('kode_kab', String(userKodeKab).padStart(2, '0'));
+      }
+
+      const { data, count, error } = await query;
+      if (error) {
+        console.error("Gagal memuat badge layanan:", error);
+        return;
+      }
+
+      const totalPending = count !== null ? count : (data ? data.length : 0);
+      const badge = document.getElementById("badgeAntreanLayanan");
+      if (badge) {
+        badge.innerText = totalPending;
+        badge.style.display = totalPending > 0 ? "inline-block" : "none";
+      }
+    } catch (err) {
+      console.error("Error updateDashboardBadgeLayanan:", err);
+    }
   }
 
   function renderAntreanLayananTable() {
