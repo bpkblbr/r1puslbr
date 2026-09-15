@@ -1547,6 +1547,7 @@
         <input type="hidden" id="reg_kode_kec" value="">
         <input type="hidden" id="reg_kode_desa" value="">
         <input type="hidden" id="reg_kode_dusun" value="">
+        <input type="hidden" id="reg_nik_suami" value="">
 
         <!-- KARTU A: RINGKASAN IDENTITAS PUS TERPILIH -->
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 18px;">
@@ -7850,6 +7851,8 @@ function checkAndLockKbTable() {
     document.getElementById("reg_kode_desa").value = item.kode_desa || "";
     document.getElementById("reg_kode_dusun").value = item.kode_dusun || "";
 
+    document.getElementById("reg_nik_suami").value = item.nik_suami || "";
+
     document.getElementById("reg_nama_istri").value = item.nama_istri || "";
     document.getElementById("reg_nik_istri").value = item.nik_istri || "";
     document.getElementById("reg_nama_suami").value = item.nama_suami || "";
@@ -8072,7 +8075,8 @@ function checkAndLockKbTable() {
       nama_istri: namaIstri,
       nik_istri: nikIstri,
       nama_suami: document.getElementById("reg_nama_suami").value,
-	  kode_kab: userKodeKab || "01",
+      nik_suami: document.getElementById("reg_nik_suami").value || null,
+	    kode_kab: userKodeKab || "01",
       kode_kec: document.getElementById("reg_kode_kec").value,
       kode_desa: document.getElementById("reg_kode_desa").value,
       kode_dusun: document.getElementById("reg_kode_dusun").value,
