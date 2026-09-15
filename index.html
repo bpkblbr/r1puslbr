@@ -1891,6 +1891,11 @@
         // 3. SETELAH showDashboardView() SELESAI, BARU SET GREETING
         setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
 
+        // Panggil fungsi realtime di dalam window.onload setelah sesi valid:
+        if (typeof initRealtimePelayananKb === "function") {
+          initRealtimePelayananKb();
+        }
+
       } catch (err) {
         console.error("Gagal membaca session:", err);
         localStorage.removeItem("pus_app_session");
@@ -3198,6 +3203,7 @@ function checkAndLockKbTable() {
       document.getElementById("appContainer").style.display = "block";
       
       showDashboardView();
+      if (typeof initRealtimePelayananKb === "function") initRealtimePelayananKb();
 
     } catch (err) {
       Swal.fire('Error', err.message, 'error');
@@ -7704,6 +7710,31 @@ function checkAndLockKbTable() {
     }
   }
 
+  // REALTIME LISTENER SUPABASE UNTUK TABEL PENDAFTARAN LAYANAN KB
+  function initRealtimePelayananKb() {
+    db.channel('public:pendaftaran_layanan_kb')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'pendaftaran_layanan_kb' 
+      }, (payload) => {
+        // Otomatis perbarui angka notifikasi di dashboard
+        if (typeof updateDashboardBadgeLayanan === "function") {
+          updateDashboardBadgeLayanan();
+        }
+        
+        // Jika modal pelayanan sedang dibuka dan bulan sudah dipilih, refresh tabelnya juga
+        const modal = document.getElementById("modalPelayananKb");
+        const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
+        const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
+        
+        if (modal && modal.style.display === "block" && bMulai && bSampai) {
+          loadAntreanLayananTable();
+        }
+      })
+      .subscribe();
+  }
+
   function renderAntreanLayananTable() {
     const tbody = document.getElementById("antreanLayananTbody");
     tbody.innerHTML = "";
@@ -8215,6 +8246,7 @@ function checkAndLockKbTable() {
 
       resetFormPendaftaranLayanan();
       switchLayananTab('antrean');
+      if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();      
 
     } catch (err) {
       Swal.fire("Gagal Mendaftar", err.message, "error");
@@ -8320,6 +8352,7 @@ function checkAndLockKbTable() {
       });
 
       loadAntreanLayananTable();
+      if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
 
     } catch (err) {
       console.error("Gagal realisasi layanan:", err);
@@ -8345,10 +8378,12 @@ function checkAndLockKbTable() {
 
         if (error) {
           Swal.fire("Gagal", error.message, "error");
+
         } else {
-          Swal.fire("Dibatalkan", "Pendaftaran telah dibatalkan.", "success");
-          loadAntreanLayananTable();
-        }
+        Swal.fire("Dibatalkan", "Pendaftaran telah dibatalkan.", "success");
+        loadAntreanLayananTable();
+        if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
+        }        
       }
     });
   }
