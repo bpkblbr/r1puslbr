@@ -6632,6 +6632,11 @@ function checkAndLockKbTable() {
         userKodeDesa = "";
         userKodeDusunList = [];
 
+        if (realtimeLayananChannel) {
+          db.removeChannel(realtimeLayananChannel);
+          realtimeLayananChannel = null;
+        }
+
         localStorage.removeItem("pus_app_session");
 
         // Reset seluruh modul dan form
@@ -7716,29 +7721,41 @@ function checkAndLockKbTable() {
     }
   }
 
+  let realtimeLayananChannel = null;
+
   // REALTIME LISTENER SUPABASE UNTUK TABEL PENDAFTARAN LAYANAN KB
   function initRealtimePelayananKb() {
-    db.channel('public:pendaftaran_layanan_kb')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'pendaftaran_layanan_kb' 
-      }, (payload) => {
-        // Otomatis perbarui angka notifikasi di dashboard
-        if (typeof updateDashboardBadgeLayanan === "function") {
-          updateDashboardBadgeLayanan();
-        }
-        
-        // Jika modal pelayanan sedang dibuka dan bulan sudah dipilih, refresh tabelnya juga
-        const modal = document.getElementById("modalPelayananKb");
-        const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
-        const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
-        
-        if (modal && modal.style.display === "block" && bMulai && bSampai) {
-          loadAntreanLayananTable();
-        }
-      })
-      .subscribe();
+    // 1. Jika channel sudah pernah dibuat dan aktif, tidak perlu buat ulang
+    if (realtimeLayananChannel) {
+      return;
+    }
+
+    try {
+      // 2. Buat dan simpan ke variabel channel
+      realtimeLayananChannel = db.channel('public:pendaftaran_layanan_kb')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'pendaftaran_layanan_kb' 
+        }, (payload) => {
+          // Otomatis perbarui angka notifikasi di dashboard
+          if (typeof updateDashboardBadgeLayanan === "function") {
+            updateDashboardBadgeLayanan();
+          }
+          
+          // Jika modal pelayanan sedang dibuka dan bulan sudah dipilih, refresh tabelnya juga
+          const modal = document.getElementById("modalPelayananKb");
+          const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
+          const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
+          
+          if (modal && modal.style.display === "block" && bMulai && bSampai) {
+            loadAntreanLayananTable();
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.error("Gagal inisialisasi Realtime Supabase:", err);
+    }
   }
 
   function renderAntreanLayananTable() {
