@@ -7100,7 +7100,7 @@ function checkAndLockKbTable() {
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
-        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: false });
 
         if (!rows || rows.length <= 1) {
           Swal.fire("File Kosong", "File Excel tidak memiliki baris data!", "error");
@@ -7135,7 +7135,10 @@ function checkAndLockKbTable() {
           }
 
           let idPus = String(r[0] || "").trim();
-          let isDummy = (nikIstri === "9999999999999999");
+          let isDummy = (nikIstri === "9999999999999999" || /^9{10,}$/.test(rawNikIstri) || rawNikIstri === "10000000000000000");
+          if (isDummy) {
+            nikIstri = "9999999999999999";
+          }
           let namaIstriVal = String(r[17] || "").toUpperCase().trim();
           let namaSuamiVal = String(r[15] || "").toUpperCase().trim();
 
