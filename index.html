@@ -6985,6 +6985,58 @@ function checkAndLockKbTable() {
     XLSX.writeFile(wb, `DAFTAR_NIK_GANDA_DILEWATI_${new Date().getTime()}.xlsx`);
   }
 
+  // Konversi format tanggal (baik Serial Number Excel maupun String teks) ke format 'YYYY-MM-DD'
+  function formatExcelDate(val) {
+    if (val === undefined || val === null || val === "") return null;
+
+    // 1. Tangani jika berupa Serial Number Excel (angka murni, misal: 33757 atau "33757")
+    if (!isNaN(val) && typeof val !== 'boolean') {
+      const serial = parseFloat(val);
+      if (serial <= 0) return null;
+
+      // Hitung tanggal lokal tanpa konversi ISO string agar tidak bergeser hari karena UTC
+      const utcDays = Math.floor(serial - 25569);
+      const dateObj = new Date(utcDays * 86400 * 1000);
+
+      if (!isNaN(dateObj.getTime())) {
+        const year = dateObj.getUTCFullYear();
+        const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    }
+
+    // 2. Tangani jika berupa string tanggal format Indonesia: DD/MM/YYYY atau DD-MM-YYYY
+    const strVal = String(val).trim();
+    const dmyMatch = strVal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmyMatch) {
+      const day = dmyMatch[1].padStart(2, '0');
+      const month = dmyMatch[2].padStart(2, '0');
+      const year = dmyMatch[3];
+      return `${year}-${month}-${day}`;
+    }
+
+    // 3. Tangani jika sudah dalam format ISO: YYYY-MM-DD
+    const ymdMatch = strVal.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (ymdMatch) {
+      const year = ymdMatch[1];
+      const month = ymdMatch[2].padStart(2, '0');
+      const day = ymdMatch[3].padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // 4. Fallback jika berupa objek Date bawaan JavaScript
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    return null;
+  }
+
   // Logika upload Excel dengan pencatatan identitas NIK ganda
   async function handleUploadExcelFile(event) {
     event.preventDefault();
@@ -7172,7 +7224,7 @@ function checkAndLockKbTable() {
             nik_suami: nikSuami,
             nama_istri: namaIstriVal,
             nik_istri: nikIstri,
-            tgl_lahir_istri: r[19] || null,
+            tgl_lahir_istri: formatExcelDate(r[19]),
             umur_istri: parseInt(r[20] || 0, 10),
             jumlah_anak: parseInt(r[21] || 0, 10),
             umur_anak_terkecil: parseInt(r[22] || 0, 10),
