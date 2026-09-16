@@ -6942,48 +6942,48 @@ function checkAndLockKbTable() {
 
   // Fungsi mengunduh daftar baris duplikat yang dilewati ke file Excel
   function downloadSkippedDuplicatesExcel() {
-    if (!lastSkippedRowsData || lastSkippedRowsData.length === 0) {
-      Swal.fire("Info", "Tidak ada data duplikat untuk diunduh.", "info");
-      return;
-    }
-
-    const headers = [
-      "Alasan Dilewati", "Baris Excel", "ID PUS", "NIK Istri", "Nama Istri", 
-      "NIK Suami", "Nama Suami", "Kecamatan", "Desa", "Dusun", "RT"
-    ];
-
-    const rows = lastSkippedRowsData.map(item => [
-      item.alasan,
-      item.barisKe,
-      item.idPus || "-",
-      String(item.nikIstri),
-      item.namaIstri,
-      String(item.nikSuami),
-      item.namaSuami,
-      item.kecamatan,
-      item.desa,
-      item.dusun,
-      item.rt
-    ]);
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    
-    // Format NIK sebagai text
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
-        if (ws[cell_ref] && [3, 5].includes(C)) {
-          ws[cell_ref].t = 's';
-        }
-      }
-    }
-    ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 22 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 10 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "NIK_GANDA_DILEWATI");
-    XLSX.writeFile(wb, `DAFTAR_NIK_GANDA_DILEWATI_${new Date().getTime()}.xlsx`);
+  if (!lastSkippedRowsData || lastSkippedRowsData.length === 0) {
+    Swal.fire("Info", "Tidak ada data duplikat yang dilewati.", "info");
+    return;
   }
+
+  // Susun data sesuai urutan kolom template
+  const excelRows = lastSkippedRowsData.map((d, index) => ({
+    "NO": index + 1,
+    "KECAMATAN": d.kecamatan || "",
+    "DESA": d.desa || "",
+    "BARIS": d.barisKe || "-",
+    "TAHUN": String(d.tahun || ""),
+    "ID PUS": d.idPus || "-",
+    "NAMA ISTRI": d.namaIstri || "",
+    "NIK ISTRI": String(d.nikIstri || ""), // Pastikan NIK berupa teks agar digit tidak terpotong
+    "NAMA SUAMI": d.namaSuami || "",
+    "KETERANGAN / ALASAN": d.alasan || "",
+    "STATUS": d.status || "DIELIMINASI / DIHAPUS"
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(excelRows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Log_Duplikat_Dieliminasi");
+
+  // Atur lebar kolom agar proporsional dan mudah dibaca
+  worksheet['!cols'] = [
+    { wch: 5 },   // NO
+    { wch: 18 },  // KECAMATAN
+    { wch: 22 },  // DESA
+    { wch: 8 },   // BARIS
+    { wch: 8 },   // TAHUN
+    { wch: 22 },  // ID PUS
+    { wch: 25 },  // NAMA ISTRI
+    { wch: 20 },  // NIK ISTRI
+    { wch: 25 },  // NAMA SUAMI
+    { wch: 65 },  // KETERANGAN / ALASAN
+    { wch: 24 }   // STATUS
+  ];
+
+  const tglSekarang = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(workbook, `LOG_DUPLIKAT_PUS_TERELIMINASI_${tglSekarang}.xlsx`);
+}
 
   // Konversi format tanggal (baik Serial Number Excel maupun String teks) ke format 'YYYY-MM-DD'
   function formatExcelDate(val) {
@@ -7058,9 +7058,11 @@ function checkAndLockKbTable() {
     btn.innerText = "Membaca Database & File...";
 
     // 1. Ambil NIK Istri yang SUDAH ADA di Supabase untuk tahun ini
+    // 1. Ambil NIK Istri yang SUDAH ADA di Supabase untuk tahun ini
     const { data: dbExistingRows } = await db
       .from('data_pus')
-      .select('nik_istri, nama_istri, kb_jan, kb_feb, kb_mar, kb_apr, kb_mei, kb_jun, kb_jul, kb_agu, kb_sep, kb_okt, kb_nov, kb_des')
+      // Tambahkan kecamatan_nama & desa_nama ke dalam select
+      .select('nik_istri, nama_istri, kecamatan_nama, desa_nama, kb_jan, kb_feb, kb_mar, kb_apr, kb_mei, kb_jun, kb_jul, kb_agu, kb_sep, kb_okt, kb_nov, kb_des')
       .eq('tahun', targetTahun);
 
     const dbActiveIstriNiks = new Map();
@@ -7080,7 +7082,12 @@ function checkAndLockKbTable() {
             }
           }
           if (!isMutasi) {
-            dbActiveIstriNiks.set(nik, row.nama_istri || "");
+            // SIMPAN SEBAGAI OBJECT AGAR NAMA, DESA, DAN KECAMATAN TERBACA DI LOG
+            dbActiveIstriNiks.set(nik, {
+              nama: row.nama_istri || "",
+              desa: row.desa_nama || "",
+              kecamatan: row.kecamatan_nama || ""
+            });
           }
         }
       });
@@ -7132,44 +7139,42 @@ function checkAndLockKbTable() {
           let namaIstriVal = String(r[17] || "").toUpperCase().trim();
           let namaSuamiVal = String(r[15] || "").toUpperCase().trim();
 
-          // Evaluasi Duplikat jika bukan mode edit (ID_PUS kosong)
-          if (!idPus && !isDummy && !isMutasi && nikIstri) {
-            // Cek apakah sudah terdaftar aktif di database
+          // Saat mendeteksi duplikat dengan database:
             if (dbActiveIstriNiks.has(nikIstri)) {
+              const pemilikDb = dbActiveIstriNiks.get(nikIstri);
               lastSkippedRowsData.push({
-                alasan: "Sudah Terdaftar Aktif di Database",
-                barisKe: idx + 2,
-                idPus: r[0],
-                nikIstri: nikIstri,
-                namaIstri: namaIstriVal,
-                nikSuami: nikSuami,
-                namaSuami: namaSuamiVal,
                 kecamatan: r[7] || "",
                 desa: r[9] || "",
-                dusun: r[11] || "",
-                rt: r[13] || ""
+                barisKe: idx + 2,
+                tahun: targetTahun,
+                idPus: r[0] || "-",
+                namaIstri: namaIstriVal,
+                nikIstri: nikIstri,
+                namaSuami: namaSuamiVal,
+                alasan: `Duplikat NIK Istri Aktif dengan ${pemilikDb.nama || 'PUS Lain'} [${pemilikDb.desa || ''}]`,
+                status: "DIELIMINASI / DIHAPUS"
               });
               return;
             }
 
-            // Cek apakah ganda di dalam file Excel yang sama
+            // Saat mendeteksi ganda sesama baris di file Excel:
             if (seenIstriNiksInExcel.has(nikIstri)) {
+              const prevRow = seenIstriNiksInExcel.get(nikIstri);
               lastSkippedRowsData.push({
-                alasan: "NIK Ganda di Dalam File Excel",
-                barisKe: idx + 2,
-                idPus: r[0],
-                nikIstri: nikIstri,
-                namaIstri: namaIstriVal,
-                nikSuami: nikSuami,
-                namaSuami: namaSuamiVal,
                 kecamatan: r[7] || "",
                 desa: r[9] || "",
-                dusun: r[11] || "",
-                rt: r[13] || ""
+                barisKe: idx + 2,
+                tahun: targetTahun,
+                idPus: r[0] || "-",
+                namaIstri: namaIstriVal,
+                nikIstri: nikIstri,
+                namaSuami: namaSuamiVal,
+                alasan: `Duplikat NIK Istri Aktif ganda dengan ${prevRow.nama} [Desa ${prevRow.desa} - Baris ${prevRow.baris}]`,
+                status: "DIELIMINASI / DIHAPUS"
               });
               return;
             }
-            seenIstriNiksInExcel.set(nikIstri, namaIstriVal);
+            seenIstriNiksInExcel.set(nikIstri, { nama: namaIstriVal, desa: r[9] || "", baris: idx + 2 });
           }
 
           let kdProv = String(r[4] || "").trim().padStart(2, '0');
