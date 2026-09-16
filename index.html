@@ -3351,6 +3351,18 @@ function checkAndLockKbTable() {
       return;
     }    
 
+    // Helper untuk mengambil nama kecamatan dari master_wilayah cache
+    function getNamaKecamatanByKode(kdKec) {
+      if (!kdKec) return "-";
+      let cleanKd = String(kdKec).trim().padStart(2, '0');
+      for (let kdKab in dataKecamatan) {
+        if (dataKecamatan[kdKab] && dataKecamatan[kdKab][cleanKd]) {
+          return dataKecamatan[kdKab][cleanKd];
+        }
+      }
+      return kdKec;
+    }
+
     cachedPendingMutasiList.forEach((item, idx) => {
       const tr = document.createElement("tr");
       
@@ -3378,9 +3390,11 @@ function checkAndLockKbTable() {
         ? `<button type="button" class="btn-nav btn-action" style="padding: 5px 10px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>`
         : `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1; padding:4px 8px; border-radius:4px; font-size:10.5px; font-weight:600; display:inline-block;" title="${lockReason}">🔒 ${lockReason}</span>`;
 
+      const namaKecAsal = getNamaKecamatanByKode(item.kode_kec_asal);
+
       tr.innerHTML = `
         <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
-        <td><b>Desa ${item.desa_asal}</b><br><small style="color:#64748b;">Kec: ${item.kode_kec_asal}</small></td>
+        <td><b>Desa ${item.desa_asal}</b><br><small style="color:#64748b;">Kec: ${namaKecAsal}</small></td>
         <td>
           Istri: <b>${item.nama_istri}</b> (${item.nik_istri})<br>
           Suami: ${item.nama_suami}
