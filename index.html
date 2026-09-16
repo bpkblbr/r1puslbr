@@ -7139,7 +7139,9 @@ function checkAndLockKbTable() {
           let namaIstriVal = String(r[17] || "").toUpperCase().trim();
           let namaSuamiVal = String(r[15] || "").toUpperCase().trim();
 
-          // Saat mendeteksi duplikat dengan database:
+          if (!idPus && !isDummy && !isMutasi && nikIstri) {
+
+            // 1. Cek apakah sudah ada di database Supabase
             if (dbActiveIstriNiks.has(nikIstri)) {
               const pemilikDb = dbActiveIstriNiks.get(nikIstri);
               lastSkippedRowsData.push({
@@ -7157,7 +7159,7 @@ function checkAndLockKbTable() {
               return;
             }
 
-            // Saat mendeteksi ganda sesama baris di file Excel:
+            // 2. Cek apakah ganda sesama baris di dalam file Excel yang sama
             if (seenIstriNiksInExcel.has(nikIstri)) {
               const prevRow = seenIstriNiksInExcel.get(nikIstri);
               lastSkippedRowsData.push({
@@ -7174,7 +7176,9 @@ function checkAndLockKbTable() {
               });
               return;
             }
+
             seenIstriNiksInExcel.set(nikIstri, { nama: namaIstriVal, desa: r[9] || "", baris: idx + 2 });
+          }
           
 
           let kdProv = String(r[4] || "").trim().padStart(2, '0');
