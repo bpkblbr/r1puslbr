@@ -3747,28 +3747,28 @@ function checkAndLockKbTable() {
     const kdDesa = document.getElementById("kode_desa").value.padStart(4, '0');
     const kdDsn  = document.getElementById("kode_dusun").value.padStart(4, '0');
     const kdRt   = document.getElementById("kode_rt").value.padStart(3, '0');
-
-    const originalIdPus = document.getElementById("original_id_pus").value.trim();
-    const origDsn = document.getElementById("original_kode_dusun").value.trim();
-    const origRt = document.getElementById("original_kode_rt").value.trim();
-
-    // Deteksi apakah ini edit data tapi Dusun atau RT-nya berubah (Pindah dalam desa)
-    const isPindahInternal = (isEditMode && (origDsn !== kdDsn || origRt !== kdRt));
-
-    // Jika data baru ATAU terjadi pindah Dusun/RT internal, buatkan ID PUS baru
-    if (!idPus || isPindahInternal) {
-      const prefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
+    
+    const expectedPrefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;    
+    
+    const oldIdPus = document.getElementById("original_id_pus").value.trim();
+    let isRelocatedInSameVillage = false;
+    
+    if (oldIdPus && !oldIdPus.startsWith(expectedPrefix)) {
+      isRelocatedInSameVillage = true;
+      idPus = ""; // Kosongkan agar masuk ke generator ID baru di bawah
+    }
+    
+    if (!idPus) {
       const { data: matchedRows } = await db
         .from('data_pus')
         .select('id_pus')
-        .ilike('id_pus', `${prefix}%`)
+        .ilike('id_pus', `${expectedPrefix}%`)
         .eq('tahun', thn);
 
       let maxSeq = 0;
       if (matchedRows && matchedRows.length > 0) {
         matchedRows.forEach(row => {
           const cleanId = String(row.id_pus || "").trim();
-          // HANYA ambil 3 karakter paling belakang jika panjang ID sesuai standar
           if (cleanId.length >= 3) {
             const lastThree = cleanId.slice(-3);
             const seqPart = parseInt(lastThree, 10);
@@ -3780,7 +3780,7 @@ function checkAndLockKbTable() {
       }
 
       const nextNum = maxSeq + 1;
-      idPus = `${prefix}${String(nextNum).padStart(3, '0')}`;
+      idPus = `${expectedPrefix}${String(nextNum).padStart(3, '0')}`;
       document.getElementById("id_pus").value = idPus;
     }
 
@@ -3826,7 +3826,7 @@ function checkAndLockKbTable() {
     const { error } = await db.from('data_pus').upsert([payload], { onConflict: 'id_pus,tahun' });
     if (error) throw error;
 
-    if (isPindahInternal && originalIdPus && originalIdPus !== idPus) {
+    if (isRelocatedInSameVillage && originalIdPus && originalIdPus !== idPus) {
       const { error: errDelOld } = await db.from('data_pus')
         .delete()
         .eq('id_pus', originalIdPus)
