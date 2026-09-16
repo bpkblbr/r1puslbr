@@ -3754,9 +3754,10 @@ function checkAndLockKbTable() {
       if (matchedRows && matchedRows.length > 0) {
         matchedRows.forEach(row => {
           const cleanId = String(row.id_pus || "").trim();
-          const matches = cleanId.match(/\d+$/);
-          if (matches) {
-            const seqPart = parseInt(matches[0], 10);
+          // HANYA ambil 3 karakter paling belakang jika panjang ID sesuai standar
+          if (cleanId.length >= 3) {
+            const lastThree = cleanId.slice(-3);
+            const seqPart = parseInt(lastThree, 10);
             if (!isNaN(seqPart) && seqPart > maxSeq) {
               maxSeq = seqPart;
             }
