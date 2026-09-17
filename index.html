@@ -7496,6 +7496,13 @@ function checkAndLockKbTable() {
       return;
     }
 
+    Swal.fire({
+      title: 'Memproses Akun...',
+      text: 'Membaca dan memvalidasi baris pengguna...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     const reader = new FileReader();
     reader.onload = async function(e) {
       try {
@@ -7503,40 +7510,40 @@ function checkAndLockKbTable() {
         const workbook = XLSX.read(data, { type: 'array' });
         const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
 
-        if (rows.length <= 1) {
+        if (!rows || rows.length <= 1) {
           Swal.fire("Kosong", "File Excel tidak memiliki data baris!", "warning");
           return;
         }
 
-        const payloadList = [];
+        // Gunakan Map agar username ganda di Excel otomatis ter-deduplikasi
+        const userMap = new Map();
         let rejectedCount = 0;
+        let duplicateInFileCount = 0;
 
-        rows.slice(1).forEach((r, idx) => {
+        rows.slice(1).forEach((r) => {
           const usernameVal = String(r[1] || "").trim();
-          if (!usernameVal) return;
+          const passVal = String(r[2] || "").trim();
+
+          // Lewati jika username atau password kosong
+          if (!usernameVal || !passVal) return;
 
           let roleVal = String(r[3] || "User Desa").trim();
           const roleUpper = roleVal.toUpperCase();
 
-          // ==========================================================
-          // PROTEKSI HIERARKI PERAN DAN WILAYAH
-          // ==========================================================
+          // Pembatasan hierarki kewenangan
           if (isKecRole()) {
-            // Admin Kec DILARANG membuat Admin Kab, Admin Kec, atau peran selain User Desa
             if (roleUpper.includes("KAB") || roleUpper.includes("KEC") || roleUpper === "ADMIN" || roleVal !== "User Desa") {
               rejectedCount++;
-              return; // Lewati baris ini
+              return;
             }
           } else if (isKabRole()) {
-            // Admin Kab DILARANG membuat akun sesama Admin Kab
             if (roleUpper.includes("KAB") || roleUpper === "ADMIN") {
               rejectedCount++;
-              return; // Lewati baris ini
+              return;
             }
           }
-          // ==========================================================
 
-          // Sanitasi kode dusun list
+          // Sanitasi daftar hak akses dusun
           let rawDsn = String(r[7] || "").trim();
           let cleanDsnList = null;
           if (roleVal === "User Desa" && rawDsn) {
@@ -7547,20 +7554,29 @@ function checkAndLockKbTable() {
               .join(',');
           }
 
-          // Kunci wilayah: Jika Admin Kec mengunggah, paksa kode_kec sesuai kecamatannya
-          const finalKec = isKecRole() ? userKodeKec : String(r[5] || "").trim().padStart(2, '0');
+          const finalKec = isKecRole() ? userKodeKec : (r[5] ? String(r[5]).trim().padStart(2, '0') : null);
+          const finalKab = String(r[4] || userKodeKab || "01").trim().padStart(2, '0');
+          const finalDesa = r[6] ? String(r[6]).trim().padStart(4, '0') : null;
 
-          payloadList.push({
+          const userKey = usernameVal.toLowerCase();
+          if (userMap.has(userKey)) {
+            duplicateInFileCount++;
+          }
+
+          // Menyimpan baris pengguna (jika duplikat, akan menimpa baris sebelumnya sehingga unik)
+          userMap.set(userKey, {
             nama_lengkap: String(r[0] || "").trim() || null,
             username: usernameVal,
-            password_hash: String(r[2] || "").trim(),
+            password_hash: passVal,
             role: roleVal,
-            kode_kab: String(r[4] || userKodeKab || "01").trim().padStart(2, '0'),
+            kode_kab: finalKab,
             kode_kec: finalKec,
-            kode_desa: String(r[6] || "").trim().padStart(4, '0'),
+            kode_desa: finalDesa,
             kode_dusun_list: cleanDsnList
           });
         });
+
+        const payloadList = Array.from(userMap.values());
 
         if (payloadList.length === 0) {
           Swal.fire({
@@ -7573,12 +7589,19 @@ function checkAndLockKbTable() {
           return;
         }
 
-        const { error } = await db.from('users').upsert(payloadList, { onConflict: 'username' });
+        // Jalankan upsert batch aman
+        const { error } = await db
+          .from('users')
+          .upsert(payloadList, { onConflict: 'username' });
+
         if (error) throw error;
 
         let pesanSukses = `Sebanyak <b>${payloadList.length}</b> akun pengguna berhasil disinkronkan!`;
+        if (duplicateInFileCount > 0) {
+          pesanSukses += `<br><span style="color:#d97706; font-size:12px;">(${duplicateInFileCount} baris ganda di berkas Excel otomatis digabungkan)</span>`;
+        }
         if (rejectedCount > 0) {
-          pesanSukses += `<br><span style="color:#ef4444; font-size:12px;">(${rejectedCount} baris akun dilewati karena melebihi hak akses peran Anda)</span>`;
+          pesanSukses += `<br><span style="color:#ef4444; font-size:12px;">(${rejectedCount} baris akun dilewati karena di luar hak akses peran Anda)</span>`;
         }
 
         Swal.fire({
@@ -7587,9 +7610,14 @@ function checkAndLockKbTable() {
           html: pesanSukses
         });
 
+        // Reset input berkas & perbarui tabel pengguna
+        const fileInput = document.getElementById("excelUserInput");
+        if (fileInput) fileInput.value = "";
         loadUsersList();
+
       } catch (err) {
-        Swal.fire("Error", "Gagal memproses file pengguna: " + err.message, "error");
+        console.error("Upload User Error:", err);
+        Swal.fire("Error", "Gagal memproses berkas pengguna: " + err.message, "error");
       }
     };
     reader.readAsArrayBuffer(file);
