@@ -1875,7 +1875,7 @@
         // 1. Tampilkan kontainer dashboard terlebih dahulu
         document.getElementById("loginContainer").style.display = "none";
         document.getElementById("appContainer").style.display = "block";
-        showDashboardView(); 
+        showDashboardView();        
 
         // 2. Ambil nama wilayah
         let namaWilayahDinamis = "";
@@ -1899,6 +1899,13 @@
 
         // 3. SETELAH showDashboardView() SELESAI, BARU SET GREETING
         setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
+
+        if (typeof initRealtimePelayananKb === "function") {
+          initRealtimePelayananKb();
+        }
+        if (typeof initRealtimeMutasi === "function") {
+          initRealtimeMutasi();
+        }
 
         // Panggil fungsi realtime di dalam window.onload setelah sesi valid:
         if (typeof initRealtimePelayananKb === "function") {
@@ -3214,6 +3221,13 @@ function checkAndLockKbTable() {
       showDashboardView();
       if (typeof initRealtimePelayananKb === "function") initRealtimePelayananKb();
 
+      if (typeof initRealtimePelayananKb === "function") {
+        initRealtimePelayananKb();
+      }
+      if (typeof initRealtimeMutasi === "function") {
+        initRealtimeMutasi();
+      }
+
     } catch (err) {
       Swal.fire('Error', err.message, 'error');
     } finally {
@@ -3251,66 +3265,80 @@ function checkAndLockKbTable() {
 
   /// =========================================================================
   // FUNGSI INBOX & NOTIFIKASI MUTASI MASUK (BERDIRI SENDIRI DI TOP-LEVEL)
-  // =========================================================================
+  // =========================================================================  
   let cachedPendingMutasiList = [];
+  let realtimeMutasiChannel = null;
 
   async function checkPendingMutasiNotifications() {
-  if (!currentUser) return;
+    if (!currentUser) return;
 
-  try {
-    const { data, error } = await db.from('mutasi_pus')
-      .select('*')
-      .ilike('status', 'PENDING');
+    try {
+      const { data, error } = await db.from('mutasi_pus')
+        .select('*')
+        .ilike('status', 'PENDING');
 
-    if (error) {
-      console.error("Gagal mengambil notifikasi mutasi:", error);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      cachedPendingMutasiList = [];
-      updateInboxBadge(0);
-      return;
-    }
-
-    // Normalisasi kode login: buang karakter selain angka dan parse aman
-    const cleanUserKec = String(userKodeKec || "").replace(/\D/g, "");
-    const cleanUserDesa = String(userKodeDesa || "").replace(/\D/g, "");
-    
-    const userKecNum = cleanUserKec ? parseInt(cleanUserKec, 10) : null;
-    const userDesaNum = cleanUserDesa ? parseInt(cleanUserDesa, 10) : null;
-
-    cachedPendingMutasiList = data.filter(item => {
-      const itemKecStr = String(item.kode_kec_tujuan || "").replace(/\D/g, "");
-      const itemDesaStr = String(item.kode_desa_tujuan || "").replace(/\D/g, "");
-
-      const itemKecNum = itemKecStr ? parseInt(itemKecStr, 10) : null;
-      const itemDesaNum = itemDesaStr ? parseInt(itemDesaStr, 10) : null;
-
-      if (isKabRole()) {
-        return true;
-      } else if (isKecRole()) {
-        return userKecNum !== null && itemKecNum === userKecNum;
-      } else {
-        // User Desa
-        return (
-          userKecNum !== null &&
-          userDesaNum !== null &&
-          itemKecNum === userKecNum &&
-          itemDesaNum === userDesaNum
-        );
+      if (error) {
+        console.error("Gagal mengambil notifikasi mutasi:", error);
+        return;
       }
-    });
 
-    console.log("Total mutasi PENDING di DB:", data.length);
-    console.log("Mutasi cocok untuk akun ini:", cachedPendingMutasiList.length);
+      if (!data || data.length === 0) {
+        cachedPendingMutasiList = [];
+        updateInboxBadge(0);
+        return;
+      }
 
-    updateInboxBadge(cachedPendingMutasiList.length);
+      const cleanUserKec  = String(userKodeKec || "").replace(/\D/g, "");
+      const cleanUserDesa = String(userKodeDesa || "").replace(/\D/g, "");
 
-  } catch (err) {
-    console.error("Error pada checkPendingMutasiNotifications:", err);
+      const userKecNum  = cleanUserKec ? parseInt(cleanUserKec, 10) : null;
+      const userDesaNum = cleanUserDesa ? parseInt(cleanUserDesa, 10) : null;
+
+      cachedPendingMutasiList = data.filter(item => {
+        const itemKecNum  = item.kode_kec_tujuan ? parseInt(String(item.kode_kec_tujuan).replace(/\D/g, ""), 10) : null;
+        const itemDesaNum = item.kode_desa_tujuan ? parseInt(String(item.kode_desa_tujuan).replace(/\D/g, ""), 10) : null;
+
+        if (isKabRole()) {
+          return true;
+        } else if (isKecRole()) {
+          return userKecNum !== null && itemKecNum === userKecNum;
+        } else {
+          // User Desa
+          const matchDesa = (userKecNum !== null && userDesaNum !== null &&
+                             itemKecNum === userKecNum && itemDesaNum === userDesaNum);
+          if (!matchDesa) return false;
+
+          const cleanTargetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
+          if (cleanTargetDsn && cleanTargetDsn !== "0000" && userKodeDusunList && userKodeDusunList.length > 0) {
+            return userKodeDusunList.includes(cleanTargetDsn);
+          }
+          return true;
+        }
+      });
+
+      updateInboxBadge(cachedPendingMutasiList.length);
+
+    } catch (err) {
+      console.error("Error checkPendingMutasiNotifications:", err);
+    }
   }
-}
+
+  function initRealtimeMutasi() {
+    if (realtimeMutasiChannel) return;
+    try {
+      realtimeMutasiChannel = db.channel('public:mutasi_pus')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'mutasi_pus' }, () => {
+          checkPendingMutasiNotifications();
+          const modal = document.getElementById("modalInboxMutasi");
+          if (modal && modal.style.display === "block") {
+            renderInboxMutasiTable();
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.error("Gagal realtime mutasi:", err);
+    }
+  }
 
   function updateInboxBadge(count) {
     const badge = document.getElementById("badgeInboxMutasi");
@@ -6654,6 +6682,11 @@ function checkAndLockKbTable() {
           db.removeChannel(realtimeLayananChannel);
           realtimeLayananChannel = null;
         }
+
+        if (realtimeMutasiChannel) {
+          db.removeChannel(realtimeMutasiChannel);
+          realtimeMutasiChannel = null;
+        }        
 
         localStorage.removeItem("pus_app_session");
 
