@@ -3774,47 +3774,61 @@ function checkAndLockKbTable() {
       let idPus = document.getElementById("id_pus").value.trim();
       const isEditMode = (idPus !== "");
 
-      // 2. Susun Prefix Wilayah Baku
-      const kdProv = document.getElementById("kode_prov").value.padStart(2, '0');
-      const kdKab  = document.getElementById("kode_kab").value.padStart(2, '0');
-      const kdKec  = document.getElementById("kode_kec").value.padStart(2, '0');
-      const kdDesa = document.getElementById("kode_desa").value.padStart(4, '0');
-      const kdDsn  = document.getElementById("kode_dusun").value.padStart(4, '0');
-      const kdRt   = document.getElementById("kode_rt").value.padStart(3, '0');
+    // 2. Susun Prefix Wilayah Baku
+    const kdProv = document.getElementById("kode_prov").value.padStart(2, '0');
+    const kdKab  = document.getElementById("kode_kab").value.padStart(2, '0');
+    const kdKec  = document.getElementById("kode_kec").value.padStart(2, '0');
+    const kdDesa = document.getElementById("kode_desa").value.padStart(4, '0');
+    const kdDsn  = document.getElementById("kode_dusun").value.padStart(4, '0');
+    const kdRt   = document.getElementById("kode_rt").value.padStart(3, '0');
+    
+    // Prefix 14 karakter: [Prov(2)][Kab(2)][Kec(2)][Desa(4)] [Dsn(4)][RT(3)]
+    const expectedPrefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;    
+    
+    const originalIdPus = (document.getElementById("original_id_pus")?.value || document.getElementById("id_pus")?.value || "").trim();
+    let isRelocatedInSameVillage = false;
+    
+    // Jika sedang edit data tapi RT/Dusun diubah, ID lama tidak berlaku lagi
+    if (isEditMode && originalIdPus && !originalIdPus.startsWith(expectedPrefix)) {
+      isRelocatedInSameVillage = true;
+      idPus = ""; // Dikosongkan agar dibuatkan nomor baru di RT tujuan
+    }
+    
+    // Jika data baru atau pindah RT, hitung nomor urut mulai 001 di RT tersebut
+    if (!idPus) {
+      const { data: matchedRows, error: errSearchSeq } = await db
+        .from('data_pus')
+        .select('id_pus')
+        .eq('kode_prov', kdProv)
+        .eq('kode_kab', kdKab)
+        .eq('kode_kec', kdKec)
+        .eq('kode_desa', kdDesa)
+        .eq('kode_dusun', kdDsn)
+        .eq('kode_rt', kdRt)
+        .eq('tahun', thn);
 
-      const expectedPrefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
-      let isRelocatedInSameVillage = false;
+      if (errSearchSeq) throw errSearchSeq;
 
-      // 3. Deteksi relokasi Dusun/RT pada mode edit
-      if (isEditMode && originalIdPus && !originalIdPus.startsWith(expectedPrefix)) {
-        isRelocatedInSameVillage = true;
-        idPus = ""; // Kosongkan agar membentuk ID baru di RT tujuan
-      }
-
-      // 4. Generate Nomor Urut Otomatis jika idPus kosong
-      if (!idPus) {
-        const { data: matchedRows } = await db
-          .from('data_pus')
-          .select('id_pus')
-          .ilike('id_pus', `${expectedPrefix}%`)
-          .eq('tahun', thn);
-
-        let maxSeq = 0;
-        if (matchedRows && matchedRows.length > 0) {
-          matchedRows.forEach(row => {
-            const cleanId = String(row.id_pus || "").trim();
-            if (cleanId.length >= 3) {
-              const lastThree = cleanId.slice(-3);
-              const seqPart = parseInt(lastThree, 10);
-              if (!isNaN(seqPart) && seqPart > maxSeq) maxSeq = seqPart;
+      let maxSeq = 0;
+      if (matchedRows && matchedRows.length > 0) {
+        matchedRows.forEach(row => {
+          const cleanId = String(row.id_pus || "").trim();
+          // Ambil 3 digit terakhir ID PUS
+          if (cleanId.startsWith(expectedPrefix)) {
+            const seqStr = cleanId.slice(expectedPrefix.length).trim();
+            const seqPart = parseInt(seqStr, 10);
+            if (!isNaN(seqPart) && seqPart > maxSeq) {
+              maxSeq = seqPart;
             }
-          });
-        }
-
-        const nextNum = maxSeq + 1;
-        idPus = `${expectedPrefix}${String(nextNum).padStart(3, '0')}`;
-        document.getElementById("id_pus").value = idPus;
+          }
+        });
       }
+
+      // Jika RT belum ada data, nextNum = 0 + 1 = 1 -> "001"
+      const nextNum = maxSeq + 1;
+      idPus = `${expectedPrefix}${String(nextNum).padStart(3, '0')}`;
+      document.getElementById("id_pus").value = idPus;
+    }
 
     const kdProv = document.getElementById("kode_prov").value.padStart(2, '0');
     const kdKab  = document.getElementById("kode_kab").value.padStart(2, '0');
@@ -7150,8 +7164,7 @@ function checkAndLockKbTable() {
 
     btn.disabled = true;
     btn.innerText = "Membaca Database & File...";
-
-    // 1. Ambil NIK Istri yang SUDAH ADA di Supabase untuk tahun ini
+    
     // 1. Ambil NIK Istri yang SUDAH ADA di Supabase untuk tahun ini
     const { data: dbExistingRows } = await db
       .from('data_pus')
@@ -7209,6 +7222,8 @@ function checkAndLockKbTable() {
         const payloadList = [];
         const seenIstriNiksInExcel = new Map();
         lastSkippedRowsData = []; // Reset penampung data duplikat
+
+        const rtSequenceTracker = new Map();
 
         dataRows.forEach((r, idx) => {
           if (!r[15] && !r[17]) return; // Lewati jika nama suami & istri kosong
@@ -7275,8 +7290,7 @@ function checkAndLockKbTable() {
             }
 
             seenIstriNiksInExcel.set(nikIstri, { nama: namaIstriVal, desa: r[9] || "", baris: idx + 2 });
-          }
-          
+          }          
 
           let kdProv = String(r[4] || "").trim().padStart(2, '0');
           let kdKab  = String(r[6] || "").trim().padStart(2, '0');
@@ -7285,8 +7299,14 @@ function checkAndLockKbTable() {
           let kdDsn  = String(r[12] || "").trim().padStart(4, '0');
           let kdRt   = String(r[14] || "").trim().padStart(3, '0');
           
+          const rtKey = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
+
+          // Jika kolom ID_PUS di Excel kosong, buat otomatis mulai 001 per RT
           if (!idPus) {
-            idPus = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}${String(idx + 1).padStart(3, '0')}`;
+            let curSeq = rtSequenceTracker.get(rtKey) || 0;
+            curSeq += 1;
+            rtSequenceTracker.set(rtKey, curSeq);
+            idPus = `${rtKey}${String(curSeq).padStart(3, '0')}`;
           }
 
           // Normalisasi status KB bulanan dari file Excel
