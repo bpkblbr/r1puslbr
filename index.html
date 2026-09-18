@@ -3640,20 +3640,30 @@ function checkAndLockKbTable() {
   const curMonth = today.getMonth() + 1; // 1 - 12
   const curDay = today.getDate();
 
-  let age = curYear - birthYear;
-  // Kurangi 1 tahun jika bulan belum sampai, atau bulan sama tapi tanggal belum sampai
-  if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
-    age--;
-  }
+    let age = curYear - birthYear;
+    // Kurangi 1 tahun jika bulan belum sampai, atau bulan sama tapi tanggal belum sampai
+    if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
+      age--;
+    }
 
-  umurInput.value = Math.max(0, age);
-  applyMutationAndAgeLocks();
-}
+    umurInput.value = Math.max(0, age);
+    applyMutationAndAgeLocks();
+  }
   
   function checkJumlahAnak() {
     const val = parseInt(document.getElementById("jumlah_anak").value, 10);
     const umur = document.getElementById("umur_anak_terkecil");
-    if (isNaN(val) || val <= 0) { umur.value = "0"; umur.disabled = true; } else { umur.disabled = false; }
+    
+    if (isNaN(val) || val <= 0) {
+      umur.value = "0";
+      umur.disabled = true;
+      umur.style.backgroundColor = "#e9ecef";
+      umur.style.cursor = "not-allowed";
+    } else {
+      umur.disabled = false;
+      umur.style.backgroundColor = "#ffffff";
+      umur.style.cursor = "default";
+    }
   }
 
   async function handleFormSubmit(event) {
@@ -6559,6 +6569,14 @@ function checkAndLockKbTable() {
     document.getElementById("original_id_pus").value = "";
     document.getElementById("original_kode_dusun").value = "";
     document.getElementById("original_kode_rt").value = "";
+    
+    const umurAnak = document.getElementById("umur_anak_terkecil");
+    if (umurAnak) {
+      umurAnak.value = "0";
+      umurAnak.disabled = true;
+      umurAnak.style.backgroundColor = "#e9ecef";
+      umurAnak.style.cursor = "not-allowed";
+    }
 
     const thnInput = document.getElementById("tahun_input");
     if (thnInput) thnInput.value = String(new Date().getFullYear());
