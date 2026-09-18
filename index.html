@@ -9014,18 +9014,22 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // RENDER KE CANVAS & EKSPOR PDF
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.left = "0";
+      // RENDER KE CANVAS & EKSPOR PDF      
+      const container = document.createElement("div");      
+      container.style.position = "fixed";
       container.style.top = "0";
-      container.style.zIndex = "-999";
-      container.style.width = "190mm";
-      container.style.background = "#ffffff";
+      container.style.left = "0";
+      container.style.width = "794px";
+      container.style.minHeight = "1123px";
+      container.style.backgroundColor = "#ffffff";
+      container.style.zIndex = "99999"; // Wajib di atas agar kanvas dapat membacanya secara fisik
+      container.style.opacity = "1";
+      container.style.pointerEvents = "none";
       container.innerHTML = contentHtml;
       document.body.appendChild(container);
 
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Beri jeda 400ms agar DOM dan font terkompilasi sempurna
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       const opt = {
         margin: [5, 5, 5, 5],
@@ -9034,9 +9038,9 @@ function checkAndLockKbTable() {
         html2canvas: { 
           scale: 2, 
           useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: container.scrollWidth
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: 794
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
@@ -9046,25 +9050,36 @@ function checkAndLockKbTable() {
           await html2pdf().set(opt).from(container).save();
         } else if (window.jspdf && window.jspdf.jsPDF) {
           const { jsPDF } = window.jspdf;
-          const doc = new jsPDF('portrait', 'mm', 'a4');
+          const doc = new jsPDF('portrait', 'pt', 'a4');
           await doc.html(container, {
-            callback: function(pdf) { pdf.save(fileName); },
-            x: 5,
-            y: 5,
-            width: 190,
+            callback: function(pdf) { 
+              pdf.save(fileName); 
+            },
+            x: 10,
+            y: 10,
+            width: 575,
             windowWidth: 794
           });
+        } else {
+          throw new Error("Pustaka PDF tidak tersedia!");
         }
-        Swal.close();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil Diekspor!',
+          text: `Berkas ${fileName} berhasil diunduh.`,
+          timer: 1500,
+          showConfirmButton: false
+        });
+
       } catch (err) {
         console.error("Gagal ekspor PDF:", err);
-        Swal.fire("Gagal", "Terjadi kesalahan saat membuat file PDF: " + err.message, "error");
+        Swal.fire("Gagal", "Terjadi kendala saat menyusun PDF: " + err.message, "error");
       } finally {
         if (container && container.parentNode) {
           container.parentNode.removeChild(container);
         }
       }
-    }
 
     // =========================================================================
     // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
