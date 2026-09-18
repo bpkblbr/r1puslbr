@@ -8660,9 +8660,7 @@ function checkAndLockKbTable() {
       let fileName = "";
       let contentHtml = "";
 
-      // =========================================================================
-      // 1. FORMULIR K/IV/KB/15 (KARTU STATUS PESERTA KB) - PAS 1 LEMBAR A4
-      // =========================================================================
+      // 1. FORMULIR K/IV/KB/15
       if (jenisDoc === "KIV" || jenisDoc === "K0") {
         fileName = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
 
@@ -8687,7 +8685,6 @@ function checkAndLockKbTable() {
 
         contentHtml = `
           <div style="width: 190mm; height: 275mm; margin: 0 auto; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 9.5px; line-height: 1.2; color: #000; border: 1.5px solid #000; padding: 6px;">
-            <!-- HEADER KODE -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
               <tr>
                 <td style="width: 25%; font-weight: bold; font-size: 12px;">K/IV/KB/15</td>
@@ -8709,7 +8706,6 @@ function checkAndLockKbTable() {
               KARTU STATUS PESERTA KB
             </div>
 
-            <!-- IDENTITAS & DATA DASAR -->
             <table style="width: 100%; border-top: 1px solid #000; border-bottom: 1px solid #000; border-collapse: collapse; margin-bottom: 3px;">
               <tr>
                 <td style="width: 22%; padding: 2px 0;">III. Nama Peserta KB</td>
@@ -8750,7 +8746,6 @@ function checkAndLockKbTable() {
               </tr>
             </table>
 
-            <!-- STATUS PESERTA & CARA TERAKHIR -->
             <table style="width: 100%; border-bottom: 1px solid #000; border-collapse: collapse; margin-bottom: 3px;">
               <tr>
                 <td style="width: 48%; border-right: 1px solid #000; padding: 2px 4px 2px 0;">
@@ -8772,7 +8767,6 @@ function checkAndLockKbTable() {
               </tr>
             </table>
 
-            <!-- XIV. PENAPISAN (SKRINING) -->
             <div style="font-weight: bold; font-size: 9px; margin-bottom: 1px;">
               XIV. Penapisan (Skrining) untuk menentukan alat kontrasepsi yang dapat digunakan
             </div>
@@ -8808,7 +8802,6 @@ function checkAndLockKbTable() {
               </tr>
             </table>
 
-            <!-- 12. TABEL ALAT KONTRASEPSI YANG BOLEH DIGUNAKAN -->
             <div style="font-weight: bold; font-size: 8.5px; margin-bottom: 1px;">12. Alat/obat/cara kontrasepsi yang boleh dipergunakan:</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; text-align: center; font-size: 7.5px; margin-bottom: 3px;">
               <tr style="background: #fafafa;">
@@ -8837,7 +8830,6 @@ function checkAndLockKbTable() {
               </tr>
             </table>
 
-            <!-- METODE TERPILIH, TANGGAL & TTD -->
             <table style="width: 100%; border-top: 1px solid #000; border-collapse: collapse; margin-top: 2px;">
               <tr>
                 <td style="width: 48%; vertical-align: top; padding-right: 4px;">
@@ -8870,15 +8862,12 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =========================================================================
-      // 2. KARTU PESERTA KB (K/I/KB/13) - PDF
-      // =========================================================================
+      // 2. KARTU K/I/KB/13
       else if (jenisDoc === "KI") {
         fileName = `KARTU_K_I_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
 
         contentHtml = `
           <div style="width: 190mm; margin: 0 auto; box-sizing: border-box; font-family: Arial, sans-serif; font-size: 10px; color: #000;">
-            <!-- HALAMAN DEPAN -->
             <div style="border: 1.5px solid #000; padding: 12px; margin-bottom: 25px; page-break-after: always;">
               <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 10px;">
                 <div style="font-weight: bold; font-size: 12px;">K/I/KB/13</div>
@@ -8921,7 +8910,6 @@ function checkAndLockKbTable() {
               </div>
             </div>
 
-            <!-- HALAMAN BELAKANG -->
             <div style="border: 1.5px solid #000; padding: 12px;">
               <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 4px;">
                 CATATAN KUNJUNGAN ULANG PESERTA KB
@@ -8941,9 +8929,7 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =========================================================================
-      // 3. INFORMED CONSENT PELAYANAN KB - PDF
-      // =========================================================================
+      // 3. INFORMED CONSENT PELAYANAN KB
       else if (jenisDoc === "CONSENT") {
         fileName = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
 
@@ -9028,21 +9014,17 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =========================================================================
-      // EKSEKUSI RENDER PDF LANGSUNG (TANPA WINDOW.PRINT / TANPA FREEZE)
-      // =========================================================================
+      // RENDER KE CANVAS & EKSPOR PDF
       const container = document.createElement("div");
-      // Jangan gunakan left: -9999px karena canvas akan merender area kosong
       container.style.position = "absolute";
       container.style.left = "0";
       container.style.top = "0";
-      container.style.zIndex = "-999"; // Berada di bawah tampilan utama
-      container.style.width = "190mm"; // Kunci lebar pas A4
+      container.style.zIndex = "-999";
+      container.style.width = "190mm";
       container.style.background = "#ffffff";
       container.innerHTML = contentHtml;
       document.body.appendChild(container);
 
-      // Beri jeda 300ms agar browser selesai menyusun layout dan font DOM
       await new Promise(resolve => setTimeout(resolve, 300));
 
       const opt = {
@@ -9063,22 +9045,16 @@ function checkAndLockKbTable() {
         if (typeof html2pdf !== "undefined") {
           await html2pdf().set(opt).from(container).save();
         } else if (window.jspdf && window.jspdf.jsPDF) {
-          // Fallback menggunakan jsPDF bawaan file Anda
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF('portrait', 'mm', 'a4');
           await doc.html(container, {
-            callback: function(pdf) {
-              pdf.save(fileName);
-            },
+            callback: function(pdf) { pdf.save(fileName); },
             x: 5,
             y: 5,
             width: 190,
-            windowWidth: 794 // 190mm pada 96 DPI
+            windowWidth: 794
           });
-        } else {
-          throw new Error("Library PDF tidak ditemukan!");
         }
-
         Swal.close();
       } catch (err) {
         console.error("Gagal ekspor PDF:", err);
@@ -9088,6 +9064,7 @@ function checkAndLockKbTable() {
           container.parentNode.removeChild(container);
         }
       }
+    }
 
     // =========================================================================
     // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
@@ -9415,6 +9392,6 @@ function checkAndLockKbTable() {
       });
     }
   
-</script>
+  </script>
 </body>
 </html>
