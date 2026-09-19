@@ -8843,11 +8843,9 @@ function checkAndLockKbTable() {
           `;
         }
 
-        // Buat container di luar dokumen
         const tempContainer = document.createElement("div");
         tempContainer.innerHTML = contentHtml;
 
-        // Inisialisasi engine jsPDF asli (sudah diimpor di library index.html)
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
           orientation: 'portrait',
@@ -8855,11 +8853,10 @@ function checkAndLockKbTable() {
           format: 'a4'
         });
 
-        // Konversi langsung DOM string ke vektor PDF tanpa melalui html2canvas screenshot
         await pdf.html(tempContainer, {
           x: 20,
           y: 20,
-          width: 555, // Lebar area cetak standar A4 portrait (595pt - margin 40pt)
+          width: 555,
           windowWidth: 740,
           autoPaging: 'text'
         });
@@ -8871,72 +8868,7 @@ function checkAndLockKbTable() {
         console.error("Gagal cetak dokumen KB:", err);
         Swal.fire("Error", "Gagal mengekspor dokumen PDF: " + err.message, "error");
       }
-    }
-
-        // --- SOLUSI PASTI: CETAK LANGSUNG KE PDF TANPA HTML2CANVAS ---
-        if (typeof Swal !== "undefined") Swal.close();
-
-        // Buat iframe tersembunyi untuk mencetak langsung layout CSS asli
-        let printFrame = document.getElementById("kbPrintFrame");
-        if (printFrame) printFrame.remove();
-
-        printFrame = document.createElement("iframe");
-        printFrame.id = "kbPrintFrame";
-        printFrame.style.position = "fixed";
-        printFrame.style.right = "0";
-        printFrame.style.bottom = "0";
-        printFrame.style.width = "0";
-        printFrame.style.height = "0";
-        printFrame.style.border = "0";
-        document.body.appendChild(printFrame);
-
-        const frameDoc = printFrame.contentWindow || printFrame.contentDocument;
-        const doc = printFrame.contentDocument || printFrame.contentWindow.document;
-
-        doc.open();
-        doc.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>${fileName.replace('.pdf', '')}</title>
-            <meta charset="utf-8">
-            <style>
-              @page {
-                size: A4 portrait;
-                margin: 8mm;
-              }
-              body {
-                font-family: Arial, sans-serif;
-                color: #000;
-                background: #fff;
-                margin: 0;
-                padding: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              table { 
-                page-break-inside: avoid; 
-              }
-            </style>
-          </head>
-          <body>
-            ${contentHtml}
-          </body>
-          </html>
-        `);
-        doc.close();
-
-        // Beri waktu browser memuat DOM iframe lalu buka dialog cetak
-        setTimeout(() => {
-          frameDoc.focus();
-          frameDoc.print();
-        }, 300);
-
-      } catch (err) {
-        console.error("Gagal cetak dokumen KB:", err);
-        Swal.fire("Error", "Gagal memproses dokumen: " + err.message, "error");
-      }
-    }    
+    }      
 
     // =========================================================================
     // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
