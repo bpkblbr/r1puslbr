@@ -9015,21 +9015,18 @@ function checkAndLockKbTable() {
       }
 
       // RENDER KE CANVAS & EKSPOR PDF      
-      const container = document.createElement("div");      
+      const container = document.createElement("div");
       container.style.position = "fixed";
       container.style.top = "0";
       container.style.left = "0";
-      container.style.width = "794px";
-      container.style.minHeight = "1123px";
+      container.style.width = "794px"; // Lebar presisi A4 (96 DPI)
       container.style.backgroundColor = "#ffffff";
-      container.style.zIndex = "99999"; // Wajib di atas agar kanvas dapat membacanya secara fisik
-      container.style.opacity = "1";
+      container.style.zIndex = "1000"; // Di bawah modal SweetAlert (SweetAlert zIndex = 1060)
       container.style.pointerEvents = "none";
       container.innerHTML = contentHtml;
       document.body.appendChild(container);
-
-      // Beri jeda 400ms agar DOM dan font terkompilasi sempurna
-      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      await new Promise(resolve => setTimeout(resolve, 350));
 
       const opt = {
         margin: [5, 5, 5, 5],
@@ -9040,25 +9037,36 @@ function checkAndLockKbTable() {
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          width: 794
+          scrollY: 0,
+          scrollX: 0
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
       try {
-        if (typeof html2pdf !== "undefined") {
-          await html2pdf().set(opt).from(container).save();
+        if (typeof html2pdf !== "undefined") {          
+          await html2pdf()
+            .set(opt)
+            .from(container)
+            .toPdf()
+            .get('pdf')
+            .then(function (pdf) {              
+            })
+            .save();
         } else if (window.jspdf && window.jspdf.jsPDF) {
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF('portrait', 'pt', 'a4');
-          await doc.html(container, {
-            callback: function(pdf) { 
-              pdf.save(fileName); 
-            },
-            x: 10,
-            y: 10,
-            width: 575,
-            windowWidth: 794
+          await new Promise((resolve) => {
+            doc.html(container, {
+              callback: function(pdf) {
+                pdf.save(fileName);
+                resolve();
+              },
+              x: 10,
+              y: 10,
+              width: 575,
+              windowWidth: 794
+            });
           });
         } else {
           throw new Error("Pustaka PDF tidak tersedia!");
@@ -9075,7 +9083,7 @@ function checkAndLockKbTable() {
       } catch (err) {
         console.error("Gagal ekspor PDF:", err);
         Swal.fire("Gagal", "Terjadi kendala saat menyusun PDF: " + err.message, "error");
-      } finally {
+      } finally {        
         if (container && container.parentNode) {
           container.parentNode.removeChild(container);
         }
