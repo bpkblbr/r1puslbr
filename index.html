@@ -8632,7 +8632,7 @@ function checkAndLockKbTable() {
     // =========================================================================
     // FUNGSI EKSPOR DOKUMEN KB LENGKAP: K/IV/KB, K/I/KB & INFORMED CONSENT
     // =========================================================================    
-    async function eksporDokumenKbKePDF(jenisDoc, index) {
+    function eksporDokumenKbKePDF(jenisDoc, index) {
       if (typeof Swal !== "undefined") Swal.close();
       const item = cachedAntreanLayanan[index];
       if (!item) {
@@ -8640,235 +8640,211 @@ function checkAndLockKbTable() {
         return;
       }
 
-      Swal.fire({
-        title: 'Membuat Dokumen PDF...',
-        text: 'Menyusun berkas PDF asli...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-      });
-
       try {
-        const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
-        const tglParts = tglFormatted.split('-');
-        const thnLayanan = tglParts[0] || "";
-        const blnLayanan = tglParts[1] || "";
-        const tglLayanan = tglParts[2] || "";
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('portrait', 'pt', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
 
+        const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
         const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kode_kec || "-");
         const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.kode_desa || "-");
         const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
         const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.kode_dusun || "-");
-        const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
+        const alamatLengkap = `RT ${item.kode_rt || '-'}, Dsn. ${nmDsn}, Desa ${nmDesa}, Kec. ${nmKec}`;
 
         const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
         const jnsAkseptor = String(item.jenis_akseptor || "").toUpperCase();
-        const isJkn = (item.peserta_jkn && !String(item.peserta_jkn).toUpperCase().includes("TIDAK"));
-
-        let fileName = "";
-        let contentHtml = "";
+        const namaIstriClean = (item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_');
 
         // 1. FORMULIR K/IV/KB/15
         if (jenisDoc === "KIV" || jenisDoc === "K0") {
-          fileName = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
+          const fileName = `FORM_K_IV_KB_${namaIstriClean}.pdf`;
 
-          let kodeAlkonPilihan = "1";
-          if (alkon.includes("SUNTIK") && alkon.includes("1")) kodeAlkonPilihan = "1";
-          else if (alkon.includes("SUNTIK")) kodeAlkonPilihan = "2";
-          else if (alkon.includes("PIL")) kodeAlkonPilihan = "3";
-          else if (alkon.includes("KONDOM")) kodeAlkonPilihan = "4";
-          else if (alkon.includes("IMPLAN") && alkon.includes("1")) kodeAlkonPilihan = "5";
-          else if (alkon.includes("IMPLAN")) kodeAlkonPilihan = "6";
-          else if (alkon.includes("IUD") && alkon.includes("CUT")) kodeAlkonPilihan = "7";
-          else if (alkon.includes("IUD")) kodeAlkonPilihan = "8";
-          else if (alkon.includes("MOW") || alkon.includes("TUBEKTOMI")) kodeAlkonPilihan = "9";
-          else if (alkon.includes("MOP") || alkon.includes("VASEKTOMI")) kodeAlkonPilihan = "10";
+          // Header
+          doc.setFontSize(13);
+          doc.setFont(undefined, 'bold');
+          doc.text("K/IV/KB/15", 40, 45);
+          doc.setFontSize(10);
+          doc.text(`Faskes : ${item.faskes_tujuan || '-'}`, pageWidth - 40, 45, { align: 'right' });
+          doc.text(`ID PUS : ${item.id_pus || '-'}`, pageWidth - 40, 60, { align: 'right' });
 
-          let kodeStatusPeserta = "1";
-          if (jnsAkseptor.includes("KBPP") || jnsAkseptor.includes("PASCA PERSALINAN")) kodeStatusPeserta = "2";
-          else if (jnsAkseptor.includes("DO") || jnsAkseptor.includes("PASCA DO")) kodeStatusPeserta = "3";
-          else if (jnsAkseptor.includes("ULANGAN") || jnsAkseptor.includes("GANTI")) kodeStatusPeserta = "4";
+          doc.setFontSize(13);
+          doc.text("REGISTER PELAYANAN KB (K/IV/KB/15)", pageWidth / 2, 85, { align: 'center' });
+          doc.setLineWidth(1);
+          doc.line(160, 90, pageWidth - 160, 90);
 
-          let kodeAsuransi = isJkn ? "1" : "3";
+          // Data Akseptor
+          const rows = [
+            ["1. Tanggal Pelayanan", `: ${tglFormatted}`],
+            ["2. Nama Istri (Calon Peserta)", `: ${item.nama_istri || '-'}`],
+            ["3. NIK Istri", `: ${item.nik_istri || '-'}`],
+            ["4. Nama Suami", `: ${item.nama_suami || '-'}`],
+            ["5. NIK Suami", `: ${item.nik_suami || '-'}`],
+            ["6. Alamat Domisili", `: ${alamatLengkap}`],
+            ["7. Asuransi Kesehatan", `: ${item.peserta_jkn || 'TIDAK MEMILIKI'}`],
+            ["8. Status Calon Peserta", `: ${jnsAkseptor || 'KB BARU'}`],
+            ["9. Metode Kontrasepsi", `: ${alkon}`],
+            ["10. Kader Pendamping", `: ${item.nama_kader || '-'}`]
+          ];
 
-          contentHtml = `
-            <div style="width: 700px; padding: 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; color: #000; background: #ffffff;">
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-                <tr>
-                  <td style="width: 30%; font-weight: bold; font-size: 14px;">K/IV/KB/15</td>
-                  <td style="width: 35%;">I. Kode Faskes/Jejaring:</td>
-                  <td style="width: 35%; text-align: right;">
-                    <span style="border: 1px solid #000; padding: 3px 6px; font-weight: bold; display: inline-block;">${item.faskes_tujuan || '-'}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>II. Kode Keluarga Indonesia:</td>
-                  <td style="text-align: right;">
-                    <span style="border: 1px solid #000; padding: 3px 6px; font-weight: bold; font-family: monospace; display: inline-block;">${item.id_pus || '-'}</span>
-                  </td>
-                </tr>
-              </table>
+          doc.autoTable({
+            startY: 110,
+            body: rows,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 5 },
+            columnStyles: {
+              0: { cellWidth: 170, fontStyle: 'bold' },
+              1: { cellWidth: 'auto' }
+            }
+          });
 
-              <div style="text-align: center; font-weight: bold; font-size: 14px; text-decoration: underline; margin: 15px 0;">
-                REGISTER PELAYANAN KB (K/IV/KB/15)
-              </div>
+          // Tanda Tangan
+          const finalY = doc.lastAutoTable.finalY + 45;
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          doc.text("Mengetahui,", 90, finalY);
+          doc.text("Petugas Pelaksana KB / Bidan", 90, finalY + 15);
+          doc.text("( .................................................... )", 90, finalY + 80);
+          doc.text("NIP.", 90, finalY + 95);
 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                <tr><td style="width: 35%; padding: 4px 0; font-weight: bold;">1. Tanggal Pelayanan</td><td style="width: 2%;">:</td><td style="width: 63%; font-weight: bold;">${tglLayanan}-${blnLayanan}-${thnLayanan}</td></tr>
-                <tr><td style="padding: 4px 0; font-weight: bold;">2. Nama Istri (Calon Peserta)</td><td>:</td><td style="font-weight: bold;">${item.nama_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">3. NIK Istri</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">4. Nama Suami</td><td>:</td><td>${item.nama_suami || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">5. NIK Suami</td><td>:</td><td style="font-family: monospace;">${item.nik_suami || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">6. Alamat Domisili</td><td>:</td><td>${alamatLengkap}</td></tr>
-                <tr><td style="padding: 4px 0;">7. Asuransi Kesehatan</td><td>:</td><td><b>[${kodeAsuransi}]</b> ${item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
-                <tr><td style="padding: 4px 0;">8. Status Calon Peserta KB</td><td>:</td><td><b>[${kodeStatusPeserta}]</b> ${item.jenis_akseptor || 'KB BARU'}</td></tr>
-                <tr><td style="padding: 4px 0;">9. Metode Kontrasepsi Diberikan</td><td>:</td><td><b>[${kodeAlkonPilihan}]</b> <b style="color: #1f4e78;">${alkon}</b></td></tr>
-                <tr><td style="padding: 4px 0;">10. Petugas / Kader Pendamping</td><td>:</td><td><b>${item.nama_kader || '-'}</b></td></tr>
-              </table>
+          doc.text(`${nmDesa}, ${tglFormatted}`, pageWidth - 90, finalY, { align: 'right' });
+          doc.text("Kader Pendamping,", pageWidth - 90, finalY + 15, { align: 'right' });
+          doc.setFont(undefined, 'bold');
+          doc.text(`( ${item.nama_kader || '................................'} )`, pageWidth - 90, finalY + 80, { align: 'right' });
 
-              <table style="width: 100%; border-collapse: collapse; margin-top: 50px;">
-                <tr>
-                  <td style="width: 50%; text-align: center;">
-                    Mengetahui,<br>Petugas Pelaksana KB / Bidan<br><br><br><br><br>
-                    ( ............................................................ )<br>NIP.
-                  </td>
-                  <td style="width: 50%; text-align: center;">
-                    ${nmDesa}, ${tglFormatted}<br>Kader Pendamping,<br><br><br><br><br>
-                    ( <b>${item.nama_kader || '...................................................'}</b> )
-                  </td>
-                </tr>
-              </table>
-            </div>
-          `;
+          doc.save(fileName);
 
         // 2. KARTU PESERTA KB (K/I/KB/13)
         } else if (jenisDoc === "KI") {
-          fileName = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
+          const fileName = `KARTU_KI_KB_${namaIstriClean}.pdf`;
 
-          contentHtml = `
-            <div style="width: 700px; padding: 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; color: #000; background: #ffffff;">
-              <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px;">
-                <span style="font-weight: bold; font-size: 13px;">K/I/KB/13</span>
-                <span style="font-weight: bold; font-size: 14px;">KARTU PESERTA KB</span>
-                <span style="font-size: 12px;">Faskes: <b>${item.faskes_tujuan || '-'}</b></span>
-              </div>
+          doc.setFontSize(13);
+          doc.setFont(undefined, 'bold');
+          doc.text("K/I/KB/13", 40, 45);
+          doc.text("KARTU PESERTA KB", pageWidth / 2, 45, { align: 'center' });
+          doc.setFontSize(10);
+          doc.text(`Faskes: ${item.faskes_tujuan || '-'}`, pageWidth - 40, 45, { align: 'right' });
+          doc.setLineWidth(1);
+          doc.line(40, 55, pageWidth - 40, 55);
 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                <tr><td style="width: 35%; padding: 4px 0;">Nomor Seri Kartu (ID PUS)</td><td style="width: 2%;">:</td><td style="width: 63%; font-weight: bold; font-family: monospace;">${item.id_pus || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">Nama Peserta KB (Istri)</td><td>:</td><td style="font-weight: bold;">${item.nama_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">NIK Peserta KB</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">Nama Suami</td><td>:</td><td>${item.nama_suami || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">Alamat</td><td>:</td><td>${alamatLengkap}</td></tr>
-                <tr><td style="padding: 4px 0;">Jaminan Kesehatan</td><td>:</td><td>${item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
-                <tr><td style="padding: 4px 0;">Metode Kontrasepsi Dipilih</td><td>:</td><td style="font-weight: bold; color: #1f4e78;">${alkon}</td></tr>
-                <tr><td style="padding: 4px 0;">Jenis Layanan / Tindakan</td><td>:</td><td>${item.jenis_pelayanan || 'PEMASANGAN'} (${item.jenis_akseptor || '-'})</td></tr>
-              </table>
+          const rowsInfo = [
+            ["Nomor Seri Kartu (ID PUS)", `: ${item.id_pus || '-'}`],
+            ["Nama Peserta KB (Istri)", `: ${item.nama_istri || '-'}`],
+            ["NIK Peserta KB", `: ${item.nik_istri || '-'}`],
+            ["Nama Suami", `: ${item.nama_suami || '-'}`],
+            ["Alamat", `: ${alamatLengkap}`],
+            ["Jaminan Kesehatan", `: ${item.peserta_jkn || 'TIDAK MEMILIKI'}`],
+            ["Metode Kontrasepsi Dipilih", `: ${alkon}`],
+            ["Jenis Tindakan", `: ${item.jenis_pelayanan || 'PEMASANGAN'} (${jnsAkseptor})`]
+          ];
 
-              <div style="font-weight: bold; margin: 15px 0 6px 0;">CATATAN KUNJUNGAN ULANG / TINDAKAN:</div>
-              <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 30px; border: 1px solid #000;">
-                <thead>
-                  <tr style="background-color: #f1f5f9; text-align: center;">
-                    <th style="border: 1px solid #000; padding: 6px; width: 22%;">Tgl Datang</th>
-                    <th style="border: 1px solid #000; padding: 6px; width: 38%;">Hasil Pemeriksaan / Tindakan</th>
-                    <th style="border: 1px solid #000; padding: 6px; width: 22%;">Tgl Kembali</th>
-                    <th style="border: 1px solid #000; padding: 6px; width: 18%;">Paraf</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">${tglFormatted}</td>
-                    <td style="border: 1px solid #000; padding: 8px;">Tindakan Pelayanan: <b>${alkon}</b> (${item.jenis_pelayanan || 'PASANG'})</td>
-                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">-</td>
-                    <td style="border: 1px solid #000; padding: 8px;"></td>
-                  </tr>
-                  <tr><td style="border: 1px solid #000; padding: 12px;">&nbsp;</td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
-                  <tr><td style="border: 1px solid #000; padding: 12px;">&nbsp;</td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
-                </tbody>
-              </table>
+          doc.autoTable({
+            startY: 70,
+            body: rowsInfo,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 4 },
+            columnStyles: { 0: { cellWidth: 170, fontStyle: 'bold' } }
+          });
 
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="width: 50%; text-align: center;">Peserta KB,<br><br><br><br>( <b>${item.nama_istri}</b> )</td>
-                  <td style="width: 50%; text-align: center;">Pimpinan Faskes / Dokter / Bidan,<br><br><br><br>( ............................................................ )</td>
-                </tr>
-              </table>
-            </div>
-          `;
+          // Tabel Kunjungan
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'bold');
+          doc.text("CATATAN KUNJUNGAN ULANG / TINDAKAN:", 40, doc.lastAutoTable.finalY + 20);
+
+          doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 28,
+            head: [["Tgl Datang", "Hasil Pemeriksaan / Tindakan", "Tgl Kembali", "Paraf"]],
+            body: [
+              [tglFormatted, `Pelayanan Alkon: ${alkon} (${item.jenis_pelayanan || 'PASANG'})`, "-", ""],
+              ["", "", "", ""],
+              ["", "", "", ""]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [31, 78, 120], textColor: 255, halign: 'center' },
+            styles: { fontSize: 9, cellPadding: 8 }
+          });
+
+          const finalY = doc.lastAutoTable.finalY + 40;
+          doc.setFont(undefined, 'normal');
+          doc.text("Peserta KB,", 90, finalY);
+          doc.setFont(undefined, 'bold');
+          doc.text(`( ${item.nama_istri} )`, 90, finalY + 65);
+
+          doc.setFont(undefined, 'normal');
+          doc.text("Pimpinan Faskes / Bidan,", pageWidth - 90, finalY, { align: 'right' });
+          doc.text("( .................................................... )", pageWidth - 90, finalY + 65, { align: 'right' });
+
+          doc.save(fileName);
 
         // 3. INFORMED CONSENT
         } else {
-          fileName = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}.pdf`;
+          const fileName = `INFORMED_CONSENT_${namaIstriClean}.pdf`;
 
-          contentHtml = `
-            <div style="width: 700px; padding: 20px; font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #000; background: #ffffff;">
-              <div style="text-align: center; font-weight: bold; font-size: 14px; text-decoration: underline; margin-bottom: 4px;">
-                SURAT PERSETUJUAN / PENOLAKAN TINDAKAN MEDIS PELAYANAN KB
-              </div>
-              <div style="text-align: center; font-size: 12px; margin-bottom: 16px;">
-                (INFORMED CONSENT)
-              </div>
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("SURAT PERSETUJUAN / PENOLAKAN TINDAKAN MEDIS PELAYANAN KB", pageWidth / 2, 50, { align: 'center' });
+          doc.setFontSize(10);
+          doc.text("(INFORMED CONSENT)", pageWidth / 2, 65, { align: 'center' });
+          doc.setLineWidth(1);
+          doc.line(40, 75, pageWidth - 40, 75);
 
-              <p style="margin: 0 0 8px 0;">Yang bertanda tangan di bawah ini:</p>
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
-                <tr><td style="width: 30%; padding: 4px 0;">Nama Lengkap</td><td style="width: 2%;">:</td><td style="width: 68%; font-weight: bold;">${item.nama_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">NIK</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">Nama Suami</td><td>:</td><td>${item.nama_suami || '-'}</td></tr>
-                <tr><td style="padding: 4px 0;">Alamat</td><td>:</td><td>${alamatLengkap}</td></tr>
-              </table>
+          doc.setFont(undefined, 'normal');
+          doc.text("Yang bertanda tangan di bawah ini:", 40, 95);
 
-              <p style="text-align: justify; margin: 12px 0;">
-                Menyatakan dengan sesungguhnya bahwa setelah mendapatkan penjelasan secara lengkap dari petugas kesehatan mengenai metode kontrasepsi <b>${alkon}</b>, manfaat, risiko tindakan medis, efek samping, dan alternatif kontrasepsi lainnya, maka dengan ini saya secara sadar dan sukarela menyatakan:
-              </p>
+          doc.autoTable({
+            startY: 105,
+            body: [
+              ["Nama Lengkap", `: ${item.nama_istri || '-'}`],
+              ["NIK", `: ${item.nik_istri || '-'}`],
+              ["Nama Suami", `: ${item.nama_suami || '-'}`],
+              ["Alamat", `: ${alamatLengkap}`]
+            ],
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 3 },
+            columnStyles: { 0: { cellWidth: 130, fontStyle: 'bold' } }
+          });
 
-              <div style="text-align: center; font-weight: bold; font-size: 13px; margin: 16px 0; border: 2px dashed #000; padding: 8px;">
-                [ SETUJU ] UNTUK DILAKUKAN TINDAKAN PELAYANAN MEDIS KB: ${alkon}
-              </div>
+          const narasiY = doc.lastAutoTable.finalY + 18;
+          const text1 = `Menyatakan dengan sesungguhnya bahwa setelah mendapatkan penjelasan secara lengkap dari petugas kesehatan mengenai metode kontrasepsi ${alkon}, manfaat, risiko tindakan medis, efek samping, dan alternatif lainnya, maka dengan ini saya secara sadar dan sukarela menyatakan:`;
+          doc.text(doc.splitTextToSize(text1, pageWidth - 80), 40, narasiY);
 
-              <p style="text-align: justify; margin: 12px 0 30px 0;">
-                Demikian surat pernyataan persetujuan ini saya buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun.
-              </p>
+          // Kotak Persetujuan
+          doc.setDrawColor(0);
+          doc.setLineDashPattern([3, 3], 0);
+          doc.rect(40, narasiY + 38, pageWidth - 80, 26);
+          doc.setFont(undefined, 'bold');
+          doc.text(`[ SETUJU ] DILAKUKAN TINDAKAN PELAYANAN KB: ${alkon}`, pageWidth / 2, narasiY + 55, { align: 'center' });
+          doc.setLineDashPattern([], 0);
 
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="width: 50%; text-align: center;">Suami / Saksi Keluarga,<br><br><br><br>( <b>${item.nama_suami || '......................................'}</b> )</td>
-                  <td style="width: 50%; text-align: center;">${nmDesa}, ${tglFormatted}<br>Yang Menyatakan (Akseptor),<br><br><br><br>( <b>${item.nama_istri}</b> )</td>
-                </tr>
-                <tr>
-                  <td colspan="2" style="text-align: center; padding-top: 35px;">
-                    Petugas Kesehatan / Bidan Pelaksana,<br><br><br><br>( .......................................................................... )<br>NIP / SIPB:
-                  </td>
-                </tr>
-              </table>
-            </div>
-          `;
+          const text2 = "Demikian surat pernyataan persetujuan ini saya buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun.";
+          doc.setFont(undefined, 'normal');
+          doc.text(text2, 40, narasiY + 85);
+
+          // Tanda Tangan
+          const finalY = narasiY + 125;
+          doc.text("Suami / Saksi Keluarga,", 90, finalY);
+          doc.setFont(undefined, 'bold');
+          doc.text(`( ${item.nama_suami || '................................'} )`, 90, finalY + 60);
+
+          doc.setFont(undefined, 'normal');
+          doc.text(`${nmDesa}, ${tglFormatted}`, pageWidth - 90, finalY, { align: 'right' });
+          doc.text("Yang Menyatakan (Akseptor),", pageWidth - 90, finalY + 15, { align: 'right' });
+          doc.setFont(undefined, 'bold');
+          doc.text(`( ${item.nama_istri} )`, pageWidth - 90, finalY + 60, { align: 'right' });
+
+          doc.setFont(undefined, 'normal');
+          doc.text("Petugas Kesehatan / Bidan Pelaksana,", pageWidth / 2, finalY + 85, { align: 'center' });
+          doc.text("( .......................................................................... )", pageWidth / 2, finalY + 140, { align: 'center' });
+          doc.text("NIP / SIPB:", pageWidth / 2, finalY + 152, { align: 'center' });
+
+          doc.save(fileName);
         }
-
-        const tempContainer = document.createElement("div");
-        tempContainer.innerHTML = contentHtml;
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'pt',
-          format: 'a4'
-        });
-
-        await pdf.html(tempContainer, {
-          x: 20,
-          y: 20,
-          width: 555,
-          windowWidth: 740,
-          autoPaging: 'text'
-        });
-
-        pdf.save(fileName);
-        Swal.close();
 
       } catch (err) {
         console.error("Gagal cetak dokumen KB:", err);
-        Swal.fire("Error", "Gagal mengekspor dokumen PDF: " + err.message, "error");
+        Swal.fire("Error", "Gagal membuat PDF: " + err.message, "error");
       }
-    }      
+    }     
 
     // =========================================================================
     // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
