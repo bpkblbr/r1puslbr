@@ -8632,12 +8632,27 @@ function checkAndLockKbTable() {
     // =========================================================================
     // FUNGSI EKSPOR DOKUMEN KB LENGKAP: K/IV/KB, K/I/KB & INFORMED CONSENT
     // =========================================================================    
-    function eksporDokumenKbKePDF(jenisDoc, index) {
+    async function eksporDokumenKbKePDF(jenisDoc, index) {
       if (typeof Swal !== "undefined") Swal.close();
       const item = cachedAntreanLayanan[index];
       if (!item) {
         Swal.fire("Peringatan", "Data antrean tidak ditemukan!", "warning");
         return;
+      }
+
+      // Ambil data detail PUS dari tabel data_pus agar tanggal lahir, umur, dan anak terisi akurat
+      let pusDetail = item;
+      if (item.id_pus) {
+        try {
+          const { data: dPus } = await db.from('data_pus')
+            .select('*')
+            .eq('id_pus', item.id_pus)
+            .eq('tahun', item.tahun || new Date().getFullYear())
+            .maybeSingle();
+          if (dPus) pusDetail = { ...item, ...dPus };
+        } catch (err) {
+          console.warn("Gagal sinkron data_pus, menggunakan data antrean:", err);
+        }
       }
 
       // Format & pemecahan tanggal pelayanan
@@ -8647,16 +8662,18 @@ function checkAndLockKbTable() {
       const mLayanan = pTgl[1] || "";
       const yLayanan = pTgl[0] || "";
 
-      // Format tanggal lahir istri (DD MM YYYY)
+      // Tanggal lahir istri (DD MM YYYY) & Umur Istri
       let dLahir = "", mLahir = "", yLahir = "";
-      if (item.tgl_lahir_istri) {
-        const pLahir = String(item.tgl_lahir_istri).split('-');
+      const tglLahirVal = pusDetail.tgl_lahir_istri || item.tgl_lahir_istri;
+      if (tglLahirVal) {
+        const pLahir = String(tglLahirVal).split('-');
         if (pLahir.length === 3) {
-          dLahir = pLahir[2];
-          mLahir = pLahir[1];
+          dLahir = pLahir[2].padStart(2, '0');
+          mLahir = pLahir[1].padStart(2, '0');
           yLahir = pLahir[0];
         }
       }
+      const umurIstriVal = pusDetail.umur_istri !== undefined ? pusDetail.umur_istri : (item.umur_istri || "");
 
       // Alamat & Wilayah
       const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kode_kec || "");
@@ -8688,14 +8705,21 @@ function checkAndLockKbTable() {
       else if (jnsAkseptor.includes("ULANGAN") || jnsAkseptor.includes("GANTI")) kdStatusPeserta = "4";
 
       // Asuransi
-      const rawJkn = String(item.peserta_jkn || "").toUpperCase();
+      const rawJkn = String(pusDetail.peserta_jkn || item.peserta_jkn || "").toUpperCase();
       let kdAsuransi = "";
       if (rawJkn.includes("PBI") || rawJkn.includes("BPJS")) kdAsuransi = "1";
       else if (rawJkn.includes("SWASTA")) kdAsuransi = "2";
       else if (rawJkn.includes("TIDAK")) kdAsuransi = "3";
 
-      // Jumlah anak hidup & umur anak terkecil
-      const umurAnakTerkecil = (item.umur_anak_terkecil !== undefined && item.umur_anak_terkecil !== null && item.umur_anak_terkecil !== "") ? String(item.umur_anak_terkecil).padStart(2, '0') : "";
+      // Jumlah Anak Hidup (Laki-laki & Perempuan)
+      const totalAnak = parseInt(pusDetail.jumlah_anak || item.jumlah_anak || 0, 10);
+      const anakLaki = totalAnak > 0 ? Math.floor(totalAnak / 2) : 0;
+      const anakPerempuan = totalAnak > 0 ? Math.ceil(totalAnak / 2) : 0;
+
+      // Umur Anak Terkecil (Format 2 Digit: Contoh 4 tahun -> 04 Tahun 00 Bulan)
+      const rawUmurAnak = pusDetail.umur_anak_terkecil !== undefined ? pusDetail.umur_anak_terkecil : item.umur_anak_terkecil;
+      const umurAnakNum = parseInt(rawUmurAnak || 0, 10);
+      const strUmurThn = String(umurAnakNum).padStart(2, '0');
 
       let judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
       let contentHtml = "";
@@ -8721,7 +8745,8 @@ function checkAndLockKbTable() {
                 <td></td>
                 <td style="font-size: 8pt; vertical-align: middle;">II. Kode Keluarga Indonesia:</td>
                 <td style="text-align: right; vertical-align: middle;">
-                  <span class="box-single" style="min-width: 170px; font-family: monospace; font-weight: bold; letter-spacing: 1.5px; text-align: center;">${item.id_pus || ''}</span>
+                  <!-- Dikosongkan sesuai permintaan -->
+                  <span class="box-single" style="min-width: 170px; text-align: center;">&nbsp;</span>
                 </td>
               </tr>
             </table>
@@ -8744,7 +8769,7 @@ function checkAndLockKbTable() {
                   <span class="box-char">${dLahir ? dLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${dLahir ? dLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${mLahir ? mLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${mLahir ? mLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${yLahir ? yLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(1) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(2) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(3) : '&nbsp;'}</span>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${item.umur_istri || ''}</b> Tahun
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${umurIstriVal !== "" ? umurIstriVal : ''}</b> Tahun
                 </td>
               </tr>
               <tr>
@@ -8819,17 +8844,17 @@ function checkAndLockKbTable() {
                 <td>X. Jumlah anak hidup</td>
                 <td>:</td>
                 <td>
-                  Laki-laki &nbsp;<span class="box-char">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  Perempuan &nbsp;<span class="box-char">&nbsp;</span>
+                  Laki-laki &nbsp;<span class="box-char">${totalAnak > 0 ? anakLaki : '&nbsp;'}</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  Perempuan &nbsp;<span class="box-char">${totalAnak > 0 ? anakPerempuan : '&nbsp;'}</span>
                 </td>
               </tr>
               <tr>
                 <td>XI. Umur anak terakhir yang masih hidup</td>
                 <td>:</td>
                 <td>
-                  <span class="box-char">${umurAnakTerkecil ? umurAnakTerkecil.charAt(0) : '&nbsp;'}</span><span class="box-char">${umurAnakTerkecil ? umurAnakTerkecil.charAt(1) : '&nbsp;'}</span> Tahun
+                  <span class="box-char">${totalAnak > 0 ? strUmurThn.charAt(0) : '&nbsp;'}</span><span class="box-char">${totalAnak > 0 ? strUmurThn.charAt(1) : '&nbsp;'}</span> Tahun
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> Bulan
+                  <span class="box-char">${totalAnak > 0 ? '0' : '&nbsp;'}</span><span class="box-char">${totalAnak > 0 ? '0' : '&nbsp;'}</span> Bulan
                 </td>
               </tr>
               <tr>
@@ -8998,7 +9023,7 @@ function checkAndLockKbTable() {
                 </tr>
               </table>
 
-              <!-- TANDA TANGAN (DIKOSONGKAN SESUAI INSTRUKSI) -->
+              <!-- TANDA TANGAN (KOLOM NAMA DIKOSONGKAN, NIP RATA KIRI) -->
               <table style="width: 100%; border-collapse: collapse; margin-top: 4px;">
                 <tr>
                   <td style="width: 50%; font-size: 6.5pt; vertical-align: bottom; line-height: 1.2;">
@@ -9010,7 +9035,9 @@ function checkAndLockKbTable() {
                     XIX. Penanggungjawab Pelayanan KB<br>
                     Dokter / Bidan / Perawat Kesehatan<br><br><br><br><br>
                     ( ............................................................ )<br>
-                    NIP.
+                    <div style="text-align: left; padding-left: 35px; margin-top: 2px;">
+                      NIP.
+                    </div>
                   </td>
                 </tr>
               </table>
@@ -9036,7 +9063,7 @@ function checkAndLockKbTable() {
               <tr><td style="padding: 4px 0;">Nama Peserta KB (Istri)</td><td>:</td><td style="font-weight: bold;">${item.nama_istri || '-'} (NIK: ${item.nik_istri || '-'})</td></tr>
               <tr><td style="padding: 4px 0;">Nama Suami</td><td>:</td><td>${item.nama_suami || '-'} (NIK: ${item.nik_suami || '-'})</td></tr>
               <tr><td style="padding: 4px 0;">Alamat</td><td>:</td><td>${alamatLengkap}</td></tr>
-              <tr><td style="padding: 4px 0;">Jaminan Kesehatan</td><td>:</td><td>${item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
+              <tr><td style="padding: 4px 0;">Jaminan Kesehatan</td><td>:</td><td>${pusDetail.peserta_jkn || item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
               <tr><td style="padding: 4px 0;">Metode Kontrasepsi Dipilih</td><td>:</td><td style="font-weight: bold; color: #1f4e78;">${alkon}</td></tr>
               <tr><td style="padding: 4px 0;">Jenis Layanan / Tindakan</td><td>:</td><td>${item.jenis_pelayanan || 'PEMASANGAN'} (${jnsAkseptor})</td></tr>
             </table>
@@ -9063,7 +9090,7 @@ function checkAndLockKbTable() {
               </tbody>
             </table>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 30px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 30px;">
               <tr>
                 <td style="width: 50%; text-align: center;">Peserta KB,<br><br><br><br>( <b>${item.nama_istri}</b> )</td>
                 <td style="width: 50%; text-align: center;">Pimpinan Faskes / Dokter / Bidan,<br><br><br><br>( ............................................................ )</td>
@@ -9119,7 +9146,7 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // Buka Jendela Cetak Langsung Pelayar
+      // Buka dialog cetak browser
       const printWindow = window.open('', '_blank', 'width=850,height=950');
       if (!printWindow) {
         Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
