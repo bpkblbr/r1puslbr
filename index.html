@@ -9458,7 +9458,7 @@ function checkAndLockKbTable() {
             width: 100%;
             border-collapse: collapse;
             font-size: 8.5pt;
-            margin-top: 3mm;
+            margin-top: 4mm;
           }
           .ic-sign-table td {
             vertical-align: top;
@@ -9488,19 +9488,19 @@ function checkAndLockKbTable() {
 
             <table class="tbl-ic-grid" style="margin-bottom: 3mm;">
               <tr>
-                <td style="width: 35%; line-height: 1.25;">
+                <td style="width: 35%; line-height: 1.25; vertical-align: top;">
                   Nama Faskes KB/RS/Praktik<br>
                   Dokter/Praktek Bidan Mandiri *)
                 </td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 63%; vertical-align: bottom;">
+                <td style="width: 2%; vertical-align: top;">:</td>
+                <td style="width: 63%; vertical-align: top; padding-top: 0.5px;">
                   <span style="font-weight: bold; text-decoration: underline;">${item.faskes_tujuan || '....................................................................................................'}</span>
                 </td>
               </tr>
               <tr>
-                <td style="padding-top: 1.5mm;">Nomor Kode Faskes KB</td>
-                <td style="padding-top: 1.5mm;">:</td>
-                <td style="padding-top: 1.5mm;">
+                <td style="padding-top: 1.5mm; vertical-align: top;">Nomor Kode Faskes KB</td>
+                <td style="padding-top: 1.5mm; vertical-align: top;">:</td>
+                <td style="padding-top: 1.5mm; vertical-align: top;">
                   <span class="ic-digit-box"></span><span class="ic-digit-box"></span>
                   &nbsp;&nbsp;
                   <span class="ic-digit-box"></span><span class="ic-digit-box"></span>
@@ -9509,21 +9509,21 @@ function checkAndLockKbTable() {
                 </td>
               </tr>
               <tr>
-                <td style="line-height: 1.25; padding-top: 1.5mm;">
+                <td style="line-height: 1.25; padding-top: 1.5mm; vertical-align: top;">
                   Nomor Klien / Nomor Seri Kartu<br>
                   (Sesuai dengan K/IV/KB)
                 </td>
-                <td style="padding-top: 1.5mm;">:</td>
-                <td style="padding-top: 1.5mm; vertical-align: middle;">
+                <td style="padding-top: 1.5mm; vertical-align: top;">:</td>
+                <td style="padding-top: 1.5mm; vertical-align: top;">
                   <span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span>
                   &nbsp;&nbsp;
                   <span class="ic-digit-box"></span><span class="ic-digit-box"></span>
                 </td>
               </tr>
               <tr>
-                <td style="padding-top: 1.5mm;">Kode Keluarga Indonesia (KKN)</td>
-                <td style="padding-top: 1.5mm;">:</td>
-                <td style="padding-top: 1.5mm;">
+                <td style="padding-top: 1.5mm; vertical-align: top;">Kode Keluarga Indonesia (KKN)</td>
+                <td style="padding-top: 1.5mm; vertical-align: top;">:</td>
+                <td style="padding-top: 1.5mm; vertical-align: top;">
                   <span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span><span class="ic-digit-box"></span>
                 </td>
               </tr>
@@ -9537,30 +9537,30 @@ function checkAndLockKbTable() {
             <p style="margin: 0 0 1.5mm 0;">Saya yang bertanda tangan di bawah ini</p>
             <table class="tbl-ic-grid" style="margin-bottom: 2mm;">
               <tr>
-                <td style="width: 35%;">Nama</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 63%; font-weight: bold;">${item.nama_istri || '....................................................................................'}</td>
+                <td style="width: 35%; vertical-align: top;">Nama</td>
+                <td style="width: 2%; vertical-align: top;">:</td>
+                <td style="width: 63%; font-weight: bold; vertical-align: top;">${item.nama_istri || '....................................................................................'}</td>
               </tr>
               <tr>
-                <td>Umur</td>
-                <td>:</td>
-                <td>
+                <td style="vertical-align: top;">Umur</td>
+                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">
                   ${umurIstriVal ? `<b>${umurIstriVal}</b>` : '......'} Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   Jenis Kelamin &nbsp;&nbsp;
                   <u>Laki-laki</u>/Perempuan *)
                 </td>
               </tr>
               <tr>
-                <td>Alamat Lengkap</td>
-                <td>:</td>
-                <td>
+                <td style="vertical-align: top;">Alamat Lengkap</td>
+                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">
                   Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW..... Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
                 <td></td>
                 <td></td>
-                <td>
+                <td style="vertical-align: top;">
                   <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                     <tr>
                       <td style="width: 50%;">Kecamatan <b>${nmKec || '...............................'}</b></td>
@@ -9606,30 +9606,30 @@ function checkAndLockKbTable() {
             <p style="margin: 0 0 1.5mm 0;">Saya yang bertanda tangan di bawah ini</p>
             <table class="tbl-ic-grid" style="margin-bottom: 2mm;">
               <tr>
-                <td style="width: 35%;">Nama</td>
-                <td style="width: 2%;">:</td>
-                <td style="width: 63%; font-weight: bold;">${item.nama_suami || '....................................................................................'}</td>
+                <td style="width: 35%; vertical-align: top;">Nama</td>
+                <td style="width: 2%; vertical-align: top;">:</td>
+                <td style="width: 63%; font-weight: bold; vertical-align: top;">${item.nama_suami || '....................................................................................'}</td>
               </tr>
               <tr>
-                <td>Umur</td>
-                <td>:</td>
-                <td>
+                <td style="vertical-align: top;">Umur</td>
+                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">
                   ...... Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   Jenis Kelamin &nbsp;&nbsp;
                   Laki-laki/<u>Perempuan</u> *)
                 </td>
               </tr>
               <tr>
-                <td>Alamat Lengkap</td>
-                <td>:</td>
-                <td>
+                <td style="vertical-align: top;">Alamat Lengkap</td>
+                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">
                   Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW..... Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
                 <td></td>
                 <td></td>
-                <td>
+                <td style="vertical-align: top;">
                   <table style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
                     <tr>
                       <td style="width: 50%;">Kecamatan <b>${nmKec || '...............................'}</b></td>
@@ -9651,24 +9651,29 @@ function checkAndLockKbTable() {
               Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
             </p>
 
-            <div style="text-align: right; margin-top: 2.5mm; margin-right: 5mm;">
-              Lombok Barat, ${dLayanan} ${mLayanan} ${yLayanan}
-            </div>
-
-            <!-- TANDA TANGAN 3 PIHAK -->
+            <!-- TANDA TANGAN 3 PIHAK DENGAN TANGGAL CENTER TEPAT DI ATAS SUAMI/ISTERI -->
             <table class="ic-sign-table">
               <tr>
-                <td style="width: 40%;">
+                <td style="width: 40%; vertical-align: bottom;">
                   Yang memberi pelayanan konseling<br>
-                  Dokter/Bidan/Perawat *)<br><br><br><br><br>
+                  Dokter/Bidan/Perawat *)
+                </td>
+                <td style="width: 25%; vertical-align: bottom;">
+                  Klien
+                </td>
+                <td style="width: 35%; text-align: center; vertical-align: bottom;">
+                  <div style="margin-bottom: 4px;">Lombok Barat, ${dLayanan} ${mLayanan} ${yLayanan}</div>
+                  Suami/Isteri Klien *)
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top: 18mm;">
                   (....................................................)
                 </td>
-                <td style="width: 25%;">
-                  <br>Klien<br><br><br><br><br>
+                <td style="padding-top: 18mm;">
                   ( <b>${item.nama_istri}</b> )
                 </td>
-                <td style="width: 35%;">
-                  <br>Suami/Isteri Klien *)<br><br><br><br><br>
+                <td style="padding-top: 18mm;">
                   ( <b>${item.nama_suami || '................................'}</b> )
                 </td>
               </tr>
