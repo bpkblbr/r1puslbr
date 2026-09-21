@@ -8663,6 +8663,27 @@ function checkAndLockKbTable() {
       const yLayanan = pTgl[0] || "2026";
       const yShort = yLayanan.slice(-2);
 
+      let tglCabutFormatted = "-";
+      let dCabut = "", mCabut = "", yCabut = "", yCabutShort = "";
+
+      if (tglFormatted && (alkon.includes("IMPLAN") || alkon.includes("IUD") || alkon.includes("SUSUK"))) {
+        const tglPasangObj = new Date(tglFormatted);
+        if (!isNaN(tglPasangObj.getTime())) {
+          const addYears = alkon.includes("IUD") ? 8 : 3;
+          tglPasangObj.setFullYear(tglPasangObj.getFullYear() + addYears);
+          
+          const yFull = tglPasangObj.getFullYear();
+          const mNum = String(tglPasangObj.getMonth() + 1).padStart(2, '0');
+          const dNum = String(tglPasangObj.getDate()).padStart(2, '0');
+          
+          tglCabutFormatted = `${dNum}/${mNum}/${yFull}`;
+          dCabut = dNum;
+          mCabut = mNum;
+          yCabut = String(yFull);
+          yCabutShort = yCabut.slice(-2);
+        }
+      }
+
       // Tanggal lahir & umur istri
       let dLahir = "", mLahir = "", yLahir = "";
       const tglLahirVal = pusDetail.tgl_lahir_istri || item.tgl_lahir_istri;
@@ -8977,10 +8998,10 @@ function checkAndLockKbTable() {
                     
                     XVIII. Tanggal dicabut : 
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span>
-                    <br><span style="font-size: 6pt; margin-left: 95px; color: #555;">(khusus Implan/IUD)&nbsp;&nbsp; Tanggal &nbsp;&nbsp;&nbsp;&nbsp; Bulan &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tahun</span>
+                    <span class="box-char">${dCabut ? dCabut.charAt(0) : '&nbsp;'}</span><span class="box-char">${dCabut ? dCabut.charAt(1) : '&nbsp;'}</span> / 
+                    <span class="box-char">${mCabut ? mCabut.charAt(0) : '&nbsp;'}</span><span class="box-char">${mCabut ? mCabut.charAt(1) : '&nbsp;'}</span> / 
+                    <span class="box-char">${yCabut ? yCabut.charAt(0) : '&nbsp;'}</span><span class="box-char">${yCabut ? yCabut.charAt(1) : '&nbsp;'}</span><span class="box-char">${yCabut ? yCabut.charAt(2) : '&nbsp;'}</span><span class="box-char">${yCabut ? yCabut.charAt(3) : '&nbsp;'}</span>
+                    <br><span style="font-size: 6.5pt; margin-left: 95px; color: #555;">(khusus Implan/IUD)&nbsp;&nbsp; Tanggal &nbsp;&nbsp;&nbsp;&nbsp; Bulan &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tahun</span>
                   </td>
                 </tr>
               </table>
@@ -9331,11 +9352,11 @@ function checkAndLockKbTable() {
                   <td class="b-text" style="vertical-align: top;">:</td>
                   <td style="vertical-align: top;">
                     <div style="display: inline-flex; align-items: center;">
-                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                      <span class="box-digit">${dCabut ? dCabut.charAt(0) : '0'}</span><span class="box-digit">${dCabut ? dCabut.charAt(1) : '0'}</span>
                       &nbsp;&nbsp;
-                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                      <span class="box-digit">${mCabut ? mCabut.charAt(0) : '0'}</span><span class="box-digit">${mCabut ? mCabut.charAt(1) : '0'}</span>
                       &nbsp;&nbsp;
-                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                      <span class="box-digit">${yCabutShort ? yCabutShort.charAt(0) : '0'}</span><span class="box-digit">${yCabutShort ? yCabutShort.charAt(1) : '0'}</span>
                     </div>
                   </td>
                 </tr>
