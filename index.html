@@ -9009,7 +9009,6 @@ function checkAndLockKbTable() {
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
 
-        // Format tanggal lahir & umur
         let tglLahirTeks = "-";
         if (dLahir && mLahir && yLahir) {
           const namaBln = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
@@ -9017,7 +9016,6 @@ function checkAndLockKbTable() {
         }
         if (umurIstriVal) tglLahirTeks += ` / ${umurIstriVal} TH`;
 
-        // Status JKN
         const isPbi = rawJkn.includes("PBI") && !rawJkn.includes("BUKAN");
         const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
         const isNonJkn = rawJkn.includes("TIDAK") || (!isPbi && !isNonPbi);
@@ -9027,142 +9025,150 @@ function checkAndLockKbTable() {
             size: 90mm 125mm;
             margin: 0;
           }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body {
             margin: 0;
             padding: 0;
             background: #fff;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
           }
-          .ki-page-card {
+          .ki-page {
             width: 90mm;
             height: 125mm;
             max-width: 90mm;
             max-height: 125mm;
             padding: 2.5mm;
             box-sizing: border-box;
-            background: #fff;
             page-break-after: always;
-            overflow: hidden;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #000;
             position: relative;
+            background: #fff;
+            overflow: hidden;
           }
-          .ki-page-card:last-child {
+          .ki-page:last-child {
             page-break-after: auto;
           }
-          .ki-inner-border {
+          .ki-frame {
             width: 100%;
             height: 100%;
-            border: 1.5px solid #000;
-            box-sizing: border-box;
-            padding: 0;
+            border: 2px solid #000;
             position: relative;
-            overflow: hidden;
+            background: #fff;
           }
-          .ki-top-band {
-            height: 5.5mm;
-            background-color: #343499;
+          /* HEADER BIRU HALAMAN DEPAN */
+          .ki-bar-top {
             width: 100%;
+            height: 6mm;
+            background-color: #343499 !important;
           }
-          .ki-bottom-band {
-            height: 4.5mm;
-            background-color: #343499;
+          .ki-bar-bottom {
             width: 100%;
+            height: 5mm;
+            background-color: #343499 !important;
             margin-top: 1.5mm;
           }
-          .ki-header-area {
+          .ki-header-mid {
             display: flex;
             align-items: center;
-            padding: 1.5mm 3mm 0 3mm;
+            padding: 1mm 2.5mm 0 2.5mm;
             position: relative;
+            height: 19mm;
           }
-          .ki-logo-box {
-            width: 15mm;
-            height: 14mm;
+          .ki-logo-wrap {
+            width: 19mm;
+            height: 18mm;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
           }
-          .ki-logo-box img {
+          .ki-logo-wrap img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
           }
-          .ki-title-box {
-            padding-left: 2.5mm;
-            flex: 1;
+          .ki-title-wrap {
+            padding-left: 2mm;
           }
           .ki-title-1 {
-            font-size: 13pt;
+            font-size: 16pt;
             font-weight: 900;
             color: #000;
-            line-height: 1;
+            line-height: 0.95;
             letter-spacing: 0.5px;
           }
           .ki-title-2 {
-            font-size: 11pt;
+            font-size: 13pt;
             font-weight: 900;
             color: #000;
             line-height: 1.1;
             letter-spacing: 0.5px;
-            margin-top: 1mm;
+            margin-top: 1.5mm;
           }
-          .ki-badge-kikb {
+          .ki-kikb-box {
             position: absolute;
-            right: 3mm;
+            right: 2.5mm;
             top: 1mm;
-            border: 1.2px solid #000;
-            padding: 0.5mm 3mm;
-            font-size: 7pt;
-            font-weight: bold;
-            color: #000;
+            border: 1.5px solid #000;
+            padding: 0.4mm 2.5mm;
+            font-size: 7.5pt;
+            font-weight: 900;
             background: #fff;
           }
-          .ki-front-content {
-            padding: 2mm 3.5mm;
-            font-size: 6.8pt;
-            line-height: 1.2;
+          /* KONTEN DATA DEPAN */
+          .ki-body-front {
+            padding: 2.5mm 3mm;
+            font-size: 7pt;
           }
-          .tbl-ki-front {
+          .tbl-front-data {
             width: 100%;
             border-collapse: collapse;
           }
-          .tbl-ki-front td {
+          .tbl-front-data td {
             padding: 0.7mm 0;
             vertical-align: top;
-            font-size: 6.8pt;
+            font-size: 7pt;
+            color: #000;
           }
-          .ki-box-char {
+          .b-text {
+            font-weight: bold;
+          }
+          .box-digit {
             border: 1px solid #000;
             display: inline-block;
-            width: 3.2mm;
-            height: 3.2mm;
-            line-height: 3.2mm;
+            width: 3.4mm;
+            height: 3.4mm;
+            line-height: 3.4mm;
             text-align: center;
-            font-size: 6.5pt;
+            font-size: 6.8pt;
             font-weight: bold;
             vertical-align: middle;
-            margin: 0 0.3mm;
+            margin: 0 0.2mm;
           }
-          .ki-box-check {
-            border: 1px solid #000;
+          .box-check {
+            border: 1.2px solid #000;
             display: inline-block;
-            width: 3.2mm;
-            height: 3.2mm;
-            line-height: 3.2mm;
+            width: 3.4mm;
+            height: 3.4mm;
+            line-height: 3.4mm;
             text-align: center;
-            font-size: 6.5pt;
-            font-weight: bold;
+            font-size: 7pt;
+            font-weight: 900;
             vertical-align: middle;
             margin-right: 1mm;
           }
-          .ki-sign-area {
-            margin-top: 2.5mm;
-            margin-left: 36mm;
-            font-size: 6.5pt;
+          .sign-front-area {
+            margin-top: 3mm;
+            margin-left: 33mm;
+            font-size: 6.8pt;
             line-height: 1.25;
-            text-align: left;
+          }
+          /* HALAMAN BELAKANG */
+          .ki-body-back {
+            padding: 3mm 3mm;
           }
           .tbl-back-top {
             width: 100%;
@@ -9173,198 +9179,200 @@ function checkAndLockKbTable() {
           .tbl-back-top td {
             padding: 0.8mm 0;
             vertical-align: middle;
-            font-size: 7pt;
           }
-          .tbl-back-main {
+          .tbl-back-table {
             width: 100%;
             border-collapse: collapse;
-            border: 1.5px solid #000;
+            border: 1.8px solid #000;
           }
-          .tbl-back-main th, .tbl-back-main td {
-            border: 1px solid #000;
+          .tbl-back-table th, .tbl-back-table td {
+            border: 1.2px solid #000;
             padding: 1.2mm 1mm;
-            font-size: 6.5pt;
+            font-size: 7pt;
           }
-          .tbl-back-main th {
+          .tbl-back-table th {
             font-weight: bold;
             text-align: center;
             vertical-align: middle;
             background: #fff;
           }
+          .page-tag {
+            position: absolute;
+            bottom: -0.5mm;
+            right: 2mm;
+            font-size: 5.5pt;
+            font-style: italic;
+            color: #333;
+          }
         `;
 
         contentHtml = `
           <!-- ================= HALAMAN DEPAN (9 x 12.5 CM) ================= -->
-          <div class="ki-page-card">
-            <div class="ki-inner-border">
+          <div class="ki-page">
+            <div class="ki-frame">
               <!-- PITA BIRU ATAS -->
-              <div class="ki-top-band"></div>
+              <div class="ki-bar-top"></div>
 
-              <div class="ki-header-area">
-                <!-- LOGO DARI GITHUB SESUAI REQUEST -->
-                <div class="ki-logo-box">
+              <div class="ki-header-mid">
+                <div class="ki-logo-wrap">
                   <img src="https://raw.githubusercontent.com/bpkblbr/r1puslbr/main/Logo1.png" alt="Logo KKB">
                 </div>
-
-                <div class="ki-title-box">
+                <div class="ki-title-wrap">
                   <div class="ki-title-1">KARTU</div>
                   <div class="ki-title-2">PESERTA KB</div>
                 </div>
-
-                <div class="ki-badge-kikb">K/I/KB/13</div>
+                <div class="ki-kikb-box">K/I/KB/13</div>
               </div>
 
-              <!-- PITA BIRU BAWAH KOP -->
-              <div class="ki-bottom-band"></div>
+              <!-- PITA BIRU BAWAH -->
+              <div class="ki-bar-bottom"></div>
 
-              <!-- DATA IDENTITAS PESERTA -->
-              <div class="ki-front-content">
-                <table class="tbl-ki-front">
+              <!-- ISI DATA DEPAN -->
+              <div class="ki-body-front">
+                <table class="tbl-front-data">
                   <tr>
-                    <td style="width: 37%; font-weight: bold;">Nama Peserta KB</td>
-                    <td style="width: 4%; font-weight: bold;">:</td>
-                    <td style="width: 59%; font-weight: bold;">${item.nama_istri || '-'}</td>
+                    <td class="b-text" style="width: 37%;">Nama Peserta KB</td>
+                    <td class="b-text" style="width: 3%;">:</td>
+                    <td class="b-text" style="width: 60%;">${item.nama_istri || '-'}</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Nama Suami/Istri</td>
-                    <td style="font-weight: bold;">:</td>
-                    <td style="font-weight: bold;">${item.nama_suami || '-'}</td>
+                    <td class="b-text">Nama Suami/Istri</td>
+                    <td class="b-text">:</td>
+                    <td class="b-text">${item.nama_suami || '-'}</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Tgl. Lahir/Umur Istri</td>
-                    <td style="font-weight: bold;">:</td>
-                    <td style="font-weight: bold;">${tglLahirTeks}</td>
+                    <td class="b-text">Tgl. Lahir/Umur Istri</td>
+                    <td class="b-text">:</td>
+                    <td class="b-text">${tglLahirTeks}</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold; vertical-align: top;">Alamat Peserta KB</td>
-                    <td style="font-weight: bold; vertical-align: top;">:</td>
-                    <td style="font-weight: bold;">${alamatLengkap}</td>
+                    <td class="b-text" style="vertical-align: top;">Alamat Peserta KB</td>
+                    <td class="b-text" style="vertical-align: top;">:</td>
+                    <td class="b-text">${alamatLengkap}</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Tahapan KS</td>
-                    <td style="font-weight: bold;">:</td>
-                    <td style="font-weight: bold;">KPS</td>
+                    <td class="b-text">Tahapan KS</td>
+                    <td class="b-text">:</td>
+                    <td class="b-text">KPS</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold; vertical-align: top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
-                    <td style="font-weight: bold; vertical-align: top;">:</td>
+                    <td class="b-text" style="vertical-align: top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
+                    <td class="b-text" style="vertical-align: top;">:</td>
                     <td>
-                      <div>
-                        <span class="ki-box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> <b>Peserta JKN :</b>
-                      </div>
+                      <div><span class="box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> <span class="b-text">Peserta JKN :</span></div>
                       <div style="margin-left: 4.5mm; margin-top: 0.5mm;">
-                        <div><span class="ki-box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
-                        <div><span class="ki-box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
+                        <div><span class="box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
+                        <div><span class="box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
                       </div>
-                      <div style="margin-top: 0.6mm;">
-                        <span class="ki-box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN
-                      </div>
+                      <div style="margin-top: 0.6mm;"><span class="box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
                     </td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Nomor Seri Kartu</td>
-                    <td style="font-weight: bold;">:</td>
+                    <td class="b-text">Nomor Seri Kartu</td>
+                    <td class="b-text">:</td>
                     <td>
                       <div style="display: inline-flex; align-items: center;">
-                        <span class="ki-box-char">${dLayanan.charAt(0)}</span><span class="ki-box-char">${dLayanan.charAt(1)}</span><span class="ki-box-char">${mLayanan.charAt(0)}</span><span class="ki-box-char">${mLayanan.charAt(1)}</span>
+                        <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span><span class="box-digit">${mLayanan.charAt(0)}</span><span class="box-digit">${mLayanan.charAt(1)}</span>
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <span class="ki-box-char">${yShort.charAt(0)}</span><span class="ki-box-char">${yShort.charAt(1)}</span>
+                        <span class="box-digit">${yShort.charAt(0)}</span><span class="box-digit">${yShort.charAt(1)}</span>
                       </div>
                     </td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Nama Faskes KB</td>
-                    <td style="font-weight: bold;">:</td>
-                    <td style="font-weight: bold;">${item.faskes_tujuan || '-'}</td>
+                    <td class="b-text">Nama Faskes KB</td>
+                    <td class="b-text">:</td>
+                    <td class="b-text">${item.faskes_tujuan || '-'}</td>
                   </tr>
                   <tr>
-                    <td style="font-weight: bold;">Nomor Kode Faskes KB</td>
-                    <td style="font-weight: bold;">:</td>
+                    <td class="b-text">Nomor Kode Faskes KB</td>
+                    <td class="b-text">:</td>
                     <td>
                       <div style="display: inline-flex; align-items: center;">
-                        <span class="ki-box-char">5</span><span class="ki-box-char">2</span>
+                        <span class="box-digit">1</span><span class="box-digit">8</span>
                         &nbsp;&nbsp;
-                        <span class="ki-box-char">0</span><span class="ki-box-char">1</span>
+                        <span class="box-digit">0</span><span class="box-digit">9</span>
                         &nbsp;&nbsp;
-                        <span class="ki-box-char">0</span><span class="ki-box-char">0</span><span class="ki-box-char">7</span>
+                        <span class="box-digit">0</span><span class="box-digit">0</span><span class="box-digit">7</span>
                       </div>
                     </td>
                   </tr>
                 </table>
 
-                <!-- TANDA TANGAN KANAN BAWAH -->
-                <div class="ki-sign-area">
-                  <b>${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}</b><br>
-                  Penanggung jawab Faskes KB/<br>
-                  Praktik Dokter/Praktik Bidan Mandiri,<br><br><br><br>
+                <div class="sign-front-area">
+                  <span class="b-text">${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}</span><br>
+                  <span class="b-text">Penanggung jawab Faskes KB/</span><br>
+                  <span class="b-text">Praktik Dokter/Praktik Bidan Mandiri,</span><br><br><br><br>
                   ( ............................................................ )
                 </div>
               </div>
             </div>
+            <div class="page-tag">Halaman Depan</div>
           </div>
 
           <!-- ================= HALAMAN BELAKANG (9 x 12.5 CM) ================= -->
-          <div class="ki-page-card">
-            <div class="ki-inner-border" style="padding: 2.5mm 3mm;">
-              <table class="tbl-back-top">
-                <tr>
-                  <td style="width: 44%; font-weight: bold;">Metode Kontrasepsi</td>
-                  <td style="width: 4%; font-weight: bold;">:</td>
-                  <td style="width: 52%; font-weight: bold;">${alkon}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold;">Tgl/Bln/Thn Mulai Dipakai</td>
-                  <td style="font-weight: bold;">:</td>
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <span class="ki-box-char">${dLayanan.charAt(0)}</span><span class="ki-box-char">${dLayanan.charAt(1)}</span>
-                      &nbsp;&nbsp;
-                      <span class="ki-box-char">${mLayanan.charAt(0)}</span><span class="ki-box-char">${mLayanan.charAt(1)}</span>
-                      &nbsp;&nbsp;
-                      <span class="ki-box-char">${yShort.charAt(0)}</span><span class="ki-box-char">${yShort.charAt(1)}</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; font-weight: normal;">(Khusus Implant/IUD)</span></td>
-                  <td style="font-weight: bold; vertical-align: top;">:</td>
-                  <td style="vertical-align: top;">
-                    <div style="display: inline-flex; align-items: center;">
-                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
-                      &nbsp;&nbsp;
-                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
-                      &nbsp;&nbsp;
-                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
-                    </div>
-                  </td>
-                </tr>
-              </table>
+          <div class="ki-page">
+            <div class="ki-frame">
+              <div class="ki-body-back">
+                <table class="tbl-back-top">
+                  <tr>
+                    <td class="b-text" style="width: 44%;">Metode Kontrasepsi</td>
+                    <td class="b-text" style="width: 3%;">:</td>
+                    <td class="b-text" style="width: 53%;">${alkon}</td>
+                  </tr>
+                  <tr>
+                    <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td>
+                    <td class="b-text">:</td>
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span>
+                        &nbsp;&nbsp;
+                        <span class="box-digit">${mLayanan.charAt(0)}</span><span class="box-digit">${mLayanan.charAt(1)}</span>
+                        &nbsp;&nbsp;
+                        <span class="box-digit">${yShort.charAt(0)}</span><span class="box-digit">${yShort.charAt(1)}</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="b-text" style="vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; font-weight: normal;">(Khusus Implant/IUD)</span></td>
+                    <td class="b-text" style="vertical-align: top;">:</td>
+                    <td style="vertical-align: top;">
+                      <div style="display: inline-flex; align-items: center;">
+                        <span class="box-digit">0</span><span class="box-digit">0</span>
+                        &nbsp;&nbsp;
+                        <span class="box-digit">0</span><span class="box-digit">0</span>
+                        &nbsp;&nbsp;
+                        <span class="box-digit">0</span><span class="box-digit">0</span>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
 
-              <!-- TABEL 2 KOLOM (DIPESAN KEMBALI & KETERANGAN) -->
-              <table class="tbl-back-main">
-                <thead>
-                  <tr>
-                    <th style="width: 32%;">DIPESAN<br>KEMBALI</th>
-                    <th style="width: 68%;">KETERANGAN</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
-                    <td style="font-weight: bold;">BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
-                  </tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
-                </tbody>
-              </table>
+                <table class="tbl-back-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 30%;">DIPESAN<br>KEMBALI</th>
+                      <th style="width: 70%;">KETERANGAN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
+                      <td style="font-weight: bold;">BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
+                    </tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
+            <div class="page-tag">Halaman Belakang</div>
           </div>
         `;
 
@@ -9457,17 +9465,18 @@ function checkAndLockKbTable() {
           <title>${judulDokumen}</title>
           <meta charset="utf-8">
           <style>
-            ${customCss}
+            ${pageStyleCss}
           </style>
         </head>
         <body>
           ${contentHtml}
           <script>
             window.onload = function() {
+              // Menunggu 400ms memastikan gambar logo dari GitHub ter-render penuh
               setTimeout(function() {
                 window.print();
                 window.onafterprint = function() { window.close(); };
-              }, 300);
+              }, 400);
             };
           <\/script>
         </body>
