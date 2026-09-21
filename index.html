@@ -8663,27 +8663,6 @@ function checkAndLockKbTable() {
       const yLayanan = pTgl[0] || "2026";
       const yShort = yLayanan.slice(-2);
 
-      let tglCabutFormatted = "-";
-      let dCabut = "", mCabut = "", yCabut = "", yCabutShort = "";
-
-      if (tglFormatted && (alkon.includes("IMPLAN") || alkon.includes("IUD") || alkon.includes("SUSUK"))) {
-        const tglPasangObj = new Date(tglFormatted);
-        if (!isNaN(tglPasangObj.getTime())) {
-          const addYears = alkon.includes("IUD") ? 8 : 3;
-          tglPasangObj.setFullYear(tglPasangObj.getFullYear() + addYears);
-          
-          const yFull = tglPasangObj.getFullYear();
-          const mNum = String(tglPasangObj.getMonth() + 1).padStart(2, '0');
-          const dNum = String(tglPasangObj.getDate()).padStart(2, '0');
-          
-          tglCabutFormatted = `${dNum}/${mNum}/${yFull}`;
-          dCabut = dNum;
-          mCabut = mNum;
-          yCabut = String(yFull);
-          yCabutShort = yCabut.slice(-2);
-        }
-      }
-
       // Tanggal lahir & umur istri
       let dLahir = "", mLahir = "", yLahir = "";
       const tglLahirVal = pusDetail.tgl_lahir_istri || item.tgl_lahir_istri;
@@ -8704,7 +8683,7 @@ function checkAndLockKbTable() {
       const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.kode_dusun || "");
       const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
 
-      // Alkon & Kode
+      // Alkon & Kode (Dideklarasikan lebih awal agar bisa dipakai perhitungan tanggal cabut)
       const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
       let kdAlkon = "";
       if (alkon.includes("SUNTIK") && alkon.includes("1")) kdAlkon = "1";
@@ -8717,6 +8696,28 @@ function checkAndLockKbTable() {
       else if (alkon.includes("IUD")) kdAlkon = "8";
       else if (alkon.includes("MOW") || alkon.includes("TUBEKTOMI")) kdAlkon = "9";
       else if (alkon.includes("MOP") || alkon.includes("VASEKTOMI")) kdAlkon = "10";
+
+      // Perhitungan Otomatis Tanggal Dicabut (Implan +3 Tahun, IUD +8 Tahun)
+      let tglCabutFormatted = "-";
+      let dCabut = "", mCabut = "", yCabut = "", yCabutShort = "";
+
+      if (tglFormatted && (alkon.includes("IMPLAN") || alkon.includes("IUD") || alkon.includes("SUSUK"))) {
+        const tglPasangObj = new Date(tglFormatted);
+        if (!isNaN(tglPasangObj.getTime())) {
+          const addYears = alkon.includes("IUD") ? 8 : 3;
+          tglPasangObj.setFullYear(tglPasangObj.getFullYear() + addYears);
+          
+          const yFull = tglPasangObj.getFullYear();
+          const mNum = String(tglPasangObj.getMonth() + 1).padStart(2, '0');
+          const dNum = String(tglPasangObj.getDate()).padStart(2, '0');
+          
+          tglCabutFormatted = `${dNum}/${mNum}/${yFull}`;
+          dCabut = dNum;
+          mCabut = mNum;
+          yCabut = String(yFull);
+          yCabutShort = yCabut.slice(-2);
+        }
+      }
 
       // Status Peserta
       const jnsAkseptor = String(item.jenis_akseptor || "").toUpperCase();
@@ -9304,9 +9305,9 @@ function checkAndLockKbTable() {
                     <td class="b-text">:</td>
                     <td>
                       <div style="display: inline-flex; align-items: center;">
-                        <span class="box-digit">5</span><span class="box-digit">2</span>
+                        <span class="box-digit">1</span><span class="box-digit">8</span>
                         &nbsp;&nbsp;
-                        <span class="box-digit">0</span><span class="box-digit">1</span>
+                        <span class="box-digit">0</span><span class="box-digit">9</span>
                         &nbsp;&nbsp;
                         <span class="box-digit">0</span><span class="box-digit">0</span><span class="box-digit">7</span>
                       </div>
@@ -9720,9 +9721,9 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =========================================================================
-      // EKSEKUSI CETAK DENGAN ATURAN @PAGE TERISOLASI
-      // =========================================================================
+      // =======================================================================
+      // EKSEKUSI JENDELA CETAK BROWSER SECARA TERISOLASI
+      // =======================================================================
       const printWindow = window.open('', '_blank', 'width=850,height=950');
       if (!printWindow) {
         Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
