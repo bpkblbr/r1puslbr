@@ -8640,7 +8640,7 @@ function checkAndLockKbTable() {
         return;
       }
 
-      // Ambil data detail PUS dari tabel data_pus secara aman
+      // Ambil data detail PUS dari tabel data_pus
       let pusDetail = { ...item };
       if (item.id_pus) {
         try {
@@ -8651,11 +8651,11 @@ function checkAndLockKbTable() {
             .maybeSingle();
           if (dPus) pusDetail = { ...item, ...dPus };
         } catch (err) {
-          console.warn("Gagal mengambil data_pus detail:", err);
+          console.warn("Gagal sinkron data_pus:", err);
         }
       }
 
-      // Tanggal pelayanan
+      // Format tanggal pelayanan
       const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
       const pTgl = tglFormatted.split('-');
       const dLayanan = pTgl[2] || "01";
@@ -8725,15 +8725,20 @@ function checkAndLockKbTable() {
       let customCss = "";
       let contentHtml = "";
 
-      // =======================================================================
-      // 1. FORMULIR K/IV/KB/15 (STANDAR A4 PORTRAIT - 1 HALAMAN PAS)
-      // =======================================================================
+      // =========================================================================
+      // 1. FORMULIR K/IV/KB/15 (WAJIB A4 PORTRAIT - 1 HALAMAN PAS)
+      // =========================================================================
       if (jenisDoc === "KIV" || jenisDoc === "K0") {
         judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
         customCss = `
           @page {
-            size: A4 portrait;
-            margin: 5mm 8mm;
+            size: A4 portrait !important;
+            margin: 5mm 8mm !important;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           body {
             font-family: Arial, Helvetica, sans-serif;
@@ -8741,8 +8746,6 @@ function checkAndLockKbTable() {
             background: #fff;
             margin: 0;
             padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
           .form-wrapper {
             border: 1.5px solid #000;
@@ -9004,7 +9007,7 @@ function checkAndLockKbTable() {
         `;
 
       // =========================================================================
-      // 2. KARTU K/I/KB/13 (PERSIS UKURAN 9 x 12.5 CM DUA HALAMAN)
+      // 2. KARTU K/I/KB/13 (PERSIS 90mm x 125mm BOLAK-BALIK DUA HALAMAN)
       // =========================================================================
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
@@ -9020,10 +9023,10 @@ function checkAndLockKbTable() {
         const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
         const isNonJkn = rawJkn.includes("TIDAK") || (!isPbi && !isNonPbi);
 
-        pageStyleCss = `
+        customCss = `
           @page {
-            size: 90mm 125mm;
-            margin: 0;
+            size: 90mm 125mm !important;
+            margin: 0 !important;
           }
           * {
             box-sizing: border-box;
@@ -9037,29 +9040,28 @@ function checkAndLockKbTable() {
             font-family: Arial, Helvetica, sans-serif;
             color: #000;
           }
-          .ki-page {
+          .ki-page-card {
             width: 90mm;
             height: 125mm;
             max-width: 90mm;
             max-height: 125mm;
             padding: 2.5mm;
             box-sizing: border-box;
-            page-break-after: always;
-            position: relative;
             background: #fff;
+            page-break-after: always;
             overflow: hidden;
+            position: relative;
           }
-          .ki-page:last-child {
+          .ki-page-card:last-child {
             page-break-after: auto;
           }
-          .ki-frame {
+          .ki-inner-border {
             width: 100%;
             height: 100%;
             border: 2px solid #000;
             position: relative;
             background: #fff;
           }
-          /* HEADER BIRU HALAMAN DEPAN */
           .ki-bar-top {
             width: 100%;
             height: 6mm;
@@ -9118,7 +9120,6 @@ function checkAndLockKbTable() {
             font-weight: 900;
             background: #fff;
           }
-          /* KONTEN DATA DEPAN */
           .ki-body-front {
             padding: 2.5mm 3mm;
             font-size: 7pt;
@@ -9166,7 +9167,6 @@ function checkAndLockKbTable() {
             font-size: 6.8pt;
             line-height: 1.25;
           }
-          /* HALAMAN BELAKANG */
           .ki-body-back {
             padding: 3mm 3mm;
           }
@@ -9207,12 +9207,10 @@ function checkAndLockKbTable() {
         `;
 
         contentHtml = `
-          <!-- ================= HALAMAN DEPAN (9 x 12.5 CM) ================= -->
-          <div class="ki-page">
-            <div class="ki-frame">
-              <!-- PITA BIRU ATAS -->
+          <!-- HALAMAN DEPAN (9 x 12.5 CM) -->
+          <div class="ki-page-card">
+            <div class="ki-inner-border">
               <div class="ki-bar-top"></div>
-
               <div class="ki-header-mid">
                 <div class="ki-logo-wrap">
                   <img src="https://raw.githubusercontent.com/bpkblbr/r1puslbr/main/Logo1.png" alt="Logo KKB">
@@ -9223,11 +9221,8 @@ function checkAndLockKbTable() {
                 </div>
                 <div class="ki-kikb-box">K/I/KB/13</div>
               </div>
-
-              <!-- PITA BIRU BAWAH -->
               <div class="ki-bar-bottom"></div>
 
-              <!-- ISI DATA DEPAN -->
               <div class="ki-body-front">
                 <table class="tbl-front-data">
                   <tr>
@@ -9288,9 +9283,9 @@ function checkAndLockKbTable() {
                     <td class="b-text">:</td>
                     <td>
                       <div style="display: inline-flex; align-items: center;">
-                        <span class="box-digit">1</span><span class="box-digit">8</span>
+                        <span class="box-digit">5</span><span class="box-digit">2</span>
                         &nbsp;&nbsp;
-                        <span class="box-digit">0</span><span class="box-digit">9</span>
+                        <span class="box-digit">0</span><span class="box-digit">1</span>
                         &nbsp;&nbsp;
                         <span class="box-digit">0</span><span class="box-digit">0</span><span class="box-digit">7</span>
                       </div>
@@ -9309,82 +9304,85 @@ function checkAndLockKbTable() {
             <div class="page-tag">Halaman Depan</div>
           </div>
 
-          <!-- ================= HALAMAN BELAKANG (9 x 12.5 CM) ================= -->
-          <div class="ki-page">
-            <div class="ki-frame">
-              <div class="ki-body-back">
-                <table class="tbl-back-top">
-                  <tr>
-                    <td class="b-text" style="width: 44%;">Metode Kontrasepsi</td>
-                    <td class="b-text" style="width: 3%;">:</td>
-                    <td class="b-text" style="width: 53%;">${alkon}</td>
-                  </tr>
-                  <tr>
-                    <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td>
-                    <td class="b-text">:</td>
-                    <td>
-                      <div style="display: inline-flex; align-items: center;">
-                        <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span>
-                        &nbsp;&nbsp;
-                        <span class="box-digit">${mLayanan.charAt(0)}</span><span class="box-digit">${mLayanan.charAt(1)}</span>
-                        &nbsp;&nbsp;
-                        <span class="box-digit">${yShort.charAt(0)}</span><span class="box-digit">${yShort.charAt(1)}</span>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="b-text" style="vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; font-weight: normal;">(Khusus Implant/IUD)</span></td>
-                    <td class="b-text" style="vertical-align: top;">:</td>
-                    <td style="vertical-align: top;">
-                      <div style="display: inline-flex; align-items: center;">
-                        <span class="box-digit">0</span><span class="box-digit">0</span>
-                        &nbsp;&nbsp;
-                        <span class="box-digit">0</span><span class="box-digit">0</span>
-                        &nbsp;&nbsp;
-                        <span class="box-digit">0</span><span class="box-digit">0</span>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
+          <!-- HALAMAN BELAKANG (9 x 12.5 CM) -->
+          <div class="ki-page-card">
+            <div class="ki-inner-border" style="padding: 2.5mm 3mm;">
+              <table class="tbl-back-top">
+                <tr>
+                  <td class="b-text" style="width: 44%;">Metode Kontrasepsi</td>
+                  <td class="b-text" style="width: 3%;">:</td>
+                  <td class="b-text" style="width: 53%;">${alkon}</td>
+                </tr>
+                <tr>
+                  <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td>
+                  <td class="b-text">:</td>
+                  <td>
+                    <div style="display: inline-flex; align-items: center;">
+                      <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span>
+                      &nbsp;&nbsp;
+                      <span class="box-digit">${mLayanan.charAt(0)}</span><span class="box-digit">${mLayanan.charAt(1)}</span>
+                      &nbsp;&nbsp;
+                      <span class="box-digit">${yShort.charAt(0)}</span><span class="box-digit">${yShort.charAt(1)}</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="b-text" style="vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; font-weight: normal;">(Khusus Implant/IUD)</span></td>
+                  <td class="b-text" style="vertical-align: top;">:</td>
+                  <td style="vertical-align: top;">
+                    <div style="display: inline-flex; align-items: center;">
+                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                      &nbsp;&nbsp;
+                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                      &nbsp;&nbsp;
+                      <span class="box-digit">0</span><span class="box-digit">0</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
-                <table class="tbl-back-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 30%;">DIPESAN<br>KEMBALI</th>
-                      <th style="width: 70%;">KETERANGAN</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
-                      <td style="font-weight: bold;">BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
-                    </tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                    <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="tbl-back-table">
+                <thead>
+                  <tr>
+                    <th style="width: 30%;">DIPESAN<br>KEMBALI</th>
+                    <th style="width: 70%;">KETERANGAN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
+                    <td style="font-weight: bold;">BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
+                  </tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td></tr>
+                </tbody>
+              </table>
             </div>
             <div class="page-tag">Halaman Belakang</div>
           </div>
         `;
 
       // =========================================================================
-      // 3. INFORMED CONSENT (STANDAR A4 PORTRAIT - 1 HALAMAN PAS)
+      // 3. INFORMED CONSENT (WAJIB A4 PORTRAIT - 1 HALAMAN PAS)
       // =========================================================================
       } else {
         judulDokumen = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
         customCss = `
           @page {
-            size: A4 portrait;
-            margin: 12mm 15mm;
+            size: A4 portrait !important;
+            margin: 12mm 15mm !important;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           body {
             font-family: Arial, Helvetica, sans-serif;
@@ -9392,8 +9390,6 @@ function checkAndLockKbTable() {
             background: #fff;
             margin: 0;
             padding: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
           .consent-wrapper {
             border: 1.5px solid #000;
@@ -9448,9 +9444,9 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =======================================================================
-      // EKSEKUSI JENDELA CETAK BROWSER SECARA TERISOLASI
-      // =======================================================================
+      // =========================================================================
+      // EKSEKUSI CETAK DENGAN ATURAN @PAGE TERISOLASI
+      // =========================================================================
       const printWindow = window.open('', '_blank', 'width=850,height=950');
       if (!printWindow) {
         Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
@@ -9465,14 +9461,13 @@ function checkAndLockKbTable() {
           <title>${judulDokumen}</title>
           <meta charset="utf-8">
           <style>
-            ${pageStyleCss}
+            ${customCss}
           </style>
         </head>
         <body>
           ${contentHtml}
           <script>
             window.onload = function() {
-              // Menunggu 400ms memastikan gambar logo dari GitHub ter-render penuh
               setTimeout(function() {
                 window.print();
                 window.onafterprint = function() { window.close(); };
