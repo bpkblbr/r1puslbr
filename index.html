@@ -9020,7 +9020,7 @@ function checkAndLockKbTable() {
         const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
         const isNonJkn = rawJkn.includes("TIDAK") || (!isPbi && !isNonPbi);
 
-        customCss = `
+        pageStyleCss = `
           @page {
             size: 90mm 125mm;
             margin: 0;
@@ -9054,9 +9054,10 @@ function checkAndLockKbTable() {
             justify-content: space-between;
             margin-bottom: 2mm;
           }
-          .ki-logo-svg {
+          .ki-logo-img {
             width: 14mm;
             height: 14mm;
+            object-fit: contain;
           }
           .ki-title-box {
             text-align: center;
@@ -9066,14 +9067,14 @@ function checkAndLockKbTable() {
           .ki-title-1 {
             font-size: 13pt;
             font-weight: 900;
-            color: #1b75bb;
+            color: #343499;
             letter-spacing: 2px;
             line-height: 1;
           }
           .ki-title-2 {
             font-size: 9.5pt;
             font-weight: 900;
-            color: #1b75bb;
+            color: #343499;
             letter-spacing: 1px;
             margin-top: 1mm;
           }
@@ -9137,12 +9138,12 @@ function checkAndLockKbTable() {
             font-size: 6pt;
           }
           .tbl-back-grid th, .tbl-back-grid td {
-            border: 0.8px solid #1b75bb;
+            border: 0.8px solid #343499;
             padding: 1.1mm 0.8mm;
           }
           .tbl-back-grid th {
-            background-color: #eef7fc !important;
-            color: #1b75bb;
+            background-color: #ededf8 !important;
+            color: #343499;
             font-weight: bold;
             text-align: center;
           }
@@ -9152,15 +9153,8 @@ function checkAndLockKbTable() {
           <!-- HALAMAN DEPAN (9 x 12.5 CM) -->
           <div class="ki-page">
             <div class="ki-header-flex">
-              <svg viewBox="0 0 100 100" class="ki-logo-svg">
-                <circle cx="50" cy="50" r="46" stroke="#1b75bb" stroke-width="4" fill="none" />
-                <circle cx="34" cy="38" r="7" fill="#1b75bb" />
-                <circle cx="66" cy="38" r="7" fill="#1b75bb" />
-                <circle cx="43" cy="55" r="5" fill="#1b75bb" />
-                <circle cx="57" cy="55" r="5" fill="#1b75bb" />
-                <path d="M 22 74 C 25 48, 75 48, 78 74" fill="none" stroke="#1b75bb" stroke-width="3.8" stroke-linecap="round" />
-                <text x="50" y="90" text-anchor="middle" font-size="13" font-family="Arial" font-weight="bold" fill="#1b75bb">kkb</text>
-              </svg>
+              <!-- LOGO ASLI DARI REPO GITHUB -->
+              <img src="https://raw.githubusercontent.com/bpkblbr/r1puslbr/main/Logo1.png" class="ki-logo-img" alt="Logo KKB">
 
               <div class="ki-title-box">
                 <div class="ki-title-1">KARTU</div>
@@ -9201,11 +9195,11 @@ function checkAndLockKbTable() {
                 <td style="vertical-align: top;">:</td>
                 <td>
                   <div><span class="ki-box">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> Peserta JKN :</div>
-                  <div style="margin-left: 4mm; margin-top: 0.5mm;">
+                  <div style="margin-left: 4.5mm; margin-top: 0.5mm;">
                     <div><span class="ki-box">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
                     <div><span class="ki-box">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
                   </div>
-                  <div style="margin-top: 0.6mm;"><span class="ki-box">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
+                  <div style="margin-top: 0.8mm;"><span class="ki-box">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
                 </td>
               </tr>
               <tr>
@@ -9247,7 +9241,7 @@ function checkAndLockKbTable() {
               <tr>
                 <td style="width: 44%; font-weight: bold;">Metode Kontrasepsi</td>
                 <td style="width: 3%;">:</td>
-                <td style="width: 53%; font-weight: bold; color: #1b75bb;">${alkon}</td>
+                <td style="width: 53%; font-weight: bold; color: #343499;">${alkon}</td>
               </tr>
               <tr>
                 <td>Tgl/Bln/Thn Mulai Dipakai</td>
@@ -9285,14 +9279,14 @@ function checkAndLockKbTable() {
                   <td>BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
                   <td></td>
                 </tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.2mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
+                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
               </tbody>
             </table>
           </div>
