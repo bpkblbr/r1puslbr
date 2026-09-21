@@ -8681,7 +8681,9 @@ function checkAndLockKbTable() {
       const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.kode_desa || "");
       const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
       const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.kode_dusun || "");
-      const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
+      
+      const alamatLengkapKiv = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
+      const alamatLengkapKi = `DESA ${nmDesa} / ${nmKec}`;
 
       // Alkon & Kode
       const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
@@ -8725,63 +8727,20 @@ function checkAndLockKbTable() {
       let customCss = "";
       let contentHtml = "";
 
-      // ========================
-      // 1. FORMULIR K/IV/KB/15
-      // ========================
+      // =========================================================================
+      // 1. FORMULIR K/IV/KB/15 (A4 PORTRAIT)
+      // =========================================================================
       if (jenisDoc === "KIV" || jenisDoc === "K0") {
         judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
         customCss = `
-          @page {
-            size: A4 portrait !important;
-            margin: 5mm 8mm !important;
-          }
-          * {
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #000;
-            background: #fff;
-            margin: 0;
-            padding: 0;
-          }
-          .form-wrapper {
-            border: 1.5px solid #000;
-            padding: 5px 8px;
-            box-sizing: border-box;
-            width: 100%;
-          }
-          .box-single {
-            border: 1px solid #000;
-            padding: 2px 5px;
-            display: inline-block;
-            font-size: 8pt;
-          }
-          .box-char {
-            border: 1px solid #000;
-            display: inline-block;
-            width: 11px;
-            height: 12px;
-            line-height: 12px;
-            text-align: center;
-            font-size: 7.5pt;
-            font-weight: bold;
-            margin: 0 1px;
-            vertical-align: middle;
-          }
-          .tbl-field td {
-            font-size: 7.5pt;
-            padding: 1.2px 0;
-            vertical-align: top;
-            line-height: 1.15;
-          }
-          .tbl-grid th, .tbl-grid td {
-            border: 1px solid #000;
-            padding: 2px;
-            font-size: 6.5pt;
-          }
+          @page { size: A4 portrait !important; margin: 5mm 8mm !important; }
+          * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
+          .form-wrapper { border: 1.5px solid #000; padding: 5px 8px; box-sizing: border-box; width: 100%; }
+          .box-single { border: 1px solid #000; padding: 2px 5px; display: inline-block; font-size: 8pt; }
+          .box-char { border: 1px solid #000; display: inline-block; width: 11px; height: 12px; line-height: 12px; text-align: center; font-size: 7.5pt; font-weight: bold; margin: 0 1px; vertical-align: middle; }
+          .tbl-field td { font-size: 7.5pt; padding: 1.2px 0; vertical-align: top; line-height: 1.15; }
+          .tbl-grid th, .tbl-grid td { border: 1px solid #000; padding: 2px; font-size: 6.5pt; }
         `;
 
         contentHtml = `
@@ -8833,7 +8792,7 @@ function checkAndLockKbTable() {
                   </div>
                 </td>
               </tr>
-              <tr><td>VII. Alamat Peserta KB</td><td>:</td><td>${alamatLengkap}</td></tr>
+              <tr><td>VII. Alamat Peserta KB</td><td>:</td><td>${alamatLengkapKiv}</td></tr>
               <tr>
                 <td>VIII. Pekerjaan Suami dan Istri</td><td>:</td>
                 <td>
@@ -8980,7 +8939,7 @@ function checkAndLockKbTable() {
                     <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
                     <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
                     <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span>
-                    <br><span style="font-size: 6pt; margin-left: 95px; color: #555;">(khusus Implan/IUD)&nbsp;&nbsp; Tanggal &nbsp;&nbsp;&nbsp;&nbsp; Bulan &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tahun</span>
+                    <br><span style="font-size: 6.5pt; margin-left: 95px; color: #555;">(khusus Implan/IUD)&nbsp;&nbsp; Tanggal &nbsp;&nbsp;&nbsp;&nbsp; Bulan &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tahun</span>
                   </td>
                 </tr>
               </table>
@@ -9006,16 +8965,16 @@ function checkAndLockKbTable() {
           </div>
         `;
 
-      // ====================
-      // 2. KARTU K/I/KB/13
-      // ====================
+      // =========================================================================
+      // 2. KARTU K/I/KB/13 (90mm x 125mm BOLAK-BALIK)
+      // =========================================================================
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
 
         let tglLahirTeks = "-";
         if (dLahir && mLahir && yLahir) {
           const namaBln = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-          tglLahirTeks = `${dLahir} ${namaBln[parseInt(mLahir, 10) - 1]} ${yLahir}`;
+          tglLahirTeks = `${dLahir} ${namaBln[parseInt(mLahir, 10) - 1]}${yLahir}`;
         }
         if (umurIstriVal) tglLahirTeks += ` / ${umurIstriVal} TH`;
 
@@ -9243,7 +9202,7 @@ function checkAndLockKbTable() {
                   <tr>
                     <td class="b-text" style="vertical-align: top;">Alamat Peserta KB</td>
                     <td class="b-text" style="vertical-align: top;">:</td>
-                    <td class="b-text">${alamatLengkap}</td>
+                    <td class="b-text">${alamatLengkapKi}</td>
                   </tr>
                   <tr>
                     <td class="b-text">Tahapan KS</td>
@@ -9283,9 +9242,9 @@ function checkAndLockKbTable() {
                     <td class="b-text">:</td>
                     <td>
                       <div style="display: inline-flex; align-items: center;">
-                        <span class="box-digit">5</span><span class="box-digit">2</span>
+                        <span class="box-digit">1</span><span class="box-digit">8</span>
                         &nbsp;&nbsp;
-                        <span class="box-digit">0</span><span class="box-digit">1</span>
+                        <span class="box-digit">0</span><span class="box-digit">9</span>
                         &nbsp;&nbsp;
                         <span class="box-digit">0</span><span class="box-digit">0</span><span class="box-digit">7</span>
                       </div>
@@ -9294,7 +9253,7 @@ function checkAndLockKbTable() {
                 </table>
 
                 <div class="sign-front-area">
-                  <span class="b-text">${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}</span><br>
+                  <span class="b-text">${nmDesa},${dLayanan} ${mLayanan}${yLayanan}</span><br>
                   <span class="b-text">Penanggung jawab Faskes KB/</span><br>
                   <span class="b-text">Praktik Dokter/Praktik Bidan Mandiri,</span><br><br><br><br>
                   ( ............................................................ )
@@ -9367,11 +9326,10 @@ function checkAndLockKbTable() {
             </div>
             <div class="page-tag">Halaman Belakang</div>
           </div>
-        `;
 
-      // =====================
-      // 3. INFORMED CONSENT
-      // =====================
+      // =========================================================================
+      // 3. INFORMED CONSENT (PERSIS 100% SESUAI "INFORMED ASLI" - A4)
+      // =========================================================================
       } else {
         judulDokumen = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
 
@@ -9458,7 +9416,7 @@ function checkAndLockKbTable() {
             width: 100%;
             border-collapse: collapse;
             font-size: 8.5pt;
-            margin-top: 4mm;
+            margin-top: 3mm;
           }
           .ic-sign-table td {
             vertical-align: top;
@@ -9651,7 +9609,7 @@ function checkAndLockKbTable() {
               Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
             </p>
 
-            <!-- TANDA TANGAN 3 PIHAK DENGAN TANGGAL CENTER TEPAT DI ATAS SUAMI/ISTERI -->
+            <!-- TANDA TANGAN 3 PIHAK -->
             <table class="ic-sign-table">
               <tr>
                 <td style="width: 40%; vertical-align: bottom;">
