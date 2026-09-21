@@ -9374,10 +9374,18 @@ function checkAndLockKbTable() {
       // =========================================================================
       } else {
         judulDokumen = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
+
+        // Evaluasi centang alkon informed consent
+        const isIud = alkon.includes("IUD");
+        const isSuntik = alkon.includes("SUNTIK");
+        const isMop = alkon.includes("MOP") || alkon.includes("VASEKTOMI");
+        const isImplan = alkon.includes("IMPLAN") || alkon.includes("SUSUK");
+        const isMow = alkon.includes("MOW") || alkon.includes("TUBEKTOMI");
+
         customCss = `
           @page {
             size: A4 portrait !important;
-            margin: 12mm 15mm !important;
+            margin: 10mm 15mm !important;
           }
           * {
             box-sizing: border-box;
@@ -9391,55 +9399,238 @@ function checkAndLockKbTable() {
             margin: 0;
             padding: 0;
           }
-          .consent-wrapper {
-            border: 1.5px solid #000;
-            padding: 24px 28px;
-            box-sizing: border-box;
+          .consent-page {
             width: 100%;
+            font-size: 8.5pt;
+            line-height: 1.35;
+          }
+          .box-kode-tindakan {
+            border: 1.2px solid #000;
+            width: 32mm;
+            height: 7mm;
+            display: inline-block;
+          }
+          .tbl-identitas {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin-top: 2mm;
+            margin-bottom: 2mm;
+          }
+          .tbl-identitas td {
+            padding: 1.2px 0;
+            vertical-align: top;
+          }
+          .tbl-identitas td.border-box {
+            border: 1px solid #000;
+            padding: 2px 5px;
+          }
+          .section-head {
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+            margin: 3mm 0 1.5mm 0;
+            text-decoration: underline;
+          }
+          .tbl-form {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin-bottom: 2mm;
+          }
+          .tbl-form td {
+            padding: 1.5px 0;
+            vertical-align: top;
+          }
+          .box-check-ic {
+            border: 1.2px solid #000;
+            display: inline-block;
+            width: 3.5mm;
+            height: 3.5mm;
+            line-height: 3.5mm;
+            text-align: center;
+            font-size: 7.5pt;
+            font-weight: 900;
+            vertical-align: middle;
+            margin-right: 1.5mm;
+          }
+          .tbl-alkon-pilihan {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            font-weight: bold;
+            margin: 2.5mm 0 3mm 0;
+          }
+          .tbl-alkon-pilihan td {
+            padding: 1.5px 0;
+          }
+          .tbl-sign-ic {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin-top: 4mm;
+          }
+          .tbl-sign-ic td {
+            vertical-align: top;
+            text-align: center;
           }
         `;
 
         contentHtml = `
-          <div class="consent-wrapper">
-            <div style="text-align: center; font-weight: bold; font-size: 13pt; text-decoration: underline; margin-bottom: 5px;">
-              SURAT PERSETUJUAN / PENOLAKAN TINDAKAN MEDIS PELAYANAN KB
-            </div>
-            <div style="text-align: center; font-size: 10.5pt; margin-bottom: 20px; font-weight: bold;">(INFORMED CONSENT)</div>
-
-            <p style="margin: 0 0 10px 0; font-size: 10pt;">Yang bertanda tangan di bawah ini:</p>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10pt;">
-              <tr><td style="width: 25%; padding: 4px 0;">Nama Lengkap</td><td style="width: 2%;">:</td><td style="width: 73%; font-weight: bold;">${item.nama_istri || '-'}</td></tr>
-              <tr><td style="padding: 4px 0;">NIK</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
-              <tr><td style="padding: 4px 0;">Nama Suami</td><td>:</td><td>${item.nama_suami || '-'}</td></tr>
-              <tr><td style="padding: 4px 0;">Alamat</td><td>:</td><td>${alamatLengkap}</td></tr>
-            </table>
-
-            <p style="text-align: justify; margin: 15px 0; font-size: 10pt; line-height: 1.6;">
-              Menyatakan dengan sesungguhnya bahwa setelah mendapatkan penjelasan secara lengkap mengenai metode kontrasepsi <b>${alkon}</b>, manfaat, risiko tindakan medis, efek samping, dan alternatif kontrasepsi lainnya, maka dengan ini saya secara sadar dan sukarela menyatakan:
-            </p>
-
-            <div style="text-align: center; font-weight: bold; font-size: 12pt; margin: 20px 0; border: 2px dashed #000; padding: 12px;">
-              [ SETUJU ] DILAKUKAN TINDAKAN PELAYANAN MEDIS KB: ${alkon}
-            </div>
-
-            <p style="text-align: justify; margin: 15px 0 35px 0; font-size: 10pt; line-height: 1.6;">
-              Demikian surat pernyataan persetujuan ini saya buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun.
-            </p>
-
-            <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 25px;">
+          <div class="consent-page">
+            <!-- KOP JUDUL & KODE TINDAKAN -->
+            <table style="width: 100%; border-collapse: collapse;">
               <tr>
-                <td style="width: 50%; text-align: center;">Suami / Saksi Keluarga,<br><br><br><br><br>( <b>${item.nama_suami || '......................................'}</b> )</td>
-                <td style="width: 50%; text-align: center;">${nmDesa}, ${tglFormatted}<br>Yang Menyatakan (Akseptor),<br><br><br><br><br>( <b>${item.nama_istri}</b> )</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="text-align: center; padding-top: 40px;">
-                  Petugas Kesehatan / Bidan Pelaksana,<br><br><br><br><br>
-                  <div style="display: inline-block; text-align: left;">
-                    ( .......................................................................... )<br><span style="margin-left: 7px;">NIP / SIPB:</span>
-                  </div>
+                <td style="width: 72%; font-weight: bold; font-size: 9.5pt; line-height: 1.2; vertical-align: middle;">
+                  LEMBAR PERSETUJUAN TINDAKAN MEDIK (INFORMED CONSENT) PELAYANAN<br>KONTRASEPSI
+                </td>
+                <td style="width: 28%; text-align: right; vertical-align: top;">
+                  <span style="font-size: 7.5pt; font-weight: bold; display: block; margin-bottom: 1mm;">NOMOR KODE TINDAKAN</span>
+                  <span class="box-kode-tindakan"></span>
                 </td>
               </tr>
             </table>
+
+            <!-- IDENTITAS TEMPAT PELAYANAN -->
+            <div style="font-weight: bold; font-size: 8.8pt; margin-top: 3mm; margin-bottom: 1mm; text-decoration: underline;">
+              IDENTITAS TEMPAT PELAYANAN
+            </div>
+            <table class="tbl-identitas">
+              <tr>
+                <td style="width: 42%;">Nama Faskes KB/RS/Praktik Dokter/Praktik Bidan Mandiri *)</td>
+                <td style="width: 2%;">:</td>
+                <td class="border-box" style="width: 56%; font-weight: bold;">${item.faskes_tujuan || '-'}</td>
+              </tr>
+              <tr>
+                <td>Nomor Kode Faskes KB</td>
+                <td>:</td>
+                <td class="border-box">52 01 007</td>
+              </tr>
+              <tr>
+                <td>Nomor Klien / Nomor Seri Kartu (Sesuai dengan K/IV/KB)</td>
+                <td>:</td>
+                <td class="border-box" style="font-family: monospace; font-weight: bold;">${dLayanan}${mLayanan} &nbsp; ${yShort} &nbsp; ${item.id_pus ? item.id_pus.slice(-4) : '0001'}</td>
+              </tr>
+              <tr>
+                <td>Kode Keluarga Indonesia (KKI)</td>
+                <td>:</td>
+                <td class="border-box" style="font-family: monospace;">${item.id_pus || '-'}</td>
+              </tr>
+            </table>
+
+            <!-- PERSETUJUAN KLIEN -->
+            <div class="section-head">PERSETUJUAN KLIEN</div>
+            <p style="margin: 0 0 1.5mm 0;">Saya yang bertanda tangan di bawah ini :</p>
+            <table class="tbl-form">
+              <tr>
+                <td style="width: 20%;">Nama</td>
+                <td style="width: 2%;">:</td>
+                <td style="width: 78%; font-weight: bold;">${item.nama_istri || '-'}</td>
+              </tr>
+              <tr>
+                <td>Umur</td>
+                <td>:</td>
+                <td><b>${umurIstriVal || '-'}</b> Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Jenis Kelamin : Perempuan</td>
+              </tr>
+              <tr>
+                <td>Alamat Lengkap</td>
+                <td>:</td>
+                <td>Jalan: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RT: <b>${item.kode_rt || '-'}</b> &nbsp;&nbsp; RW: -</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td></td>
+                <td>Kelurahan/Desa: <b>${nmDesa}</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kecamatan: <b>${nmKec}</b></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td></td>
+                <td>Kabupaten/Kota: <b>LOMBOK BARAT</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kode pos: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Provinsi: <b>NUSA TENGGARA BARAT</b></td>
+              </tr>
+            </table>
+
+            <p style="text-align: justify; margin: 1.5mm 0;">
+              Setelah mendapat penjelasan dan <b>MENGERTI SEPENUHNYA PERIHAL KONTRASEPSI YANG SAYA PILIH</b>, maka saya selaku <b>KLIEN SECARA SUKARELA MEMBERIKAN PERSETUJUAN UNTUK DILAKUKAN TINDAKAN MEDIK DAN ATAU PELAYANAN KONTRASEPSI SESUAI STANDAR PROFESI</b> berupa :
+            </p>
+
+            <!-- PILIHAN KONTRASEPSI DENGAN CENTANG OTOMATIS -->
+            <table class="tbl-alkon-pilihan">
+              <tr>
+                <td style="width: 33%;"><span class="box-check-ic">${isIud ? '&#10003;' : '&nbsp;'}</span> IUD</td>
+                <td style="width: 33%;"><span class="box-check-ic">${isSuntik ? '&#10003;' : '&nbsp;'}</span> SUNTIKAN</td>
+                <td style="width: 34%;"><span class="box-check-ic">${isMop ? '&#10003;' : '&nbsp;'}</span> MOP **)</td>
+              </tr>
+              <tr>
+                <td><span class="box-check-ic">${isImplan ? '&#10003;' : '&nbsp;'}</span> IMPLAN</td>
+                <td><span class="box-check-ic">${isMow ? '&#10003;' : '&nbsp;'}</span> MOW</td>
+                <td></td>
+              </tr>
+            </table>
+
+            <!-- PERSETUJUAN SUAMI / ISTERI KLIEN -->
+            <div class="section-head">PERSETUJUAN SUAMI / ISTERI KLIEN</div>
+            <p style="margin: 0 0 1.5mm 0;">Saya yang bertanda tangan di bawah ini :</p>
+            <table class="tbl-form">
+              <tr>
+                <td style="width: 20%;">Nama</td>
+                <td style="width: 2%;">:</td>
+                <td style="width: 78%; font-weight: bold;">${item.nama_suami || '-'}</td>
+              </tr>
+              <tr>
+                <td>Umur</td>
+                <td>:</td>
+                <td>...... Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Jenis Kelamin : Laki-laki</td>
+              </tr>
+              <tr>
+                <td>Alamat Lengkap</td>
+                <td>:</td>
+                <td>Jalan: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RT: <b>${item.kode_rt || '-'}</b> &nbsp;&nbsp; RW: -</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td></td>
+                <td>Kelurahan/Desa: <b>${nmDesa}</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kecamatan: <b>${nmKec}</b></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td></td>
+                <td>Kabupaten/Kota: <b>LOMBOK BARAT</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kode pos: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Provinsi: <b>NUSA TENGGARA BARAT</b></td>
+              </tr>
+            </table>
+
+            <p style="text-align: justify; margin: 1.5mm 0;">
+              Selaku <b>Suami</b> klien telah mendapat penjelasan, memahami dan ikut menyetujui terhadap tindakan medik dan atau pelayanan kontrasepsi tersebut.
+            </p>
+            <p style="text-align: justify; margin: 1.5mm 0;">
+              Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
+            </p>
+
+            <!-- TANDA TANGAN 3 PIHAK PERSIS LAMPIRAN -->
+            <table class="tbl-sign-ic">
+              <tr>
+                <td style="width: 38%;">
+                  Yang memberi pelayanan konseling<br>
+                  Dokter/Bidan/Perawat *)<br><br><br><br><br>
+                  ( .................................................... )
+                </td>
+                <td style="width: 28%;">
+                  <br>Klien<br><br><br><br><br>
+                  ( <b>${item.nama_istri}</b> )
+                </td>
+                <td style="width: 34%;">
+                  Lombok Barat, ${dLayanan} ${mLayanan} ${yLayanan}<br>
+                  Suami/Isteri Klien *)<br><br><br><br><br>
+                  ( <b>${item.nama_suami || '................................'}</b> )
+                </td>
+              </tr>
+            </table>
+
+            <!-- KETERANGAN KAKI -->
+            <div style="font-size: 7.5pt; margin-top: 5mm; line-height: 1.3;">
+              Keterangan:<br>
+              *) coret yang tidak perlu<br>
+              **) beri tanda
+            </div>
           </div>
         `;
       }
