@@ -5346,27 +5346,27 @@ function checkAndLockKbTable() {
     data.forEach(item => {
       let div = document.createElement("div");
       div.className = "search-result-item";
-      div.style.cssText = "padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;";
+      div.style.cssText = "padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s;";
+      
+      // Mendaftarkan event klik langsung melalui JavaScript (Aman untuk objek data)
+      div.onclick = function() {
+        selectDataForEdit(item);
+      };
+
       div.onmouseover = () => div.style.backgroundColor = "#f1f5f9";
       div.onmouseout = () => div.style.backgroundColor = "transparent";
 
-      const hlId = highlightText(item.id_pus, keywordInput);
-      const hlIstri = highlightText(item.nama_istri, keywordInput);
-      const hlNikIstri = highlightText(item.nik_istri, keywordInput);
-      const hlSuami = highlightText(item.nama_suami, keywordInput);
-      const hlNikSuami = highlightText(item.nik_suami, keywordInput);
-
       div.innerHTML = `
-        <div style="flex: 1; cursor: pointer;" onclick='selectDataForEdit(${JSON.stringify(item)})'>
+        <div style="flex: 1;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-right: 10px;">
-            <span style="font-weight: bold; color: #1f4e78; font-size: 13px;">🆔 ${hlId} (${item.tahun})</span>
+            <span style="font-weight: bold; color: #1f4e78; font-size: 13px;">🆔 ${item.id_pus} (${item.tahun})</span>
             <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
               RT ${item.kode_rt || '-'} / DSN ${item.dusun_nama || '-'}
             </span>
           </div>
           <div style="font-size: 12.5px; color: #334155; line-height: 1.4;">
-            👩 <b>Istri:</b> ${hlIstri} <span style="font-family: monospace; color: #64748b;">(${hlNikIstri})</span><br>
-            👨 <b>Suami:</b> ${hlSuami} <span style="font-family: monospace; color: #64748b;">(${hlNikSuami})</span>
+            👩 <b>Istri:</b> ${item.nama_istri} <span style="font-family: monospace; color: #64748b;">(${item.nik_istri})</span><br>
+            👨 <b>Suami:</b> ${item.nama_suami} <span style="font-family: monospace; color: #64748b;">(${item.nik_suami})</span>
           </div>
           <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">
             📍 Kec. ${item.kecamatan_nama || '-'} | Desa ${item.desa_nama || '-'}
