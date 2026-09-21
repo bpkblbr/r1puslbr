@@ -9009,6 +9009,7 @@ function checkAndLockKbTable() {
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
 
+        // Format tanggal lahir & umur
         let tglLahirTeks = "-";
         if (dLahir && mLahir && yLahir) {
           const namaBln = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
@@ -9016,6 +9017,7 @@ function checkAndLockKbTable() {
         }
         if (umurIstriVal) tglLahirTeks += ` / ${umurIstriVal} TH`;
 
+        // Status JKN
         const isPbi = rawJkn.includes("PBI") && !rawJkn.includes("BUKAN");
         const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
         const isNonJkn = rawJkn.includes("TIDAK") || (!isPbi && !isNonPbi);
@@ -9032,263 +9034,337 @@ function checkAndLockKbTable() {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          .ki-page {
+          .ki-page-card {
             width: 90mm;
             height: 125mm;
             max-width: 90mm;
             max-height: 125mm;
-            padding: 4mm 5mm;
+            padding: 2.5mm;
             box-sizing: border-box;
             background: #fff;
             page-break-after: always;
             overflow: hidden;
             font-family: Arial, Helvetica, sans-serif;
             color: #000;
+            position: relative;
           }
-          .ki-page:last-child {
+          .ki-page-card:last-child {
             page-break-after: auto;
           }
-          .ki-header-flex {
+          .ki-inner-border {
+            width: 100%;
+            height: 100%;
+            border: 1.5px solid #000;
+            box-sizing: border-box;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+          }
+          .ki-top-band {
+            height: 5.5mm;
+            background-color: #343499;
+            width: 100%;
+          }
+          .ki-bottom-band {
+            height: 4.5mm;
+            background-color: #343499;
+            width: 100%;
+            margin-top: 1.5mm;
+          }
+          .ki-header-area {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2mm;
+            padding: 1.5mm 3mm 0 3mm;
+            position: relative;
           }
-          .ki-logo-img {
-            width: 14mm;
+          .ki-logo-box {
+            width: 15mm;
             height: 14mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .ki-logo-box img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
           }
           .ki-title-box {
-            text-align: center;
+            padding-left: 2.5mm;
             flex: 1;
-            padding: 0 1.5mm;
           }
           .ki-title-1 {
             font-size: 13pt;
             font-weight: 900;
-            color: #343499;
-            letter-spacing: 2px;
+            color: #000;
             line-height: 1;
+            letter-spacing: 0.5px;
           }
           .ki-title-2 {
-            font-size: 9.5pt;
+            font-size: 11pt;
             font-weight: 900;
-            color: #343499;
-            letter-spacing: 1px;
+            color: #000;
+            line-height: 1.1;
+            letter-spacing: 0.5px;
             margin-top: 1mm;
           }
-          .ki-code-right {
-            font-size: 7.5pt;
+          .ki-badge-kikb {
+            position: absolute;
+            right: 3mm;
+            top: 1mm;
+            border: 1.2px solid #000;
+            padding: 0.5mm 3mm;
+            font-size: 7pt;
             font-weight: bold;
             color: #000;
-            text-align: right;
-            align-self: flex-start;
+            background: #fff;
           }
-          .tbl-front {
+          .ki-front-content {
+            padding: 2mm 3.5mm;
+            font-size: 6.8pt;
+            line-height: 1.2;
+          }
+          .tbl-ki-front {
             width: 100%;
             border-collapse: collapse;
-            font-size: 6.8pt;
-            line-height: 1.15;
           }
-          .tbl-front td {
+          .tbl-ki-front td {
             padding: 0.7mm 0;
             vertical-align: top;
+            font-size: 6.8pt;
           }
-          .ki-box {
-            border: 0.8px solid #000;
+          .ki-box-char {
+            border: 1px solid #000;
             display: inline-block;
-            width: 3mm;
-            height: 3mm;
-            line-height: 3mm;
+            width: 3.2mm;
+            height: 3.2mm;
+            line-height: 3.2mm;
             text-align: center;
-            font-size: 6pt;
+            font-size: 6.5pt;
             font-weight: bold;
             vertical-align: middle;
-            margin-right: 0.8mm;
+            margin: 0 0.3mm;
           }
-          .ki-code-box {
-            border: 0.8px solid #000;
-            padding: 0.3mm 1.5mm;
-            font-size: 6.8pt;
-            font-weight: bold;
+          .ki-box-check {
+            border: 1px solid #000;
             display: inline-block;
-            margin-right: 0.8mm;
+            width: 3.2mm;
+            height: 3.2mm;
+            line-height: 3.2mm;
+            text-align: center;
+            font-size: 6.5pt;
+            font-weight: bold;
+            vertical-align: middle;
+            margin-right: 1mm;
           }
-          .ki-signature {
+          .ki-sign-area {
             margin-top: 2.5mm;
-            text-align: right;
+            margin-left: 36mm;
             font-size: 6.5pt;
             line-height: 1.25;
-            padding-right: 2mm;
+            text-align: left;
           }
-          .tbl-back-header {
+          .tbl-back-top {
             width: 100%;
             border-collapse: collapse;
             font-size: 7.2pt;
             margin-bottom: 2mm;
           }
-          .tbl-back-header td {
-            padding: 0.7mm 0;
+          .tbl-back-top td {
+            padding: 0.8mm 0;
             vertical-align: middle;
+            font-size: 7pt;
           }
-          .tbl-back-grid {
+          .tbl-back-main {
             width: 100%;
             border-collapse: collapse;
-            font-size: 6pt;
+            border: 1.5px solid #000;
           }
-          .tbl-back-grid th, .tbl-back-grid td {
-            border: 0.8px solid #343499;
-            padding: 1.1mm 0.8mm;
+          .tbl-back-main th, .tbl-back-main td {
+            border: 1px solid #000;
+            padding: 1.2mm 1mm;
+            font-size: 6.5pt;
           }
-          .tbl-back-grid th {
-            background-color: #ededf8 !important;
-            color: #343499;
+          .tbl-back-main th {
             font-weight: bold;
             text-align: center;
+            vertical-align: middle;
+            background: #fff;
           }
         `;
 
         contentHtml = `
-          <!-- HALAMAN DEPAN (9 x 12.5 CM) -->
-          <div class="ki-page">
-            <div class="ki-header-flex">
-              <!-- LOGO ASLI DARI REPO GITHUB -->
-              <img src="https://raw.githubusercontent.com/bpkblbr/r1puslbr/main/Logo1.png" class="ki-logo-img" alt="Logo KKB">
+          <!-- ================= HALAMAN DEPAN (9 x 12.5 CM) ================= -->
+          <div class="ki-page-card">
+            <div class="ki-inner-border">
+              <!-- PITA BIRU ATAS -->
+              <div class="ki-top-band"></div>
 
-              <div class="ki-title-box">
-                <div class="ki-title-1">KARTU</div>
-                <div class="ki-title-2">PESERTA KB</div>
+              <div class="ki-header-area">
+                <!-- LOGO DARI GITHUB SESUAI REQUEST -->
+                <div class="ki-logo-box">
+                  <img src="https://raw.githubusercontent.com/bpkblbr/r1puslbr/main/Logo1.png" alt="Logo KKB">
+                </div>
+
+                <div class="ki-title-box">
+                  <div class="ki-title-1">KARTU</div>
+                  <div class="ki-title-2">PESERTA KB</div>
+                </div>
+
+                <div class="ki-badge-kikb">K/I/KB/13</div>
               </div>
 
-              <div class="ki-code-right">K/I/KB/13</div>
-            </div>
+              <!-- PITA BIRU BAWAH KOP -->
+              <div class="ki-bottom-band"></div>
 
-            <table class="tbl-front">
-              <tr>
-                <td style="width: 38%;">Nama Peserta KB</td>
-                <td style="width: 3%;">:</td>
-                <td style="width: 59%; font-weight: bold;">${item.nama_istri || '-'}</td>
-              </tr>
-              <tr>
-                <td>Nama Suami/Istri</td>
-                <td>:</td>
-                <td>${item.nama_suami || '-'}</td>
-              </tr>
-              <tr>
-                <td>Tgl. Lahir/Umur Istri</td>
-                <td>:</td>
-                <td>${tglLahirTeks}</td>
-              </tr>
-              <tr>
-                <td>Alamat Peserta KB</td>
-                <td>:</td>
-                <td>${alamatLengkap}</td>
-              </tr>
-              <tr>
-                <td>Tahapan KS</td>
-                <td>:</td>
-                <td>KPS</td>
-              </tr>
-              <tr>
-                <td style="vertical-align: top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
-                <td style="vertical-align: top;">:</td>
-                <td>
-                  <div><span class="ki-box">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> Peserta JKN :</div>
-                  <div style="margin-left: 4.5mm; margin-top: 0.5mm;">
-                    <div><span class="ki-box">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
-                    <div><span class="ki-box">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
-                  </div>
-                  <div style="margin-top: 0.8mm;"><span class="ki-box">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
-                </td>
-              </tr>
-              <tr>
-                <td>Nomor Seri Kartu</td>
-                <td>:</td>
-                <td>
-                  <span class="ki-code-box">${dLayanan}${mLayanan}</span>
-                  <span class="ki-code-box">${yShort}</span>
-                  <span class="ki-code-box">${item.id_pus ? item.id_pus.slice(-4) : '0001'}</span>
-                </td>
-              </tr>
-              <tr>
-                <td>Nama Faskes KB</td>
-                <td>:</td>
-                <td style="font-weight: bold;">${item.faskes_tujuan || '-'}</td>
-              </tr>
-              <tr>
-                <td>Nomor Kode Faskes KB</td>
-                <td>:</td>
-                <td>
-                  <span class="ki-code-box">52</span>
-                  <span class="ki-code-box">01</span>
-                  <span class="ki-code-box">007</span>
-                </td>
-              </tr>
-            </table>
+              <!-- DATA IDENTITAS PESERTA -->
+              <div class="ki-front-content">
+                <table class="tbl-ki-front">
+                  <tr>
+                    <td style="width: 37%; font-weight: bold;">Nama Peserta KB</td>
+                    <td style="width: 4%; font-weight: bold;">:</td>
+                    <td style="width: 59%; font-weight: bold;">${item.nama_istri || '-'}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Nama Suami/Istri</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td style="font-weight: bold;">${item.nama_suami || '-'}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Tgl. Lahir/Umur Istri</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td style="font-weight: bold;">${tglLahirTeks}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; vertical-align: top;">Alamat Peserta KB</td>
+                    <td style="font-weight: bold; vertical-align: top;">:</td>
+                    <td style="font-weight: bold;">${alamatLengkap}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Tahapan KS</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td style="font-weight: bold;">KPS</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; vertical-align: top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
+                    <td style="font-weight: bold; vertical-align: top;">:</td>
+                    <td>
+                      <div>
+                        <span class="ki-box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> <b>Peserta JKN :</b>
+                      </div>
+                      <div style="margin-left: 4.5mm; margin-top: 0.5mm;">
+                        <div><span class="ki-box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
+                        <div><span class="ki-box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
+                      </div>
+                      <div style="margin-top: 0.6mm;">
+                        <span class="ki-box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Nomor Seri Kartu</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <span class="ki-box-char">${dLayanan.charAt(0)}</span><span class="ki-box-char">${dLayanan.charAt(1)}</span><span class="ki-box-char">${mLayanan.charAt(0)}</span><span class="ki-box-char">${mLayanan.charAt(1)}</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <span class="ki-box-char">${yShort.charAt(0)}</span><span class="ki-box-char">${yShort.charAt(1)}</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Nama Faskes KB</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td style="font-weight: bold;">${item.faskes_tujuan || '-'}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold;">Nomor Kode Faskes KB</td>
+                    <td style="font-weight: bold;">:</td>
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <span class="ki-box-char">5</span><span class="ki-box-char">2</span>
+                        &nbsp;&nbsp;
+                        <span class="ki-box-char">0</span><span class="ki-box-char">1</span>
+                        &nbsp;&nbsp;
+                        <span class="ki-box-char">0</span><span class="ki-box-char">0</span><span class="ki-box-char">7</span>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
 
-            <div class="ki-signature">
-              ${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}<br>
-              Penanggung jawab Faskes KB/<br>
-              Praktik Dokter/Praktik Bidan Mandiri,<br><br><br><br>
-              ( ............................................................ )
+                <!-- TANDA TANGAN KANAN BAWAH -->
+                <div class="ki-sign-area">
+                  <b>${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}</b><br>
+                  Penanggung jawab Faskes KB/<br>
+                  Praktik Dokter/Praktik Bidan Mandiri,<br><br><br><br>
+                  ( ............................................................ )
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- HALAMAN BELAKANG (9 x 12.5 CM) -->
-          <div class="ki-page">
-            <table class="tbl-back-header">
-              <tr>
-                <td style="width: 44%; font-weight: bold;">Metode Kontrasepsi</td>
-                <td style="width: 3%;">:</td>
-                <td style="width: 53%; font-weight: bold; color: #343499;">${alkon}</td>
-              </tr>
-              <tr>
-                <td>Tgl/Bln/Thn Mulai Dipakai</td>
-                <td>:</td>
-                <td>
-                  <span class="ki-code-box">${dLayanan}</span>
-                  <span class="ki-code-box">${mLayanan}</span>
-                  <span class="ki-code-box">${yShort}</span>
-                </td>
-              </tr>
-              <tr>
-                <td>Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; color: #555;">(Khusus Implant/IUD)</span></td>
-                <td>:</td>
-                <td>
-                  <span class="ki-code-box">&nbsp;&nbsp;</span>
-                  <span class="ki-code-box">&nbsp;&nbsp;</span>
-                  <span class="ki-code-box">&nbsp;&nbsp;</span>
-                </td>
-              </tr>
-            </table>
+          <!-- ================= HALAMAN BELAKANG (9 x 12.5 CM) ================= -->
+          <div class="ki-page-card">
+            <div class="ki-inner-border" style="padding: 2.5mm 3mm;">
+              <table class="tbl-back-top">
+                <tr>
+                  <td style="width: 44%; font-weight: bold;">Metode Kontrasepsi</td>
+                  <td style="width: 4%; font-weight: bold;">:</td>
+                  <td style="width: 52%; font-weight: bold;">${alkon}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold;">Tgl/Bln/Thn Mulai Dipakai</td>
+                  <td style="font-weight: bold;">:</td>
+                  <td>
+                    <div style="display: inline-flex; align-items: center;">
+                      <span class="ki-box-char">${dLayanan.charAt(0)}</span><span class="ki-box-char">${dLayanan.charAt(1)}</span>
+                      &nbsp;&nbsp;
+                      <span class="ki-box-char">${mLayanan.charAt(0)}</span><span class="ki-box-char">${mLayanan.charAt(1)}</span>
+                      &nbsp;&nbsp;
+                      <span class="ki-box-char">${yShort.charAt(0)}</span><span class="ki-box-char">${yShort.charAt(1)}</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size: 5.5pt; font-weight: normal;">(Khusus Implant/IUD)</span></td>
+                  <td style="font-weight: bold; vertical-align: top;">:</td>
+                  <td style="vertical-align: top;">
+                    <div style="display: inline-flex; align-items: center;">
+                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
+                      &nbsp;&nbsp;
+                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
+                      &nbsp;&nbsp;
+                      <span class="ki-box-char">&nbsp;</span><span class="ki-box-char">&nbsp;</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
-            <table class="tbl-back-grid">
-              <thead>
-                <tr>
-                  <th style="width: 20%;">TANGGAL<br>DATANG</th>
-                  <th style="width: 20%;">TANGGAL<br>DIPESAN<br>KEMBALI</th>
-                  <th style="width: 40%;">KETERANGAN</th>
-                  <th style="width: 20%;">TANDA TANGAN<br>PETUGAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
-                  <td style="text-align: center;">-</td>
-                  <td>BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
-                  <td></td>
-                </tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 2.5mm 0;">&nbsp;</td><td></td><td></td><td></td></tr>
-              </tbody>
-            </table>
+              <!-- TABEL 2 KOLOM (DIPESAN KEMBALI & KETERANGAN) -->
+              <table class="tbl-back-main">
+                <thead>
+                  <tr>
+                    <th style="width: 32%;">DIPESAN<br>KEMBALI</th>
+                    <th style="width: 68%;">KETERANGAN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="text-align: center; font-weight: bold;">${tglFormatted}</td>
+                    <td style="font-weight: bold;">BAIK, TENSI NORMAL, PELAYANAN: ${alkon}</td>
+                  </tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                  <tr><td style="padding: 2.3mm 0;">&nbsp;</td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         `;
 
