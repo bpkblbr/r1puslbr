@@ -9218,220 +9218,221 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // =========================================================================
-      // CSS GABUNGAN DAN EKSEKUSI CETAK
-      // =========================================================================
-      const printWindow = window.open('', '_blank', 'width=850,height=950');
-      if (!printWindow) {
-        Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
-        return;
-      }
+        // =========================================================================
+        // CSS GABUNGAN DAN EKSEKUSI CETAK
+        // =========================================================================
+        const printWindow = window.open('', '_blank', 'width=850,height=950');
+        if (!printWindow) {
+          Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
+          return;
+        }
 
-      printWindow.document.open();
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${judulDokumen}</title>
-          <meta charset="utf-8">
-          <style>
-            @page {
-              size: A4 portrait;
-              margin: 6mm 8mm;
-            }
-            body {
-              font-family: Arial, Helvetica, sans-serif;
-              color: #000;
-              background: #fff;
-              margin: 0;
-              padding: 0;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            /* CSS Form K/IV & Consent */
-            .form-wrapper {
-              border: 1.5px solid #000;
-              padding: 6px 10px;
-              box-sizing: border-box;
-            }
-            .box-single {
-              border: 1px solid #000;
-              padding: 2px 5px;
-              display: inline-block;
-              font-size: 8pt;
-            }
-            .box-char {
-              border: 1px solid #000;
-              display: inline-block;
-              width: 12px;
-              height: 13px;
-              line-height: 13px;
-              text-align: center;
-              font-size: 8pt;
-              font-weight: bold;
-              margin: 0 1px;
-              vertical-align: middle;
-            }
-            .tbl-field td {
-              font-size: 7.8pt;
-              padding: 1.5px 0;
-              vertical-align: top;
-              line-height: 1.2;
-            }
-            .tbl-grid th, .tbl-grid td {
-              border: 1px solid #000;
-              padding: 2px;
-              font-size: 6.8pt;
-            }
-            
-            /* CSS Kartu K/I (Biru) */
-            .ki-container {
-              width: 100%;
-              max-width: 720px;
-              margin: 0 auto;
-            }
-            .ki-card {
-              border: 2px solid #0284c7;
-              border-radius: 6px;
-              padding: 14px 16px;
-              box-sizing: border-box;
-              background-color: #ffffff;
-              page-break-inside: avoid;
-            }
-            .ki-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom: 2px solid #0284c7;
-              padding-bottom: 8px;
-              margin-bottom: 10px;
-            }
-            .ki-logo-wrapper {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              width: 55px;
-            }
-            .ki-logo-svg {
-              width: 44px;
-              height: 44px;
-            }
-            .ki-logo-text {
-              font-size: 8pt;
-              font-weight: 800;
-              color: #0284c7;
-              letter-spacing: 1px;
-              margin-top: 1px;
-            }
-            .ki-header-center {
-              text-align: center;
-              flex: 1;
-            }
-            .ki-title-main {
-              font-size: 16pt;
-              font-weight: 900;
-              color: #0284c7;
-              letter-spacing: 3px;
-              line-height: 1;
-            }
-            .ki-title-sub {
-              font-size: 12pt;
-              font-weight: 800;
-              color: #0284c7;
-              letter-spacing: 1.5px;
-              margin-top: 2px;
-            }
-            .ki-header-right {
-              width: 70px;
-              text-align: right;
-            }
-            .ki-code {
-              font-size: 9.5pt;
-              font-weight: bold;
-              color: #000;
-            }
-            .ki-table-front td {
-              font-size: 8.2pt;
-              padding: 2.5px 0;
-              vertical-align: middle;
-            }
-            .ki-box-char {
-              border: 1px solid #000;
-              display: inline-block;
-              width: 14px;
-              height: 14px;
-              line-height: 14px;
-              text-align: center;
-              font-size: 8pt;
-              font-weight: bold;
-              vertical-align: middle;
-            }
-            .ki-box-check {
-              border: 1px solid #000;
-              display: inline-block;
-              width: 12px;
-              height: 12px;
-              line-height: 12px;
-              text-align: center;
-              font-size: 8pt;
-              font-weight: bold;
-              vertical-align: middle;
-            }
-            .ki-box-block {
-              border: 1px solid #000;
-              padding: 1px 6px;
-              font-size: 8pt;
-              font-weight: bold;
-              text-align: center;
-              display: inline-block;
-            }
-            .ki-sign-front {
-              margin-top: 15px;
-              text-align: right;
-              font-size: 8pt;
-              padding-right: 25px;
-              line-height: 1.3;
-            }
-            .ki-page-label {
-              text-align: right;
-              font-size: 7.5pt;
-              font-style: italic;
-              color: #64748b;
-              margin-top: 8px;
-            }
-            .ki-table-back {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 6px;
-            }
-            .ki-table-back th, .ki-table-back td {
-              border: 1px solid #0284c7;
-              padding: 4px 6px;
-              font-size: 7.5pt;
-            }
-            .ki-table-back th {
-              background-color: #e0f2fe !important;
-              color: #0369a1 !important;
-              font-weight: bold;
-              text-align: center;
-              -webkit-print-color-adjust: exact;
-            }
-          </style>
-        </head>
-        <body>
-          ${contentHtml}
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-                window.onafterprint = function() { window.close(); };
-              }, 300);
-            };
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${judulDokumen}</title>
+            <meta charset="utf-8">
+            <style>
+              @page {
+                size: A4 portrait;
+                margin: 6mm 8mm;
+              }
+              body {
+                font-family: Arial, Helvetica, sans-serif;
+                color: #000;
+                background: #fff;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              /* CSS Form K/IV & Consent */
+              .form-wrapper {
+                border: 1.5px solid #000;
+                padding: 6px 10px;
+                box-sizing: border-box;
+              }
+              .box-single {
+                border: 1px solid #000;
+                padding: 2px 5px;
+                display: inline-block;
+                font-size: 8pt;
+              }
+              .box-char {
+                border: 1px solid #000;
+                display: inline-block;
+                width: 12px;
+                height: 13px;
+                line-height: 13px;
+                text-align: center;
+                font-size: 8pt;
+                font-weight: bold;
+                margin: 0 1px;
+                vertical-align: middle;
+              }
+              .tbl-field td {
+                font-size: 7.8pt;
+                padding: 1.5px 0;
+                vertical-align: top;
+                line-height: 1.2;
+              }
+              .tbl-grid th, .tbl-grid td {
+                border: 1px solid #000;
+                padding: 2px;
+                font-size: 6.8pt;
+              }
+              
+              /* CSS Kartu K/I (Biru) */
+              .ki-container {
+                width: 100%;
+                max-width: 720px;
+                margin: 0 auto;
+              }
+              .ki-card {
+                border: 2px solid #0284c7;
+                border-radius: 6px;
+                padding: 14px 16px;
+                box-sizing: border-box;
+                background-color: #ffffff;
+                page-break-inside: avoid;
+              }
+              .ki-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid #0284c7;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+              }
+              .ki-logo-wrapper {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 55px;
+              }
+              .ki-logo-svg {
+                width: 44px;
+                height: 44px;
+              }
+              .ki-logo-text {
+                font-size: 8pt;
+                font-weight: 800;
+                color: #0284c7;
+                letter-spacing: 1px;
+                margin-top: 1px;
+              }
+              .ki-header-center {
+                text-align: center;
+                flex: 1;
+              }
+              .ki-title-main {
+                font-size: 16pt;
+                font-weight: 900;
+                color: #0284c7;
+                letter-spacing: 3px;
+                line-height: 1;
+              }
+              .ki-title-sub {
+                font-size: 12pt;
+                font-weight: 800;
+                color: #0284c7;
+                letter-spacing: 1.5px;
+                margin-top: 2px;
+              }
+              .ki-header-right {
+                width: 70px;
+                text-align: right;
+              }
+              .ki-code {
+                font-size: 9.5pt;
+                font-weight: bold;
+                color: #000;
+              }
+              .ki-table-front td {
+                font-size: 8.2pt;
+                padding: 2.5px 0;
+                vertical-align: middle;
+              }
+              .ki-box-char {
+                border: 1px solid #000;
+                display: inline-block;
+                width: 14px;
+                height: 14px;
+                line-height: 14px;
+                text-align: center;
+                font-size: 8pt;
+                font-weight: bold;
+                vertical-align: middle;
+              }
+              .ki-box-check {
+                border: 1px solid #000;
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                line-height: 12px;
+                text-align: center;
+                font-size: 8pt;
+                font-weight: bold;
+                vertical-align: middle;
+              }
+              .ki-box-block {
+                border: 1px solid #000;
+                padding: 1px 6px;
+                font-size: 8pt;
+                font-weight: bold;
+                text-align: center;
+                display: inline-block;
+              }
+              .ki-sign-front {
+                margin-top: 15px;
+                text-align: right;
+                font-size: 8pt;
+                padding-right: 25px;
+                line-height: 1.3;
+              }
+              .ki-page-label {
+                text-align: right;
+                font-size: 7.5pt;
+                font-style: italic;
+                color: #64748b;
+                margin-top: 8px;
+              }
+              .ki-table-back {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 6px;
+              }
+              .ki-table-back th, .ki-table-back td {
+                border: 1px solid #0284c7;
+                padding: 4px 6px;
+                font-size: 7.5pt;
+              }
+              .ki-table-back th {
+                background-color: #e0f2fe !important;
+                color: #0369a1 !important;
+                font-weight: bold;
+                text-align: center;
+                -webkit-print-color-adjust: exact;
+              }
+            </style>
+          </head>
+          <body>
+            ${contentHtml}
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                  window.onafterprint = function() { window.close(); };
+                }, 300);
+              };
+            <\/script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     }
 
     // =========================================================================
