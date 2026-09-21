@@ -9458,7 +9458,7 @@ function checkAndLockKbTable() {
             width: 100%;
             border-collapse: collapse;
             font-size: 8.5pt;
-            margin-top: 4mm;
+            margin-top: 3mm;
           }
           .ic-sign-table td {
             vertical-align: top;
@@ -9554,7 +9554,7 @@ function checkAndLockKbTable() {
                 <td style="vertical-align: top;">Alamat Lengkap</td>
                 <td style="vertical-align: top;">:</td>
                 <td style="vertical-align: top;">
-                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW..... Kelurahan/Desa <b>${nmDesa || '................'}</b>
+                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn || '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
@@ -9623,7 +9623,7 @@ function checkAndLockKbTable() {
                 <td style="vertical-align: top;">Alamat Lengkap</td>
                 <td style="vertical-align: top;">:</td>
                 <td style="vertical-align: top;">
-                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW..... Kelurahan/Desa <b>${nmDesa || '................'}</b>
+                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn || '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
@@ -9651,7 +9651,7 @@ function checkAndLockKbTable() {
               Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
             </p>
 
-            <!-- TANDA TANGAN 3 PIHAK DENGAN TANGGAL CENTER TEPAT DI ATAS SUAMI/ISTERI -->
+            <!-- TANDA TANGAN 3 PIHAK -->
             <table class="ic-sign-table">
               <tr>
                 <td style="width: 40%; vertical-align: bottom;">
