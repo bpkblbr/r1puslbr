@@ -8704,91 +8704,13 @@ function checkAndLockKbTable() {
       else if (jnsAkseptor.includes("DO") || jnsAkseptor.includes("PASCA DO")) kdStatusPeserta = "3";
       else if (jnsAkseptor.includes("ULANGAN") || jnsAkseptor.includes("GANTI")) kdStatusPeserta = "4";
 
-      // Asuransi
+      // Asuransi & Anak
       const rawJkn = String(pusDetail.peserta_jkn || item.peserta_jkn || "").toUpperCase();
       let kdAsuransi = "";
       if (rawJkn.includes("PBI") || rawJkn.includes("BPJS")) kdAsuransi = "1";
       else if (rawJkn.includes("SWASTA")) kdAsuransi = "2";
       else if (rawJkn.includes("TIDAK")) kdAsuransi = "3";
-
-      // Jumlah Anak Hidup (Laki-laki & Perempuan)
-      const totalAnak = parseInt(pusDetail.jumlah_anak || item.jumlah_anak || 0, 10);
-      const anakLaki = totalAnak > 0 ? Math.floor(totalAnak / 2) : 0;
-      const anakPerempuan = totalAnak > 0 ? Math.ceil(totalAnak / 2) : 0;
-
-      // Umur Anak Terkecil (Format 2 Digit: Contoh 4 tahun -> 04 Tahun 00 Bulan)
-      const rawUmurAnak = pusDetail.umur_anak_terkecil !== undefined ? pusDetail.umur_anak_terkecil : item.umur_anak_terkecil;
-      const umurAnakNum = parseInt(rawUmurAnak || 0, 10);
-      const strUmurThn = String(umurAnakNum).padStart(2, '0');
-
-      let judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
-      let contentHtml = "";
-
-    // =========================================================================
-    // FUNGSI EKSPOR DOKUMEN KB LENGKAP: K/IV/KB, K/I/KB & INFORMED CONSENT
-    // =========================================================================
-    function eksporDokumenKbKePDF(jenisDoc, index) {
-      if (typeof Swal !== "undefined") Swal.close();
-      const item = cachedAntreanLayanan[index];
-      if (!item) {
-        Swal.fire("Peringatan", "Data antrean tidak ditemukan!", "warning");
-        return;
-      }
-
-      // Format & pemecahan tanggal pelayanan
-      const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
-      const pTgl = tglFormatted.split('-');
-      const dLayanan = pTgl[2] || "";
-      const mLayanan = pTgl[1] || "";
-      const yLayanan = pTgl[0] || "";
-
-      // Format tanggal lahir istri (DD MM YYYY)
-      let dLahir = "", mLahir = "", yLahir = "";
-      if (item.tgl_lahir_istri) {
-        const pLahir = String(item.tgl_lahir_istri).split('-');
-        if (pLahir.length === 3) {
-          dLahir = pLahir[2];
-          mLahir = pLahir[1];
-          yLahir = pLahir[0];
-        }
-      }
-
-      // Alamat & Wilayah
-      const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kode_kec || "");
-      const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.kode_desa || "");
-      const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
-      const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.kode_dusun || "");
-      const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
-
-      // Metode Alkon & Kode Angka
-      const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
-      let kdAlkon = "";
-      if (alkon.includes("SUNTIK") && alkon.includes("1")) kdAlkon = "1";
-      else if (alkon.includes("SUNTIK")) kdAlkon = "2";
-      else if (alkon.includes("PIL")) kdAlkon = "3";
-      else if (alkon.includes("KONDOM")) kdAlkon = "4";
-      else if (alkon.includes("IMPLAN") && alkon.includes("1")) kdAlkon = "5";
-      else if (alkon.includes("IMPLAN")) kdAlkon = "6";
-      else if (alkon.includes("IUD") && alkon.includes("380")) kdAlkon = "7";
-      else if (alkon.includes("IUD")) kdAlkon = "8";
-      else if (alkon.includes("MOW") || alkon.includes("TUBEKTOMI")) kdAlkon = "9";
-      else if (alkon.includes("MOP") || alkon.includes("VASEKTOMI")) kdAlkon = "10";
-
-      // Status Peserta
-      const jnsAkseptor = String(item.jenis_akseptor || "").toUpperCase();
-      let kdStatusPeserta = "";
-      if (jnsAkseptor.includes("MURNI") || jnsAkseptor.includes("PERTAMA")) kdStatusPeserta = "1";
-      else if (jnsAkseptor.includes("KBPP") || jnsAkseptor.includes("PERSALINAN")) kdStatusPeserta = "2";
-      else if (jnsAkseptor.includes("DO") || jnsAkseptor.includes("PASCA DO")) kdStatusPeserta = "3";
-      else if (jnsAkseptor.includes("ULANGAN") || jnsAkseptor.includes("GANTI")) kdStatusPeserta = "4";
-
-      // Asuransi & Anak
-      const rawJkn = String(item.peserta_jkn || "").toUpperCase();
-      let kdAsuransi = "";
-      if (rawJkn.includes("PBI") || rawJkn.includes("BPJS")) kdAsuransi = "1";
-      else if (rawJkn.includes("SWASTA")) kdAsuransi = "2";
-      else if (rawJkn.includes("TIDAK")) kdAsuransi = "3";
-      const umurAnakTerkecil = (item.umur_anak_terkecil !== undefined && item.umur_anak_terkecil !== null && item.umur_anak_terkecil !== "") ? String(item.umur_anak_terkecil).padStart(2, '0') : "";
+      const umurAnakTerkecil = (pusDetail.umur_anak_terkecil !== undefined && pusDetail.umur_anak_terkecil !== null && pusDetail.umur_anak_terkecil !== "") ? String(pusDetail.umur_anak_terkecil).padStart(2, '0') : "";
 
       let judulDokumen = `DOKUMEN_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
       let contentHtml = "";
@@ -8831,7 +8753,7 @@ function checkAndLockKbTable() {
                   <span class="box-char">${dLahir ? dLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${dLahir ? dLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${mLahir ? mLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${mLahir ? mLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${yLahir ? yLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(1) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(2) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(3) : '&nbsp;'}</span>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${item.umur_istri || ''}</b> Tahun
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${umurIstriVal !== "" ? umurIstriVal : ''}</b> Tahun
                 </td>
               </tr>
               <tr><td>V. Nama Suami/Istri</td><td>:</td><td>${item.nama_suami || ''}</td></tr>
@@ -9031,7 +8953,7 @@ function checkAndLockKbTable() {
           const namaBln = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
           tglLahirTeks = `${dLahir} ${namaBln[parseInt(mLahir, 10) - 1]} ${yLahir}`;
         }
-        if (item.umur_istri) tglLahirTeks += ` / ${item.umur_istri} TH`;
+        if (umurIstriVal) tglLahirTeks += ` / ${umurIstriVal} TH`;
 
         const isPbi = rawJkn.includes("PBI") && !rawJkn.includes("BUKAN");
         const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
@@ -9219,7 +9141,7 @@ function checkAndLockKbTable() {
       }
 
       // =========================================================================
-      // EKSEKUSI CETAK (BERLAKU UNTUK SEMUA JENIS DOKUMEN)
+      // CSS GABUNGAN DAN EKSEKUSI CETAK
       // =========================================================================
       const printWindow = window.open('', '_blank', 'width=850,height=950');
       if (!printWindow) {
