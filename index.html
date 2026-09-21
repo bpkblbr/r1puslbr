@@ -8725,12 +8725,80 @@ function checkAndLockKbTable() {
       let contentHtml = "";
 
       // =========================================================================
-      // FORMULIR K/IV/KB/15
+    // FUNGSI EKSPOR DOKUMEN KB LENGKAP: K/IV/KB, K/I/KB & INFORMED CONSENT
+    // =========================================================================
+    function eksporDokumenKbKePDF(jenisDoc, index) {
+      if (typeof Swal !== "undefined") Swal.close();
+      const item = cachedAntreanLayanan[index];
+      if (!item) {
+        Swal.fire("Peringatan", "Data antrean tidak ditemukan!", "warning");
+        return;
+      }
+
+      // Format & pemecahan tanggal pelayanan
+      const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
+      const pTgl = tglFormatted.split('-');
+      const dLayanan = pTgl[2] || "";
+      const mLayanan = pTgl[1] || "";
+      const yLayanan = pTgl[0] || "";
+
+      // Format tanggal lahir istri (DD MM YYYY)
+      let dLahir = "", mLahir = "", yLahir = "";
+      if (item.tgl_lahir_istri) {
+        const pLahir = String(item.tgl_lahir_istri).split('-');
+        if (pLahir.length === 3) {
+          dLahir = pLahir[2];
+          mLahir = pLahir[1];
+          yLahir = pLahir[0];
+        }
+      }
+
+      // Alamat & Wilayah
+      const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kode_kec || "");
+      const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.kode_desa || "");
+      const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
+      const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.kode_dusun || "");
+      const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
+
+      // Metode Alkon & Kode Angka
+      const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
+      let kdAlkon = "";
+      if (alkon.includes("SUNTIK") && alkon.includes("1")) kdAlkon = "1";
+      else if (alkon.includes("SUNTIK")) kdAlkon = "2";
+      else if (alkon.includes("PIL")) kdAlkon = "3";
+      else if (alkon.includes("KONDOM")) kdAlkon = "4";
+      else if (alkon.includes("IMPLAN") && alkon.includes("1")) kdAlkon = "5";
+      else if (alkon.includes("IMPLAN")) kdAlkon = "6";
+      else if (alkon.includes("IUD") && alkon.includes("380")) kdAlkon = "7";
+      else if (alkon.includes("IUD")) kdAlkon = "8";
+      else if (alkon.includes("MOW") || alkon.includes("TUBEKTOMI")) kdAlkon = "9";
+      else if (alkon.includes("MOP") || alkon.includes("VASEKTOMI")) kdAlkon = "10";
+
+      // Status Peserta
+      const jnsAkseptor = String(item.jenis_akseptor || "").toUpperCase();
+      let kdStatusPeserta = "";
+      if (jnsAkseptor.includes("MURNI") || jnsAkseptor.includes("PERTAMA")) kdStatusPeserta = "1";
+      else if (jnsAkseptor.includes("KBPP") || jnsAkseptor.includes("PERSALINAN")) kdStatusPeserta = "2";
+      else if (jnsAkseptor.includes("DO") || jnsAkseptor.includes("PASCA DO")) kdStatusPeserta = "3";
+      else if (jnsAkseptor.includes("ULANGAN") || jnsAkseptor.includes("GANTI")) kdStatusPeserta = "4";
+
+      // Asuransi & Anak
+      const rawJkn = String(item.peserta_jkn || "").toUpperCase();
+      let kdAsuransi = "";
+      if (rawJkn.includes("PBI") || rawJkn.includes("BPJS")) kdAsuransi = "1";
+      else if (rawJkn.includes("SWASTA")) kdAsuransi = "2";
+      else if (rawJkn.includes("TIDAK")) kdAsuransi = "3";
+      const umurAnakTerkecil = (item.umur_anak_terkecil !== undefined && item.umur_anak_terkecil !== null && item.umur_anak_terkecil !== "") ? String(item.umur_anak_terkecil).padStart(2, '0') : "";
+
+      let judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
+      let contentHtml = "";
+
+      // =========================================================================
+      // 1. FORMULIR K/IV/KB/15
       // =========================================================================
       if (jenisDoc === "KIV" || jenisDoc === "K0") {
         contentHtml = `
           <div class="form-wrapper">
-            <!-- HEADER FORMULIR -->
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="width: 25%; font-weight: bold; font-size: 13pt; vertical-align: top;">K/IV/KB/15</td>
@@ -8745,8 +8813,7 @@ function checkAndLockKbTable() {
                 <td></td>
                 <td style="font-size: 8pt; vertical-align: middle;">II. Kode Keluarga Indonesia:</td>
                 <td style="text-align: right; vertical-align: middle;">
-                  <!-- Dikosongkan sesuai permintaan -->
-                  <span class="box-single" style="min-width: 170px; text-align: center;">&nbsp;</span>
+                  <span class="box-single" style="min-width: 170px; font-family: monospace; font-weight: bold; letter-spacing: 1.5px; text-align: center;">${item.id_pus || ''}</span>
                 </td>
               </tr>
             </table>
@@ -8755,43 +8822,38 @@ function checkAndLockKbTable() {
               KARTU STATUS PESERTA KB
             </div>
 
-            <!-- BAGIAN IDENTITAS PESERTA -->
             <table class="tbl-field" style="width: 100%; border-collapse: collapse;">
+              <tr><td style="width: 27%;">III. Nama Peserta KB</td><td style="width: 1%;">:</td><td style="width: 72%; font-weight: bold;">${item.nama_istri || ''}</td></tr>
               <tr>
-                <td style="width: 27%;">III. Nama Peserta KB</td>
-                <td style="width: 1%;">:</td>
-                <td style="width: 72%; font-weight: bold;">${item.nama_istri || ''}</td>
-              </tr>
-              <tr>
-                <td>IV. Tgl Lahir/Umur Istri</td>
-                <td>:</td>
+                <td>IV. Tgl Lahir/Umur Istri</td><td>:</td>
                 <td>
                   <span class="box-char">${dLahir ? dLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${dLahir ? dLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${mLahir ? mLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${mLahir ? mLahir.charAt(1) : '&nbsp;'}</span> / 
                   <span class="box-char">${yLahir ? yLahir.charAt(0) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(1) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(2) : '&nbsp;'}</span><span class="box-char">${yLahir ? yLahir.charAt(3) : '&nbsp;'}</span>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${umurIstriVal !== "" ? umurIstriVal : ''}</b> Tahun
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Umur: <b>${item.umur_istri || ''}</b> Tahun
                 </td>
               </tr>
+              <tr><td>V. Nama Suami/Istri</td><td>:</td><td>${item.nama_suami || ''}</td></tr>
               <tr>
-                <td>V. Nama Suami/Istri</td>
-                <td>:</td>
-                <td>${item.nama_suami || ''}</td>
-              </tr>
-              <tr>
-                <td>VI. Pendidikan Suami dan Istri</td>
-                <td>:</td>
+                <td>VI. Pendidikan Suami dan Istri</td><td>:</td>
                 <td>
                   <table style="width: 100%; font-size: 7.5pt;">
-                    <tr>
-                      <td style="width: 33%;">1) Tidak Tamat SD/MI</td>
-                      <td style="width: 33%;">3) Tamat SLTP/MTsN</td>
-                      <td style="width: 34%;">5) Tamat PT</td>
-                    </tr>
-                    <tr>
-                      <td>2) Tamat SD/MI</td>
-                      <td>4) Tamat SLTA/MA</td>
-                      <td>6) Tidak Sekolah</td>
-                    </tr>
+                    <tr><td style="width: 33%;">1) Tidak Tamat SD/MI</td><td style="width: 33%;">3) Tamat SLTP/MTsN</td><td style="width: 34%;">5) Tamat PT</td></tr>
+                    <tr><td>2) Tamat SD/MI</td><td>4) Tamat SLTA/MA</td><td>6) Tidak Sekolah</td></tr>
+                  </table>
+                  <div style="margin-top: 2px; text-align: right; padding-right: 40px;">
+                    Suami &nbsp;<span class="box-char">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp; Istri &nbsp;<span class="box-char">&nbsp;</span>
+                  </div>
+                </td>
+              </tr>
+              <tr><td>VII. Alamat Peserta KB</td><td>:</td><td>${alamatLengkap}</td></tr>
+              <tr>
+                <td>VIII. Pekerjaan Suami dan Istri</td><td>:</td>
+                <td>
+                  <table style="width: 100%; font-size: 7.5pt;">
+                    <tr><td style="width: 25%;">1) Petani</td><td style="width: 25%;">4) PNS/TNI/POLRI</td><td style="width: 25%;">7) Pensiunan</td><td style="width: 25%;">10) Tidak Bekerja</td></tr>
+                    <tr><td>2) Nelayan</td><td>5) Pegawai Swasta</td><td>8) Pekerja Lepas</td><td></td></tr>
+                    <tr><td>3) Pedagang</td><td>6) Wiraswasta</td><td>9) Lainnya</td><td></td></tr>
                   </table>
                   <div style="margin-top: 2px; text-align: right; padding-right: 40px;">
                     Suami &nbsp;<span class="box-char">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp; Istri &nbsp;<span class="box-char">&nbsp;</span>
@@ -8799,129 +8861,51 @@ function checkAndLockKbTable() {
                 </td>
               </tr>
               <tr>
-                <td>VII. Alamat Peserta KB</td>
-                <td>:</td>
-                <td>${alamatLengkap}</td>
+                <td>IX. Penggunaan Asuransi</td><td>:</td>
+                <td><span class="box-char">${kdAsuransi || '&nbsp;'}</span> &nbsp;&nbsp; 1) BPJS Kesehatan &nbsp;&nbsp;&nbsp;&nbsp; 2) Lainnya &nbsp;&nbsp;&nbsp;&nbsp; 3) Tidak</td>
               </tr>
               <tr>
-                <td>VIII. Pekerjaan Suami dan Istri</td>
-                <td>:</td>
-                <td>
-                  <table style="width: 100%; font-size: 7.5pt;">
-                    <tr>
-                      <td style="width: 25%;">1) Petani</td>
-                      <td style="width: 25%;">4) PNS/TNI/POLRI</td>
-                      <td style="width: 25%;">7) Pensiunan</td>
-                      <td style="width: 25%;">10) Tidak Bekerja</td>
-                    </tr>
-                    <tr>
-                      <td>2) Nelayan</td>
-                      <td>5) Pegawai Swasta</td>
-                      <td>8) Pekerja Lepas</td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td>3) Pedagang</td>
-                      <td>6) Wiraswasta</td>
-                      <td>9) Lainnya</td>
-                      <td></td>
-                    </tr>
-                  </table>
-                  <div style="margin-top: 2px; text-align: right; padding-right: 40px;">
-                    Suami &nbsp;<span class="box-char">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp; Istri &nbsp;<span class="box-char">&nbsp;</span>
-                  </div>
-                </td>
+                <td>X. Jumlah anak hidup</td><td>:</td>
+                <td>Laki-laki &nbsp;<span class="box-char">&nbsp;</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Perempuan &nbsp;<span class="box-char">&nbsp;</span></td>
               </tr>
               <tr>
-                <td>IX. Penggunaan Asuransi</td>
-                <td>:</td>
-                <td>
-                  <span class="box-char">${kdAsuransi || '&nbsp;'}</span> &nbsp;&nbsp;
-                  1) BPJS Kesehatan &nbsp;&nbsp;&nbsp;&nbsp; 2) Lainnya &nbsp;&nbsp;&nbsp;&nbsp; 3) Tidak
-                </td>
+                <td>XI. Umur anak terakhir yang masih hidup</td><td>:</td>
+                <td><span class="box-char">${umurAnakTerkecil ? umurAnakTerkecil.charAt(0) : '&nbsp;'}</span><span class="box-char">${umurAnakTerkecil ? umurAnakTerkecil.charAt(1) : '&nbsp;'}</span> Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> Bulan</td>
               </tr>
               <tr>
-                <td>X. Jumlah anak hidup</td>
-                <td>:</td>
-                <td>
-                  Laki-laki &nbsp;<span class="box-char">${totalAnak > 0 ? anakLaki : '&nbsp;'}</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  Perempuan &nbsp;<span class="box-char">${totalAnak > 0 ? anakPerempuan : '&nbsp;'}</span>
-                </td>
-              </tr>
-              <tr>
-                <td>XI. Umur anak terakhir yang masih hidup</td>
-                <td>:</td>
-                <td>
-                  <span class="box-char">${totalAnak > 0 ? strUmurThn.charAt(0) : '&nbsp;'}</span><span class="box-char">${totalAnak > 0 ? strUmurThn.charAt(1) : '&nbsp;'}</span> Tahun
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <span class="box-char">${totalAnak > 0 ? '0' : '&nbsp;'}</span><span class="box-char">${totalAnak > 0 ? '0' : '&nbsp;'}</span> Bulan
-                </td>
-              </tr>
-              <tr>
-                <td style="vertical-align: top;">XII. Status Peserta KB</td>
-                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">XII. Status Peserta KB</td><td style="vertical-align: top;">:</td>
                 <td>
                   <span class="box-char">${kdStatusPeserta || '&nbsp;'}</span><br>
                   <table style="width: 100%; font-size: 7.5pt; margin-top: 2px;">
-                    <tr>
-                      <td style="width: 50%;">1) Baru Pertama kali</td>
-                      <td style="width: 50%;">3) Pernah pakai alat KB</td>
-                    </tr>
-                    <tr>
-                      <td>2) Pernah pakai alat KB berhenti sesudah bersalin/keguguran</td>
-                      <td>4) Sedang ber-KB</td>
-                    </tr>
+                    <tr><td style="width: 50%;">1) Baru Pertama kali</td><td style="width: 50%;">3) Pernah pakai alat KB</td></tr>
+                    <tr><td>2) Pernah pakai alat KB berhenti sesudah bersalin/keguguran</td><td>4) Sedang ber-KB</td></tr>
                   </table>
                 </td>
               </tr>
               <tr>
-                <td style="vertical-align: top;">XIII. Alat/Obat/Cara KB terakhir</td>
-                <td style="vertical-align: top;">:</td>
+                <td style="vertical-align: top;">XIII. Alat/Obat/Cara KB terakhir</td><td style="vertical-align: top;">:</td>
                 <td>
                   <span class="box-char">${kdAlkon || '&nbsp;'}</span><br>
                   <table style="width: 100%; font-size: 7.5pt; margin-top: 2px;">
-                    <tr>
-                      <td style="width: 25%;">1) Suntikan 1 Bulanan</td>
-                      <td style="width: 25%;">4) Kondom</td>
-                      <td style="width: 25%;">7) IUD CuT 380A</td>
-                      <td style="width: 25%;">10) Vasektomi</td>
-                    </tr>
-                    <tr>
-                      <td>2) Suntikan 3 Bulanan</td>
-                      <td>5) Implan 1 Batang</td>
-                      <td>8) IUD Lain-lain</td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td>3) Pil</td>
-                      <td>6) Implan 2 Batang</td>
-                      <td>9) Tubektomi</td>
-                      <td></td>
-                    </tr>
+                    <tr><td style="width: 25%;">1) Suntikan 1 Bulanan</td><td style="width: 25%;">4) Kondom</td><td style="width: 25%;">7) IUD CuT 380A</td><td style="width: 25%;">10) Vasektomi</td></tr>
+                    <tr><td>2) Suntikan 3 Bulanan</td><td>5) Implan 1 Batang</td><td>8) IUD Lain-lain</td><td></td></tr>
+                    <tr><td>3) Pil</td><td>6) Implan 2 Batang</td><td>9) Tubektomi</td><td></td></tr>
                   </table>
                 </td>
               </tr>
             </table>
 
-            <!-- BAGIAN XIV PENAPISAN (SKRINING) - KOSONG SESUAI FORM ASLI -->
             <div style="border-top: 1px solid #000; margin-top: 4px; padding-top: 3px;">
-              <div style="font-weight: bold; font-size: 8pt;">
-                XIV. Penapisan (Skrining) untuk menentukan alat kontrasepsi yang dapat digunakan calon peserta KB
-              </div>
+              <div style="font-weight: bold; font-size: 8pt;">XIV. Penapisan (Skrining) untuk menentukan alat kontrasepsi yang dapat digunakan calon peserta KB</div>
               <div style="font-size: 6.8pt; font-style: italic; margin-bottom: 3px; line-height: 1.15;">
                 Petunjuk: Periksalah keadaan berikut ini dan hasilnya ditulis dengan angka atau tanda centang (✓) pada kotak yang tersedia.<br>
                 Penapisan (Skrining) hanya boleh dilakukan oleh pelaksana yang telah dilatih dalam pelayanan KB.
               </div>
-
               <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
                 <tr>
-                  <!-- Kolom Kiri: Anamnese -->
                   <td style="width: 50%; vertical-align: top; padding-right: 6px; border-right: 1px solid #000;">
                     <b>Anamnese</b><br>
-                    1. Haid terakhir tanggal : 
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / 
-                    <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><br>
+                    1. Haid terakhir tanggal : <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span> / <span class="box-char">&nbsp;</span><span class="box-char">&nbsp;</span><br>
                     2. Hamil/Diduga Hamil : &nbsp; <span class="box-char">&nbsp;</span> 1) Ya &nbsp;&nbsp; 2) Tidak<br>
                     3. Jumlah GPA : &nbsp; Gravida <span class="box-char">&nbsp;</span> &nbsp; Partus <span class="box-char">&nbsp;</span> &nbsp; Abortus <span class="box-char">&nbsp;</span><br>
                     4. Menyusui : &nbsp; <span class="box-char">&nbsp;</span> 1) Ya &nbsp;&nbsp; 2) Tidak<br>
@@ -8937,8 +8921,6 @@ function checkAndLockKbTable() {
                       Bila semua jawaban TIDAK, dapat diberikan salah satu dari cara KB (kecuali IUD dan Tubektomi). Bila salah satu jawaban YA, rujuk ke dokter.
                     </div>
                   </td>
-
-                  <!-- Kolom Kanan: Pemeriksaan -->
                   <td style="width: 50%; vertical-align: top; padding-left: 6px;">
                     <b>Pemeriksaan</b><br>
                     6. Keadaan Umum : &nbsp; <span class="box-char">&nbsp;</span> 1) Baik &nbsp;&nbsp; 2) Sedang &nbsp;&nbsp; 3) Kurang<br>
@@ -8961,14 +8943,10 @@ function checkAndLockKbTable() {
                       <tr><td>c. Radang orchitis/epididymitis</td><td style="text-align: center;"><span class="box-char">&nbsp;</span></td><td style="text-align: center;"><span class="box-char">&nbsp;</span></td></tr>
                       <tr><td>d. Tumor/keganasan ginekologi</td><td style="text-align: center;"><span class="box-char">&nbsp;</span></td><td style="text-align: center;"><span class="box-char">&nbsp;</span></td></tr>
                     </table>
-                    <div style="font-size: 6.2pt; color: #333; line-height: 1.1;">
-                      Bila semua jawaban TIDAK, dapat dilakukan Vasektomi. Bila salah satu jawabannya YA, maka rujuklah ke Faskes KB/Rumah Sakit yang lengkap.
-                    </div>
                   </td>
                 </tr>
               </table>
 
-              <!-- TABEL 12: ALAT KONTRASEPSI DIPERBOLEHKAN (KOSONG POLOS) -->
               <div style="margin-top: 3px; font-size: 7.5pt;">
                 12. Alat/obat/cara kontrasepsi yang boleh dipergunakan :<br>
                 <table class="tbl-grid" style="width: 100%; border-collapse: collapse; text-align: center; margin-top: 2px;">
@@ -8978,15 +8956,12 @@ function checkAndLockKbTable() {
                     <td>Tubektomi</td><td>Vasektomi</td>
                   </tr>
                   <tr style="height: 16px;">
-                    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-                    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
-                    <td>&nbsp;</td><td>&nbsp;</td>
+                    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
                   </tr>
                 </table>
               </div>
             </div>
 
-            <!-- BAGIAN XV - XIX: TINDAKAN, TANGGAL & PENANGGUNG JAWAB -->
             <div style="border-top: 1px solid #000; margin-top: 4px; padding-top: 3px; font-size: 7.5pt;">
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
@@ -9023,7 +8998,7 @@ function checkAndLockKbTable() {
                 </tr>
               </table>
 
-              <!-- TANDA TANGAN (KOLOM NAMA DIKOSONGKAN, NIP RATA KIRI) -->
+              <!-- PENYESUAIAN NIP RATA KIRI SETELAH TANDA KURUNG -->
               <table style="width: 100%; border-collapse: collapse; margin-top: 4px;">
                 <tr>
                   <td style="width: 50%; font-size: 6.5pt; vertical-align: bottom; line-height: 1.2;">
@@ -9046,61 +9021,155 @@ function checkAndLockKbTable() {
         `;
 
       // =========================================================================
-      // FORMULIR K/I/KB/13
+      // 2. KARTU PESERTA KB (K/I/KB/13) BIRU BOLAK-BALIK
       // =========================================================================
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
+
+        let tglLahirTeks = "-";
+        if (dLahir && mLahir && yLahir) {
+          const namaBln = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+          tglLahirTeks = `${dLahir} ${namaBln[parseInt(mLahir, 10) - 1]} ${yLahir}`;
+        }
+        if (item.umur_istri) tglLahirTeks += ` / ${item.umur_istri} TH`;
+
+        const isPbi = rawJkn.includes("PBI") && !rawJkn.includes("BUKAN");
+        const isNonPbi = rawJkn.includes("BUKAN PBI") || rawJkn.includes("NON PBI") || rawJkn.includes("SWASTA");
+        const isNonJkn = rawJkn.includes("TIDAK") || (!isPbi && !isNonPbi);
+
         contentHtml = `
-          <div class="form-wrapper" style="padding: 16px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 12px;">
-              <span style="font-weight: bold; font-size: 12pt;">K/I/KB/13</span>
-              <span style="font-weight: bold; font-size: 13pt;">KARTU PESERTA KB</span>
-              <span style="font-size: 10pt;">Faskes: <b>${item.faskes_tujuan || '-'}</b></span>
+          <div class="ki-container">
+            <!-- HALAMAN DEPAN -->
+            <div class="ki-card">
+              <div class="ki-header">
+                <div class="ki-logo-wrapper">
+                  <svg viewBox="0 0 100 100" class="ki-logo-svg">
+                    <circle cx="50" cy="50" r="46" stroke="#0284c7" stroke-width="4" fill="none" />
+                    <circle cx="34" cy="40" r="7" fill="#0284c7" />
+                    <circle cx="66" cy="40" r="7" fill="#0284c7" />
+                    <circle cx="43" cy="58" r="5" fill="#0284c7" />
+                    <circle cx="57" cy="58" r="5" fill="#0284c7" />
+                    <path d="M 22 76 C 25 50, 75 50, 78 76" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round" />
+                  </svg>
+                  <div class="ki-logo-text">kkb</div>
+                </div>
+                <div class="ki-header-center">
+                  <div class="ki-title-main">KARTU</div>
+                  <div class="ki-title-sub">PESERTA KB</div>
+                </div>
+                <div class="ki-header-right">
+                  <div class="ki-code">K/I/KB/13</div>
+                </div>
+              </div>
+
+              <table class="ki-table-front">
+                <tr><td style="width: 32%;">Nama Peserta KB</td><td style="width: 2%;">:</td><td style="width: 66%; font-weight: bold;">${item.nama_istri || '-'}</td></tr>
+                <tr><td>Nama Suami/Istri</td><td>:</td><td>${item.nama_suami || '-'}</td></tr>
+                <tr><td>Tgl. Lahir/Umur Istri</td><td>:</td><td>${tglLahirTeks}</td></tr>
+                <tr><td style="vertical-align: top;">Alamat Peserta KB</td><td style="vertical-align: top;">:</td><td>${alamatLengkap}</td></tr>
+                <tr>
+                  <td>Tahapan KS</td><td>:</td>
+                  <td>
+                    <span class="ki-box-char">&nbsp;</span><span style="font-size: 7.5pt; margin-left: 5px;">KPS / KS I / KS II / KS III / KS III+</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td><td style="vertical-align: top;">:</td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                      <label style="display: flex; align-items: center; gap: 4px;">
+                        <span class="ki-box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span> Peserta JKN :
+                      </label>
+                      <div style="margin-left: 18px; display: flex; flex-direction: column; gap: 2px;">
+                        <span><span class="ki-box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</span>
+                        <span><span class="ki-box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</span>
+                      </div>
+                      <label style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                        <span class="ki-box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Nomor Seri Kartu</td><td>:</td>
+                  <td>
+                    <div style="display: inline-flex; gap: 4px; align-items: center;">
+                      <span class="ki-box-block" style="min-width: 60px; letter-spacing: 1px;">${dLayanan}${mLayanan}</span>
+                      <span class="ki-box-block" style="min-width: 40px; letter-spacing: 1px;">${yLayanan.slice(-2)}</span>
+                      <span class="ki-box-block" style="min-width: 70px; letter-spacing: 1px;">${item.id_pus ? item.id_pus.slice(-4) : '0001'}</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr><td>Nama Faskes KB</td><td>:</td><td style="font-weight: bold;">${item.faskes_tujuan || '-'}</td></tr>
+                <tr>
+                  <td>Nomor Kode Faskes KB</td><td>:</td>
+                  <td>
+                    <div style="display: inline-flex; gap: 4px; align-items: center;">
+                      <span class="ki-box-block">52</span><span class="ki-box-block">01</span><span class="ki-box-block">007</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <div class="ki-sign-front">
+                ${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}<br>
+                Penanggung jawab Faskes KB/<br>Praktik Dokter/Praktik Bidan Mandiri,<br><br><br><br>
+                <div style="display: inline-block; text-align: left;">
+                  ( ............................................................ )<br><span style="margin-left: 7px;">NIP.</span>
+                </div>
+              </div>
+              <div class="ki-page-label">Halaman Depan</div>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 9.5pt;">
-              <tr><td style="width: 32%; padding: 4px 0;">Nomor Seri Kartu (ID PUS)</td><td style="width: 2%;">:</td><td style="width: 66%; font-weight: bold; font-family: monospace;">${item.id_pus || '-'}</td></tr>
-              <tr><td style="padding: 4px 0;">Nama Peserta KB (Istri)</td><td>:</td><td style="font-weight: bold;">${item.nama_istri || '-'} (NIK: ${item.nik_istri || '-'})</td></tr>
-              <tr><td style="padding: 4px 0;">Nama Suami</td><td>:</td><td>${item.nama_suami || '-'} (NIK: ${item.nik_suami || '-'})</td></tr>
-              <tr><td style="padding: 4px 0;">Alamat</td><td>:</td><td>${alamatLengkap}</td></tr>
-              <tr><td style="padding: 4px 0;">Jaminan Kesehatan</td><td>:</td><td>${pusDetail.peserta_jkn || item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
-              <tr><td style="padding: 4px 0;">Metode Kontrasepsi Dipilih</td><td>:</td><td style="font-weight: bold; color: #1f4e78;">${alkon}</td></tr>
-              <tr><td style="padding: 4px 0;">Jenis Layanan / Tindakan</td><td>:</td><td>${item.jenis_pelayanan || 'PEMASANGAN'} (${jnsAkseptor})</td></tr>
-            </table>
-
-            <div style="font-weight: bold; margin: 15px 0 6px 0; font-size: 9.5pt;">CATATAN KUNJUNGAN ULANG / TINDAKAN:</div>
-            <table class="tbl-grid" style="width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 25px;">
-              <thead>
-                <tr style="background: #f1f5f9; text-align: center;">
-                  <th style="padding: 6px; width: 20%;">Tgl Datang</th>
-                  <th style="padding: 6px; width: 40%;">Hasil Pemeriksaan / Tindakan</th>
-                  <th style="padding: 6px; width: 22%;">Tgl Kembali</th>
-                  <th style="padding: 6px; width: 18%;">Paraf</th>
-                </tr>
-              </thead>
-              <tbody>
+            <!-- HALAMAN BELAKANG -->
+            <div class="ki-card" style="margin-top: 20px;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 8px; text-align: center;">${tglFormatted}</td>
-                  <td style="padding: 8px;">Tindakan Pelayanan: <b>${alkon}</b> (${item.jenis_pelayanan || 'PASANG'})</td>
-                  <td style="padding: 8px; text-align: center;">-</td>
-                  <td style="padding: 8px;"></td>
+                  <td style="width: 32%; font-weight: bold; font-size: 8.5pt;">Metode Kontrasepsi</td><td style="width: 2%;">:</td>
+                  <td style="width: 66%; font-weight: bold; font-size: 9pt; color: #0284c7;">${alkon}</td>
                 </tr>
-                <tr><td style="padding: 12px;">&nbsp;</td><td></td><td></td><td></td></tr>
-                <tr><td style="padding: 12px;">&nbsp;</td><td></td><td></td><td></td></tr>
-              </tbody>
-            </table>
+                <tr>
+                  <td style="font-size: 8.2pt;">Tgl/Bln/Thn Mulai Dipakai</td><td>:</td>
+                  <td>
+                    <div style="display: inline-flex; gap: 4px;">
+                      <span class="ki-box-block">${dLayanan}</span><span class="ki-box-block">${mLayanan}</span><span class="ki-box-block">${yLayanan.slice(-2)}</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 8pt; vertical-align: top;">Tgl/Bln/Thn Dicabut/Dilepas<br><small style="color: #64748b;">(Khusus Implant/IUD)</small></td>
+                  <td style="vertical-align: top;">:</td>
+                  <td style="vertical-align: top;">
+                    <div style="display: inline-flex; gap: 4px;">
+                      <span class="ki-box-block">&nbsp;&nbsp;</span><span class="ki-box-block">&nbsp;&nbsp;</span><span class="ki-box-block">&nbsp;&nbsp;</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-top: 30px;">
-              <tr>
-                <td style="width: 50%; text-align: center;">Peserta KB,<br><br><br><br>( <b>${item.nama_istri}</b> )</td>
-                <td style="width: 50%; text-align: center;">Pimpinan Faskes / Dokter / Bidan,<br><br><br><br>( ............................................................ )</td>
-              </tr>
-            </table>
+              <table class="ki-table-back">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">TANGGAL<br>DATANG</th><th style="width: 20%;">TANGGAL<br>DIPESAN<br>KEMBALI</th>
+                    <th style="width: 36%;">KETERANGAN</th><th style="width: 24%;">TANDA TANGAN<br>PETUGAS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="text-align: center; font-weight: bold;">${tglFormatted}</td><td style="text-align: center;">-</td><td>BAIK, PELAYANAN: ${alkon}</td><td></td></tr>
+                  <tr><td style="padding: 11px;">&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td style="padding: 11px;">&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td style="padding: 11px;">&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td style="padding: 11px;">&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td style="padding: 11px;">&nbsp;</td><td></td><td></td><td></td></tr>
+                </tbody>
+              </table>
+              <div class="ki-page-label">Halaman Belakang</div>
+            </div>
           </div>
         `;
 
       // =========================================================================
-      // FORMULIR INFORMED CONSENT
+      // 3. FORMULIR INFORMED CONSENT
       // =========================================================================
       } else {
         judulDokumen = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
@@ -9138,7 +9207,10 @@ function checkAndLockKbTable() {
               </tr>
               <tr>
                 <td colspan="2" style="text-align: center; padding-top: 35px;">
-                  Petugas Kesehatan / Bidan Pelaksana,<br><br><br><br>( .......................................................................... )<br>NIP / SIPB:
+                  Petugas Kesehatan / Bidan Pelaksana,<br><br><br><br>
+                  <div style="display: inline-block; text-align: left;">
+                    ( .......................................................................... )<br><span style="margin-left: 7px;">NIP / SIPB:</span>
+                  </div>
                 </td>
               </tr>
             </table>
@@ -9146,7 +9218,9 @@ function checkAndLockKbTable() {
         `;
       }
 
-      // Buka dialog cetak browser
+      // =========================================================================
+      // CSS GABUNGAN DAN EKSEKUSI CETAK
+      // =========================================================================
       const printWindow = window.open('', '_blank', 'width=850,height=950');
       if (!printWindow) {
         Swal.fire("Pop-up Terblokir", "Izinkan pop-up peramban untuk melihat lembar cetak.", "warning");
@@ -9174,6 +9248,7 @@ function checkAndLockKbTable() {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
+            /* CSS Form K/IV & Consent */
             .form-wrapper {
               border: 1.5px solid #000;
               padding: 6px 10px;
@@ -9208,6 +9283,139 @@ function checkAndLockKbTable() {
               padding: 2px;
               font-size: 6.8pt;
             }
+            
+            /* CSS Kartu K/I (Biru) */
+            .ki-container {
+              width: 100%;
+              max-width: 720px;
+              margin: 0 auto;
+            }
+            .ki-card {
+              border: 2px solid #0284c7;
+              border-radius: 6px;
+              padding: 14px 16px;
+              box-sizing: border-box;
+              background-color: #ffffff;
+              page-break-inside: avoid;
+            }
+            .ki-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #0284c7;
+              padding-bottom: 8px;
+              margin-bottom: 10px;
+            }
+            .ki-logo-wrapper {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 55px;
+            }
+            .ki-logo-svg {
+              width: 44px;
+              height: 44px;
+            }
+            .ki-logo-text {
+              font-size: 8pt;
+              font-weight: 800;
+              color: #0284c7;
+              letter-spacing: 1px;
+              margin-top: 1px;
+            }
+            .ki-header-center {
+              text-align: center;
+              flex: 1;
+            }
+            .ki-title-main {
+              font-size: 16pt;
+              font-weight: 900;
+              color: #0284c7;
+              letter-spacing: 3px;
+              line-height: 1;
+            }
+            .ki-title-sub {
+              font-size: 12pt;
+              font-weight: 800;
+              color: #0284c7;
+              letter-spacing: 1.5px;
+              margin-top: 2px;
+            }
+            .ki-header-right {
+              width: 70px;
+              text-align: right;
+            }
+            .ki-code {
+              font-size: 9.5pt;
+              font-weight: bold;
+              color: #000;
+            }
+            .ki-table-front td {
+              font-size: 8.2pt;
+              padding: 2.5px 0;
+              vertical-align: middle;
+            }
+            .ki-box-char {
+              border: 1px solid #000;
+              display: inline-block;
+              width: 14px;
+              height: 14px;
+              line-height: 14px;
+              text-align: center;
+              font-size: 8pt;
+              font-weight: bold;
+              vertical-align: middle;
+            }
+            .ki-box-check {
+              border: 1px solid #000;
+              display: inline-block;
+              width: 12px;
+              height: 12px;
+              line-height: 12px;
+              text-align: center;
+              font-size: 8pt;
+              font-weight: bold;
+              vertical-align: middle;
+            }
+            .ki-box-block {
+              border: 1px solid #000;
+              padding: 1px 6px;
+              font-size: 8pt;
+              font-weight: bold;
+              text-align: center;
+              display: inline-block;
+            }
+            .ki-sign-front {
+              margin-top: 15px;
+              text-align: right;
+              font-size: 8pt;
+              padding-right: 25px;
+              line-height: 1.3;
+            }
+            .ki-page-label {
+              text-align: right;
+              font-size: 7.5pt;
+              font-style: italic;
+              color: #64748b;
+              margin-top: 8px;
+            }
+            .ki-table-back {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 6px;
+            }
+            .ki-table-back th, .ki-table-back td {
+              border: 1px solid #0284c7;
+              padding: 4px 6px;
+              font-size: 7.5pt;
+            }
+            .ki-table-back th {
+              background-color: #e0f2fe !important;
+              color: #0369a1 !important;
+              font-weight: bold;
+              text-align: center;
+              -webkit-print-color-adjust: exact;
+            }
           </style>
         </head>
         <body>
@@ -9224,7 +9432,7 @@ function checkAndLockKbTable() {
         </html>
       `);
       printWindow.document.close();
-    }     
+    }
 
     // =========================================================================
     // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
