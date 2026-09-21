@@ -8725,9 +8725,9 @@ function checkAndLockKbTable() {
       let customCss = "";
       let contentHtml = "";
 
-      // =========================================================================
-      // 1. FORMULIR K/IV/KB/15 (WAJIB A4 PORTRAIT - 1 HALAMAN PAS)
-      // =========================================================================
+      // ========================
+      // 1. FORMULIR K/IV/KB/15
+      // ========================
       if (jenisDoc === "KIV" || jenisDoc === "K0") {
         judulDokumen = `FORM_K_IV_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
         customCss = `
@@ -9006,9 +9006,9 @@ function checkAndLockKbTable() {
           </div>
         `;
 
-      // =========================================================================
-      // 2. KARTU K/I/KB/13 (PERSIS 90mm x 125mm BOLAK-BALIK DUA HALAMAN)
-      // =========================================================================
+      // ====================
+      // 2. KARTU K/I/KB/13
+      // ====================
       } else if (jenisDoc === "KI") {
         judulDokumen = `KARTU_KI_KB_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
 
@@ -9369,13 +9369,12 @@ function checkAndLockKbTable() {
           </div>
         `;
 
-      // =========================================================================
-      // 3. INFORMED CONSENT (WAJIB A4 PORTRAIT - 1 HALAMAN PAS)
-      // =========================================================================
+      // =====================
+      // 3. INFORMED CONSENT
+      // =====================
       } else {
         judulDokumen = `INFORMED_CONSENT_${(item.nama_istri || 'AKSEPTOR').replace(/\s+/g, '_')}`;
-
-        // Evaluasi centang alkon informed consent
+        
         const isIud = alkon.includes("IUD");
         const isSuntik = alkon.includes("SUNTIK");
         const isMop = alkon.includes("MOP") || alkon.includes("VASEKTOMI");
@@ -9424,6 +9423,18 @@ function checkAndLockKbTable() {
           .tbl-identitas td.border-box {
             border: 1px solid #000;
             padding: 2px 5px;
+          }
+          .box-char-ic {
+            border: 1px solid #000;
+            display: inline-block;
+            width: 3.8mm;
+            height: 4mm;
+            line-height: 4mm;
+            text-align: center;
+            font-size: 7pt;
+            font-weight: bold;
+            vertical-align: middle;
+            margin: 0 0.4mm;
           }
           .section-head {
             font-weight: bold;
@@ -9491,32 +9502,59 @@ function checkAndLockKbTable() {
               </tr>
             </table>
 
-            <!-- IDENTITAS TEMPAT PELAYANAN -->
-            <div style="font-weight: bold; font-size: 8.8pt; margin-top: 3mm; margin-bottom: 1mm; text-decoration: underline;">
+            <!-- ============================================================= -->
+            <!-- DI SINI TEMPAT PENEMPATAN KODE IDENTITAS TEMPAT PELAYANAN     -->
+            <!-- ============================================================= -->
+            <div style="font-weight: bold; font-size: 8.8pt; margin-top: 3mm; margin-bottom: 1.5mm; text-decoration: underline;">
               IDENTITAS TEMPAT PELAYANAN
             </div>
             <table class="tbl-identitas">
               <tr>
-                <td style="width: 42%;">Nama Faskes KB/RS/Praktik Dokter/Praktik Bidan Mandiri *)</td>
+                <td style="width: 44%; padding: 2px 0;">Nama Faskes KB/RS/Praktik Dokter/Praktek Bidan Mandiri *)</td>
                 <td style="width: 2%;">:</td>
-                <td class="border-box" style="width: 56%; font-weight: bold;">${item.faskes_tujuan || '-'}</td>
+                <td class="border-box" style="width: 54%; font-weight: bold;">${item.faskes_tujuan || ''}</td>
               </tr>
               <tr>
-                <td>Nomor Kode Faskes KB</td>
+                <td style="padding: 2px 0;">Nomor Kode Faskes KB</td>
                 <td>:</td>
-                <td class="border-box">52 01 007</td>
+                <td>
+                  <div style="display: inline-flex; align-items: center;">
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                  </div>
+                </td>
               </tr>
               <tr>
-                <td>Nomor Klien / Nomor Seri Kartu (Sesuai dengan K/IV/KB)</td>
+                <td style="padding: 2px 0;">Nomor Klien / Nomor Seri Kartu (Sesuai dengan K/IV/KB)</td>
                 <td>:</td>
-                <td class="border-box" style="font-family: monospace; font-weight: bold;">${dLayanan}${mLayanan} &nbsp; ${yShort} &nbsp; ${item.id_pus ? item.id_pus.slice(-4) : '0001'}</td>
+                <td>
+                  <div style="display: inline-flex; align-items: center;">
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                  </div>
+                </td>
               </tr>
               <tr>
-                <td>Kode Keluarga Indonesia (KKI)</td>
+                <td style="padding: 2px 0;">Kode Keluarga Indonesia (KKI)</td>
                 <td>:</td>
-                <td class="border-box" style="font-family: monospace;">${item.id_pus || '-'}</td>
+                <td>
+                  <div style="display: inline-flex; align-items: center;">
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                    &nbsp;&nbsp;
+                    <span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span><span class="box-char-ic">&nbsp;</span>
+                  </div>
+                </td>
               </tr>
             </table>
+            <!-- ============================================================= -->
 
             <!-- PERSETUJUAN KLIEN -->
             <div class="section-head">PERSETUJUAN KLIEN</div>
@@ -9553,7 +9591,7 @@ function checkAndLockKbTable() {
               Setelah mendapat penjelasan dan <b>MENGERTI SEPENUHNYA PERIHAL KONTRASEPSI YANG SAYA PILIH</b>, maka saya selaku <b>KLIEN SECARA SUKARELA MEMBERIKAN PERSETUJUAN UNTUK DILAKUKAN TINDAKAN MEDIK DAN ATAU PELAYANAN KONTRASEPSI SESUAI STANDAR PROFESI</b> berupa :
             </p>
 
-            <!-- PILIHAN KONTRASEPSI DENGAN CENTANG OTOMATIS -->
+            <!-- PILIHAN KONTRASEPSI -->
             <table class="tbl-alkon-pilihan">
               <tr>
                 <td style="width: 33%;"><span class="box-check-ic">${isIud ? '&#10003;' : '&nbsp;'}</span> IUD</td>
@@ -9605,7 +9643,7 @@ function checkAndLockKbTable() {
               Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
             </p>
 
-            <!-- TANDA TANGAN 3 PIHAK PERSIS LAMPIRAN -->
+            <!-- TANDA TANGAN 3 PIHAK -->
             <table class="tbl-sign-ic">
               <tr>
                 <td style="width: 38%;">
@@ -9626,7 +9664,7 @@ function checkAndLockKbTable() {
             </table>
 
             <!-- KETERANGAN KAKI -->
-            <div style="font-size: 7.5pt; margin-top: 5mm; line-height: 1.3;">
+            <div style="font-size: 7.5pt; margin-top: 4mm; line-height: 1.3;">
               Keterangan:<br>
               *) coret yang tidak perlu<br>
               **) beri tanda
