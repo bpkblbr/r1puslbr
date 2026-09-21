@@ -9547,14 +9547,14 @@ function checkAndLockKbTable() {
                 <td style="vertical-align: top;">
                   ${umurIstriVal ? `<b>${umurIstriVal}</b>` : '......'} Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   Jenis Kelamin &nbsp;&nbsp;
-                  <u>Laki-laki</u>/Perempuan *)
+                  <span style="text-decoration: line-through;">Laki-laki</span>/Perempuan *)
                 </td>
               </tr>
               <tr>
                 <td style="vertical-align: top;">Alamat Lengkap</td>
                 <td style="vertical-align: top;">:</td>
                 <td style="vertical-align: top;">
-                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn || '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
+                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn \vert{}\vert{} '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
@@ -9616,14 +9616,14 @@ function checkAndLockKbTable() {
                 <td style="vertical-align: top;">
                   ...... Tahun &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   Jenis Kelamin &nbsp;&nbsp;
-                  Laki-laki/<u>Perempuan</u> *)
+                  Laki-laki/<span style="text-decoration: line-through;">Perempuan</span> *)
                 </td>
               </tr>
               <tr>
                 <td style="vertical-align: top;">Alamat Lengkap</td>
                 <td style="vertical-align: top;">:</td>
                 <td style="vertical-align: top;">
-                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn || '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
+                  Jalan........................................RT <b>${item.kode_rt || '.....'}</b> RW/Dusun <b>${nmDsn \vert{}\vert{} '.....'}</b> Kelurahan/Desa <b>${nmDesa || '................'}</b>
                 </td>
               </tr>
               <tr>
@@ -9645,7 +9645,7 @@ function checkAndLockKbTable() {
             </table>
 
             <p style="text-align: justify; margin: 1.5mm 0; line-height: 1.35;">
-              Selaku <b>Suami</b>/Isteri *) klien telah mendapat penjelasan, memahami dan ikut menyetujui terhadap tindakan medik dan atau pelayanan kontrasepsi tersebut.
+              Selaku Suami/<span style="text-decoration: line-through;">Isteri</span> *) klien telah mendapat penjelasan, memahami dan ikut menyetujui terhadap tindakan medik dan atau pelayanan kontrasepsi tersebut.
             </p>
             <p style="text-align: justify; margin: 1.5mm 0; line-height: 1.35;">
               Pernyataan ini kami buat dengan <b>KESADARAN PENUH ATAS SEGALA RESIKO TINDAK MEDIK</b> yang akan diberikan.
