@@ -259,26 +259,63 @@
       padding-bottom: 6px;
     }
 
-    .label-flex-kb {
+    /* Card Container Form Layanan */
+    .card-layanan-plan {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Label Fleksibel & Teratur */
+    .label-field-kb {
       font-size: 11.5px;
       font-weight: 700;
       color: #475569;
       letter-spacing: 0.3px;
       text-transform: uppercase;
       margin: 0;
-      line-height: 1.3;
+      line-height: 1.35;
+      min-height: 32px; /* Menyeragamkan ruang vertikal label agar kotak input di bawahnya sejajar */
+      display: flex;
+      align-items: flex-end; /* Mengunci pangkal label tepat di atas kotak input */
     }
-    
-    @media (min-width: 601px) {
-      .label-flex-kb {
-        white-space: nowrap !important;
-      }
+
+    /* Standarisasi Semua Elemen Input Form Layanan */
+    .input-control-kb {
+      height: 45px !important; /* Standar tinggi seragam yang ideal dan proporsional */
+      min-height: 45px !important;
+      width: 100% !important;
+      padding: 0 12px !important;
+      border-radius: 6px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      font-size: 13px !important;
+      color: #1e293b !important;
+      background-color: #ffffff;
+      box-sizing: border-box !important;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    
-    @media (max-width: 600px) {
-      .label-flex-kb {
-        white-space: normal !important;
-        word-break: normal;
+
+    .input-control-kb:focus {
+      border-color: #0284c7 !important;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    /* Wadah Field Dinamis */
+    .form-col-kb {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    /* Responsif: Di desktop label tetap 1 baris jika muat, di HP otomatis membungkus rapi */
+    @media (min-width: 768px) {
+      .label-field-kb {
+        white-space: normal;
       }
     }
 
@@ -1630,28 +1667,28 @@
         </div>
 
         <!-- KARTU B: FORM RENCANA PELAYANAN MEDIS -->
-        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);">
+        <div class="card-layanan-plan">
           
           <!-- Header Sub-Bagian -->
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="background: #0284c7; color: #ffffff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">2</span>
-              <span style="font-size: 13px; font-weight: 800; color: #1e293b; letter-spacing: 0.3px; text-transform: uppercase;">
+              <span style="background: #0284c7; color: #ffffff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">2</span>
+              <span style="font-size: 13.5px; font-weight: 800; color: #1e293b; letter-spacing: 0.3px; text-transform: uppercase;">
                 Rencana Pelayanan & Tindakan KB
               </span>
             </div>
-            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">* Wajib diisi</span>
+            <span style="font-size: 11px; color: #ef4444; font-weight: 700;">* Wajib diisi</span>
           </div>
 
-          <!-- Baris 1: Jenis Pelayanan, Metode Kontrasepsi & Jenis Akseptor (Grid 3 Kolom) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;">
+          <!-- Baris 1: Jenis Pelayanan, Metode Kontrasepsi & Jenis Akseptor (Grid 3 Kolom Simetris) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 14px;">
             
-            <!-- 1. Dropdown Jenis Pelayanan -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="reg_jenis_pelayanan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
-                Jenis Pelayanan <span style="color: #ef4444;">*</span>
+            <!-- 1. Jenis Pelayanan -->
+            <div class="form-col-kb">
+              <label for="reg_jenis_pelayanan" class="label-field-kb">
+                Jenis Pelayanan <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <select id="reg_jenis_pelayanan" onchange="onJenisPelayananChange()" required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #1e293b; background-color: #ffffff; font-size: 13px; box-sizing: border-box;">
+              <select id="reg_jenis_pelayanan" class="input-control-kb" onchange="onJenisPelayananChange()" required style="font-weight: 700;">
                 <option value="">-- PILIH PELAYANAN --</option>
                 <option value="PEMASANGAN/PEMAKAIAN">PEMASANGAN / PEMAKAIAN</option>
                 <option value="CABUT/LEPAS">CABUT / LEPAS</option>
@@ -1659,41 +1696,43 @@
               </select>
             </div>
 
-            <!-- 2. Dropdown Metode Kontrasepsi (Awalnya disabled dan kosong) -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="reg_rencana_metode" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
-                Metode Kontrasepsi <span style="color: #ef4444;">*</span>
+            <!-- 2. Metode Kontrasepsi -->
+            <div class="form-col-kb">
+              <label for="reg_rencana_metode" class="label-field-kb">
+                Metode Kontrasepsi <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <select id="reg_rencana_metode" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 700; color: #0369a1; background-color: #e9ecef; font-size: 13px; box-sizing: border-box;">
+              <select id="reg_rencana_metode" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="font-weight: 700; color: #0369a1; background-color: #f1f5f9;">
                 <option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>
               </select>
             </div>
 
-            <!-- 3. Jenis Akseptor (Otomatis & Terkunci) -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
-                Jenis Akseptor <span style="font-size: 10px; color: #0284c7; font-weight: 800;">(OTOMATIS)</span>
+            <!-- 3. Jenis Akseptor (Otomatis) -->
+            <div class="form-col-kb">
+              <label class="label-field-kb">
+                Jenis Akseptor <span style="font-size: 10px; color: #0284c7; font-weight: 800; margin-left: 4px;">(OTOMATIS)</span>
               </label>
               <input type="hidden" id="reg_jenis_akseptor" value="">
-              <div id="badgeJenisAkseptorDisplay" style="height: 42px; width: 100%; padding: 0 14px; border-radius: 6px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 12.5px; font-weight: 700; color: #94a3b8; display: flex; align-items: center; box-sizing: border-box; user-select: none;">
+              <div id="badgeJenisAkseptorDisplay" class="input-control-kb" style="background: #f8fafc; font-weight: 700; color: #64748b; display: flex; align-items: center; user-select: none; border-style: dashed;">
                 Menunggu pemilihan metode...
               </div>
             </div>
+
           </div>
 
           <!-- Keterangan Deteksi Cerdas Riwayat KB -->
-          <div style="margin-top: -8px; margin-bottom: 16px;">
-            <small id="infoRiwayatKb" style="font-size: 11px; font-weight: 600; color: #64748b; display: block; line-height: 1.4;"></small>
+          <div style="margin-bottom: 18px; padding: 2px 2px;">
+            <small id="infoRiwayatKb" style="font-size: 11.5px; font-weight: 600; color: #0369a1; display: block; line-height: 1.4;"></small>
           </div>
 
-          <!-- Baris 2: Bulan Pelayanan & Tanggal Rencana (Simetris 2 Kolom) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; align-items: stretch;">
-  
-            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: space-between;">
-              <label for="reg_bulan_rencana" class="label-flex-kb">
-                Bulan Pelayanan <span style="color: #ef4444;">*</span>
+          <!-- Baris 2: Bulan Pelayanan & Tanggal Rencana (Grid 2 Kolom Simetris) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px;">
+            
+            <!-- Bulan Pelayanan -->
+            <div class="form-col-kb">
+              <label for="reg_bulan_rencana" class="label-field-kb">
+                Bulan Pelayanan <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <select id="reg_bulan_rencana" onchange="evaluasiOtomatisJenisAkseptor()" required style="min-height: 44px; height: 100%; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-weight: 600; font-size: 13px; box-sizing: border-box; background-color: #ffffff;">
+              <select id="reg_bulan_rencana" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" required style="font-weight: 600;">
                 <option value="1">JANUARI</option><option value="2">FEBRUARI</option><option value="3">MARET</option>
                 <option value="4">APRIL</option><option value="5">MEI</option><option value="6">JUNI</option>
                 <option value="7">JULI</option><option value="8">AGUSTUS</option><option value="9">SEPTEMBER</option>
@@ -1701,51 +1740,46 @@
               </select>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: space-between;">
-              <label for="reg_tgl_rencana" class="label-flex-kb">
+            <!-- Tanggal Rencana Tindakan -->
+            <div class="form-col-kb">
+              <label for="reg_tgl_rencana" class="label-field-kb">
                 Tanggal Rencana Tindakan:
               </label>
-              <input type="date" id="reg_tgl_rencana" style="min-height: 44px; height: 100%; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; color: #1e293b; background-color: #ffffff; box-sizing: border-box;">
+              <input type="date" id="reg_tgl_rencana" class="input-control-kb">
             </div>
 
           </div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="reg_tgl_rencana" class="label-flex-kb">
-                Tanggal Rencana Tindakan:
-              </label>
-              <input type="date" id="reg_tgl_rencana" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; color: #1e293b; background-color: #ffffff; box-sizing: border-box;">
-            </div>
-
-          </div>
-
-          <!-- Baris 3: Fasilitas Pelayanan & Kader Pendamping (Simetris 2 Kolom) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; align-items: stretch;">
-  
-            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: space-between;">
-              <label for="reg_faskes_tujuan" class="label-flex-kb">
+          <!-- Baris 3: Fasilitas Pelayanan & Kader Pendamping (Grid 2 Kolom Simetris) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px;">
+            
+            <!-- Tempat / Fasilitas Pelayanan -->
+            <div class="form-col-kb">
+              <label for="reg_faskes_tujuan" class="label-field-kb">
                 Tempat / Fasilitas Pelayanan:
               </label>
-              <input type="text" id="reg_faskes_tujuan" placeholder="CONTOH: RS / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()" style="min-height: 44px; height: 100%; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: uppercase; box-sizing: border-box;">
+              <input type="text" id="reg_faskes_tujuan" class="input-control-kb" placeholder="CONTOH: RSUD / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()">
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px; justify-content: space-between;">
-              <label for="reg_nama_kader" class="label-flex-kb">
-                Nama Kader Pendamping <span style="color: #ef4444;">*</span>
+            <!-- Nama Kader Pendamping -->
+            <div class="form-col-kb">
+              <label for="reg_nama_kader" class="label-field-kb">
+                Nama Kader Pendamping <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <input type="text" id="reg_nama_kader" required placeholder="NAMA LENGKAP KADER" oninput="this.value = this.value.toUpperCase()" style="min-height: 44px; height: 100%; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; font-weight: 600; text-transform: uppercase; box-sizing: border-box;">
+              <input type="text" id="reg_nama_kader" class="input-control-kb" required placeholder="NAMA LENGKAP KADER" oninput="this.value = this.value.toUpperCase()" style="font-weight: 600;">
             </div>
 
           </div>
 
-          <!-- Baris 4: Catatan Tambahan (Full Width 1 Kolom) -->
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="reg_catatan" class="label-flex-kb">
+          <!-- Baris 4: Catatan Tambahan (Full Width Simetris) -->
+          <div class="form-col-kb" style="margin-bottom: 6px;">
+            <label for="reg_catatan" class="label-field-kb" style="min-height: auto; margin-bottom: 2px;">
               Catatan Tambahan (Opsional):
             </label>
-            <input type="text" id="reg_catatan" placeholder="Contoh: Riwayat tensi tinggi, ganti dari suntik 3 bulanan, dll." style="min-height: 44px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: none; box-sizing: border-box;">
+            <input type="text" id="reg_catatan" class="input-control-kb" placeholder="Contoh: Riwayat tensi tinggi, ganti dari suntik 3 bulanan, dll." style="text-transform: none;">
           </div>
-        </div>          
+
+        </div>         
 
         <!-- TOMBOL AKSI -->
         <div style="display: flex; gap: 10px;">
