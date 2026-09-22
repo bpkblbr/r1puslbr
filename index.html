@@ -3748,6 +3748,54 @@ function checkAndLockKbTable() {
     umurInput.value = Math.max(0, age);
     applyMutationAndAgeLocks();
   }
+
+  function hitungUmurPresisi(tglLahirInput) {
+  if (!tglLahirInput) return 0;
+
+  let birthYear, birthMonth, birthDay;
+
+  // Tangani format YYYY-MM-DD maupun DD/MM/YYYY
+  if (typeof tglLahirInput === "string") {
+    if (tglLahirInput.includes("-")) {
+      const p = tglLahirInput.split("-");
+      if (p[0].length === 4) {
+        birthYear = parseInt(p[0], 10);
+        birthMonth = parseInt(p[1], 10);
+        birthDay = parseInt(p[2], 10);
+      } else {
+        birthYear = parseInt(p[2], 10);
+        birthMonth = parseInt(p[1], 10);
+        birthDay = parseInt(p[0], 10);
+      }
+    } else if (tglLahirInput.includes("/")) {
+      const p = tglLahirInput.split("/");
+      if (p[2].length === 4) {
+        birthYear = parseInt(p[2], 10);
+        birthMonth = parseInt(p[1], 10);
+        birthDay = parseInt(p[0], 10);
+      } else {
+        birthYear = parseInt(p[0], 10);
+        birthMonth = parseInt(p[1], 10);
+        birthDay = parseInt(p[2], 10);
+      }
+    }
+  }
+
+  if (!birthYear || isNaN(birthYear)) return 0;
+
+  // Bandingkan dengan tanggal dan bulan hari ini
+  const today = new Date();
+  const curYear = today.getFullYear();
+  const curMonth = today.getMonth() + 1; // 1 - 12
+  const curDay = today.getDate();
+
+  let age = curYear - birthYear;
+  if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
+    age--;
+  }
+
+  return Math.max(0, age);
+}
   
   function checkJumlahAnak() {
     const val = parseInt(document.getElementById("jumlah_anak").value, 10);
@@ -7397,14 +7445,10 @@ function checkAndLockKbTable() {
           }
 
           let parsedTglLahir = formatExcelDate(r[19]);
-          let umurFromExcel = parseInt(r[20] || 0, 10);
-
-          if ((!umurFromExcel || umurFromExcel === 0) && parsedTglLahir) {
-            const birthYear = parseInt(parsedTglLahir.split('-')[0], 10);
-            const targetThn = parseInt(r[1] || targetTahun, 10);
-            if (!isNaN(birthYear) && birthYear > 1900) {
-              umurFromExcel = Math.max(0, targetThn - birthYear);
-            }
+          let umurFromExcel = hitungUmurPresisi(parsedTglLahir);
+          
+          if (umurFromExcel === 0 && r[20]) {
+            umurFromExcel = parseInt(r[20] || 0, 10);
           }
 
           payloadList.push({
