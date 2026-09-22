@@ -1702,7 +1702,7 @@
                 Metode Kontrasepsi <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
               <select id="reg_rencana_metode" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="font-weight: 700; color: #0369a1; background-color: #f1f5f9;">
-                <option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>
+                <option value=""></option>
               </select>
             </div>
 
@@ -8333,39 +8333,28 @@ function checkAndLockKbTable() {
     const infoText = document.getElementById("infoRiwayatKb");
     if (infoText) infoText.innerText = "Silakan pilih metode kontrasepsi di samping...";
   }
-
-  // 1. Logika saat Jenis Pelayanan dipilih
+  
   function onJenisPelayananChange() {
     const jenisLayanan = document.getElementById("reg_jenis_pelayanan").value;
     const selMetode = document.getElementById("reg_rencana_metode");
 
-    selMetode.innerHTML = '<option value="">-- PILIH METODE KB --</option>';
-
     if (!jenisLayanan) {
       selMetode.disabled = true;
       selMetode.style.backgroundColor = "#e9ecef";
-      selMetode.innerHTML = '<option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>';
+      selMetode.innerHTML = '<option value=""></option>'; // Benar-benar kosong tanpa teks
       evaluasiOtomatisJenisAkseptor();
       return;
     }
-
+    
     selMetode.disabled = false;
     selMetode.style.backgroundColor = "#ffffff";
+    selMetode.innerHTML = '<option value="">-- PILIH METODE KB --</option>';
 
-    let opsiMetode = [];
+    let opsiMetode = (jenisLayanan === "CABUT/LEPAS" || jenisLayanan === "BONGKAR PASANG")
+      ? ["IMPLAN", "IUD", "MOW", "MOP"]
+      : ["IMPLAN", "IUD", "SUNTIK", "PIL", "KONDOM", "MOW", "MOP"];
 
-    if (jenisLayanan === "PEMASANGAN/PEMAKAIAN") {
-      // Semua ALKON
-      opsiMetode = ["IMPLAN", "IUD", "SUNTIK", "PIL", "KONDOM", "MOW", "MOP"];
-    } else if (jenisLayanan === "CABUT/LEPAS" || jenisLayanan === "BONGKAR PASANG") {
-      // Khusus MKJP / Metode Tindakan Medis
-      opsiMetode = ["IMPLAN", "IUD", "MOW", "MOP"];
-    }
-
-    opsiMetode.forEach(m => {
-      selMetode.add(new Option(m, m));
-    });
-
+    opsiMetode.forEach(m => selMetode.add(new Option(m, m)));
     evaluasiOtomatisJenisAkseptor();
   }
 
@@ -8506,7 +8495,7 @@ function checkAndLockKbTable() {
 
       const selMetode = document.getElementById("reg_rencana_metode");
       if (selMetode) {
-        selMetode.innerHTML = '<option value="">-- PILIH JENIS PELAYANAN DAHULU --</option>';
+        selMetode.innerHTML = '<option value=""></option>'; // Dikosongkan tanpa tulisan
         selMetode.disabled = true;
         selMetode.style.backgroundColor = "#e9ecef";
       }
