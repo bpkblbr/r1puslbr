@@ -258,6 +258,30 @@
       border-bottom: 1px solid #f1f5f9;
       padding-bottom: 6px;
     }
+
+    .label-flex-kb {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #475569;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin: 0;
+      line-height: 1.3;
+    }
+    
+    @media (min-width: 601px) {
+      .label-flex-kb {
+        white-space: nowrap !important;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .label-flex-kb {
+        white-space: normal !important;
+        word-break: normal;
+      }
+    }
+
     .chart-container { position: relative; height: 250px; width: 100%; }
   </style>
 </head>
@@ -1686,7 +1710,7 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="reg_tgl_rencana" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+              <label for="reg_tgl_rencana" class="label-flex-kb">
                 Tanggal Rencana Tindakan:
               </label>
               <input type="date" id="reg_tgl_rencana" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; color: #1e293b; background-color: #ffffff; box-sizing: border-box;">
@@ -1698,10 +1722,10 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
             
             <div style="display: flex; flex-direction: column; gap: 6px;">
-              <label for="reg_faskes_tujuan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+              <label for="reg_faskes_tujuan" class="label-flex-kb">
                 Tempat / Fasilitas Pelayanan:
               </label>
-              <input type="text" id="reg_faskes_tujuan" placeholder="CONTOH: PUSKESMAS / PMB / BAKSOS" oninput="this.value = this.value.toUpperCase()" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: uppercase; box-sizing: border-box;">
+              <input type="text" id="reg_faskes_tujuan" placeholder="CONTOH: RS / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()" style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: uppercase; box-sizing: border-box;">
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1715,7 +1739,7 @@
 
           <!-- Baris 4: Catatan Tambahan (Full Width 1 Kolom) -->
           <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="reg_catatan" style="font-size: 11.5px; font-weight: 700; color: #475569; letter-spacing: 0.3px; text-transform: uppercase;">
+            <label for="reg_catatan" class="label-flex-kb">
               Catatan Tambahan (Opsional):
             </label>
             <input type="text" id="reg_catatan" placeholder="Contoh: Riwayat tensi tinggi, ganti dari suntik 3 bulanan, dll." style="height: 42px; width: 100%; padding: 0 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; font-size: 13px; text-transform: none; box-sizing: border-box;">
