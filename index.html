@@ -7396,32 +7396,42 @@ function checkAndLockKbTable() {
             }
           }
 
+          let parsedTglLahir = formatExcelDate(r[19]);
+          let umurFromExcel = parseInt(r[20] || 0, 10);
+
+          if ((!umurFromExcel || umurFromExcel === 0) && parsedTglLahir) {
+            const birthYear = parseInt(parsedTglLahir.split('-')[0], 10);
+            const targetThn = parseInt(r[1] || targetTahun, 10);
+            if (!isNaN(birthYear) && birthYear > 1900) {
+              umurFromExcel = Math.max(0, targetThn - birthYear);
+            }
+          }
+
           payloadList.push({
             id_pus: idPus,
             tahun: parseInt(r[1] || targetTahun, 10),
             timestamp: new Date().toISOString(),
-            provinsi_nama: String(r[3] || "").toUpperCase(),
+            provinsi_nama: String(r[3] || "NUSA TENGGARA BARAT").toUpperCase().trim(),
             kode_prov: kdProv,
-            kabupaten_nama: String(r[5] || "").toUpperCase(),
+            kabupaten_nama: String(r[5] || "").toUpperCase().trim(),
             kode_kab: kdKab,
-            kecamatan_nama: String(r[7] || "").toUpperCase(),
+            kecamatan_nama: String(r[7] || "").toUpperCase().trim(),
             kode_kec: kdKec,
-            desa_nama: String(r[9] || "").toUpperCase(),
+            desa_nama: String(r[9] || "").toUpperCase().trim(),
             kode_desa: kdDesa,
-            dusun_nama: String(r[11] || "").toUpperCase(),
+            dusun_nama: String(r[11] || "").toUpperCase().trim(),
             kode_dusun: kdDsn,
-            rt_nama: String(r[13] || "").toUpperCase(),
+            rt_nama: String(r[13] || ("RT " + kdRt)).toUpperCase().trim(),
             kode_rt: kdRt,
             nama_suami: namaSuamiVal,
             nik_suami: nikSuami,
             nama_istri: namaIstriVal,
             nik_istri: nikIstri,
-            tgl_lahir_istri: formatExcelDate(r[19]),
-            umur_istri: parseInt(r[20] || 0, 10),
+            tgl_lahir_istri: parsedTglLahir, // Menggunakan hasil format tanggal yang sama
+            umur_istri: umurFromExcel,        // Ganti parseInt(r[20] || 0, 10) menjadi umurFromExcel
             jumlah_anak: parseInt(r[21] || 0, 10),
             umur_anak_terkecil: parseInt(r[22] || 0, 10),
-            peserta_jkn: String(r[23] || "").toUpperCase(),
-            // Gunakan array cleanedKb yang sudah disaring
+            peserta_jkn: String(r[23] || "TIDAK MEMILIKI").toUpperCase().trim(),
             kb_jan: cleanedKb[0],
             kb_feb: cleanedKb[1],
             kb_mar: cleanedKb[2],
