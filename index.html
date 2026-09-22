@@ -7473,14 +7473,7 @@ function checkAndLockKbTable() {
         }
 
         const { error: upsertError } = await db.from('data_pus').upsert(payloadList, { onConflict: 'id_pus,tahun' });
-        if (upsertError) throw upsertError;
-
-        if (isRelocatedInSameVillage && originalIdPus && originalIdPus !== idPus) {
-          await db.from('data_pus')
-            .delete()
-            .eq('id_pus', originalIdPus)
-            .eq('tahun', thn);
-        }
+        if (upsertError) throw upsertError;        
 
         Swal.fire({
           icon: 'success',
