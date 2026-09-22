@@ -1543,7 +1543,22 @@
     <!-- TAB 2: FORM DAFTARKAN CALON AKSEPTOR DARI DATABASE PUS -->
     <div id="layananTabDaftar" style="display: none;">
       <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #0284c7;">
-        <div style="font-size: 12.5px; color: #334155; font-weight: bold; margin-bottom: 6px;">Cari Calon Akseptor dari Database</div>
+        <div style="font-size: 12.5px; color: #334155; font-weight: bold; margin-bottom: 8px;">Cari Calon Akseptor dari Database</div>
+        
+        <!-- GRID FILTER WILAYAH KHUSUS TINGKAT KABUPATEN -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <select id="cariLayananKec" onchange="onCariLayananKecChangeKab()" style="padding: 8px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+            <option value="">-- PILIH KECAMATAN --</option>
+          </select>
+          <select id="cariLayananDesa" onchange="onCariLayananDesaChangeKab()" style="padding: 8px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+            <option value="">-- PILIH DESA --</option>
+          </select>
+          <select id="cariLayananDusun" style="padding: 8px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
+            <option value="">-- PILIH DUSUN --</option>
+          </select>
+        </div>
+
+        <!-- INPUT KATA KUNCI & TOMBOL CARI -->
         <div style="display: flex; gap: 8px;">
           <input type="text" id="cariPusLayananInput" placeholder="KETIK NAMA ISTRI, NIK, ATAU ID PUS..." oninput="this.value = this.value.toUpperCase()" style="flex: 1; padding: 10px 12px; font-size: 13px; text-transform: uppercase; border: 1px solid #cbd5e1; border-radius: 6px;">
           <button type="button" class="btn-action" style="padding: 8px 16px; font-size: 12px;" onclick="cariPusUntukLayanan()">🔍 Cari PUS</button>
@@ -7786,6 +7801,11 @@ function checkAndLockKbTable() {
 
     if (isAntrean) {
       loadAntreanLayananTable();
+    } else {
+      // Inisialisasi filter wilayah pencarian akseptor skala kabupaten
+      if (typeof initFilterWilayahCariLayananKab === "function") {
+        initFilterWilayahCariLayananKab();
+      }
     }
   }
 
@@ -8040,14 +8060,105 @@ function checkAndLockKbTable() {
     });
   }
 
+  // Inisialisasi dropdown filter pencarian calon akseptor skala Kabupaten
+  function initFilterWilayahCariLayananKab() {
+    const selKec = document.getElementById("cariLayananKec");
+    const selDesa = document.getElementById("cariLayananDesa");
+    const selDusun = document.getElementById("cariLayananDusun");
+
+    if (!selKec) return;
+
+    if (isDesaRole()) {
+      // User Desa: Kunci Kecamatan & Desa ke wilayah binaannya
+      selKec.innerHTML = '<option value="">-- PILIH KECAMATAN --</option>';
+      for (let kdKab in dataKecamatan) {
+        if (dataKecamatan[kdKab][userKodeKec]) {
+          selKec.add(new Option(dataKecamatan[kdKab][userKodeKec].toUpperCase(), userKodeKec));
+        }
+      }
+      setSelectValueCaseInsensitive("cariLayananKec", userKodeKec);
+      selKec.disabled = true;
+
+      populateDesaByKec(userKodeKec, "cariLayananDesa");
+      setSelectValueCaseInsensitive("cariLayananDesa", userKodeDesa);
+      selDesa.disabled = true;
+
+      onCariLayananDesaChangeKab();
+    } else if (isKecRole()) {
+      // Admin Kecamatan: Kunci Kecamatan ke wilayahnya, buka Desa
+      selKec.innerHTML = '<option value="">-- PILIH KECAMATAN --</option>';
+      for (let kdKab in dataKecamatan) {
+        if (dataKecamatan[kdKab][userKodeKec]) {
+          selKec.add(new Option(dataKecamatan[kdKab][userKodeKec].toUpperCase(), userKodeKec));
+        }
+      }
+      setSelectValueCaseInsensitive("cariLayananKec", userKodeKec);
+      selKec.disabled = true;
+
+      populateDesaByKec(userKodeKec, "cariLayananDesa");
+      selDesa.disabled = false;
+      selDusun.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
+    } else {
+      // Admin Kabupaten: Buka seluruh Kecamatan, Desa, Dusun
+      selKec.disabled = false;
+      selDesa.disabled = false;
+      selKec.innerHTML = '<option value="">-- PILIH KECAMATAN --</option>';
+      const addedKec = {};
+      for (let kdKab in dataKecamatan) {
+        for (let kd in dataKecamatan[kdKab]) {
+          let clean = String(kd).trim();
+          if (!addedKec[clean]) {
+            addedKec[clean] = true;
+            selKec.add(new Option(dataKecamatan[kdKab][kd].toUpperCase(), clean));
+          }
+        }
+      }
+      selDesa.innerHTML = '<option value="">-- PILIH DESA --</option>';
+      selDusun.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
+    }
+  }
+
+  function onCariLayananKecChangeKab() {
+    const kec = isKabRole() ? document.getElementById("cariLayananKec").value : userKodeKec;
+    populateDesaByKec(kec, "cariLayananDesa");
+    document.getElementById("cariLayananDusun").innerHTML = '<option value="">-- PILIH DUSUN --</option>';
+  }
+
+  function onCariLayananDesaChangeKab() {
+    const kec = isKabRole() ? document.getElementById("cariLayananKec").value : userKodeKec;
+    const desa = isDesaRole() ? userKodeDesa : document.getElementById("cariLayananDesa").value;
+    const sel = document.getElementById("cariLayananDusun");
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
+    if (kec && desa) {
+      const dsn = getDusunList(kec, desa);
+      if (dsn) {
+        for (let kd in dsn) {
+          let cleanKd = String(kd).trim().padStart(4, '0');
+          // Jika akun User Desa dibatasi dusun tertentu
+          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
+            if (!userKodeDusunList.includes(cleanKd)) continue;
+          }
+          sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
+        }
+      }
+    }
+  }
+
   // 2. Pencarian PUS dari Database untuk Didaftarkan (Tampilan Identik Cari PUS)
   async function cariPusUntukLayanan() {
     const keywordInput = document.getElementById("cariPusLayananInput").value.trim();
     const keyword = keywordInput.toUpperCase();
     const resultBox = document.getElementById("hasilPencarianPusLayanan");
     
-    if (!keyword) {
-      Swal.fire("Perhatian", "Ketik nama istri, NIK, atau ID PUS untuk mencari!", "warning");
+    // Ambil nilai filter dropdown
+    const filterKec = (isDesaRole() || isKecRole()) ? userKodeKec : document.getElementById("cariLayananKec")?.value;
+    const filterDesa = isDesaRole() ? userKodeDesa : document.getElementById("cariLayananDesa")?.value;
+    const filterDusun = document.getElementById("cariLayananDusun")?.value;
+
+    if (!keyword && !filterKec && !filterDesa && !filterDusun) {
+      Swal.fire("Perhatian", "Ketik kata kunci atau pilih salah satu filter wilayah!", "warning");
       return;
     }
 
@@ -8058,48 +8169,28 @@ function checkAndLockKbTable() {
     let currentYear = inputYear ? parseInt(inputYear, 10) : new Date().getFullYear();
 
     let query = db.from('data_pus').select('*').eq('tahun', currentYear);
-    query = query.or(`id_pus.ilike.%${keyword}%,nama_istri.ilike.%${keyword}%,nik_istri.ilike.%${keyword}%,nama_suami.ilike.%${keyword}%`);
 
-    if (isDesaRole()) {
-      const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
-      const cleanDesa = String(userKodeDesa || "").replace(/\D/g, "");
-
-      if (cleanKec) {
-        query = query.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
-      }
-      if (cleanDesa) {
-        query = query.or(`kode_desa.eq.${cleanDesa.padStart(4, '0')},kode_desa.eq.${parseInt(cleanDesa, 10)}`);
-      }
-    } else if (isKecRole()) {
-      const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
-      if (cleanKec) {
-        query = query.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
-      }
+    // Kunci kode kabupaten akun
+    if (userKodeKab) {
+      query = query.eq('kode_kab', String(userKodeKab).padStart(2, '0'));
     }
 
-    let { data, error } = await query.limit(15);
-
-    // Fallback jika tahun berjalan belum terisi data
-    if ((!data || data.length === 0) && !error) {
-      let fallbackQuery = db.from('data_pus').select('*')
-        .or(`id_pus.ilike.%${keyword}%,nama_istri.ilike.%${keyword}%,nik_istri.ilike.%${keyword}%,nama_suami.ilike.%${keyword}%`);
-
-      if (isDesaRole()) {
-        const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
-        const cleanDesa = String(userKodeDesa || "").replace(/\D/g, "");
-        if (cleanKec) fallbackQuery = fallbackQuery.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
-        if (cleanDesa) fallbackQuery = fallbackQuery.or(`kode_desa.eq.${cleanDesa.padStart(4, '0')},kode_desa.eq.${parseInt(cleanDesa, 10)}`);
-      } else if (isKecRole()) {
-        const cleanKec = String(userKodeKec || "").replace(/\D/g, "");
-        if (cleanKec) fallbackQuery = fallbackQuery.or(`kode_kec.eq.${cleanKec.padStart(2, '0')},kode_kec.eq.${parseInt(cleanKec, 10)}`);
-      }
-
-      const fallbackRes = await fallbackQuery.order('tahun', { ascending: false }).limit(15);
-      if (fallbackRes.data && fallbackRes.data.length > 0) {
-        data = fallbackRes.data;
-      }
+    // Filter Kata Kunci
+    if (keyword) {
+      query = query.or(`id_pus.ilike.%${keyword}%,nama_istri.ilike.%${keyword}%,nik_istri.ilike.%${keyword}%,nama_suami.ilike.%${keyword}%`);
     }
 
+    // Filter Wilayah
+    if (filterKec) query = query.eq('kode_kec', String(filterKec).padStart(2, '0'));
+    if (filterDesa) query = query.eq('kode_desa', String(filterDesa).padStart(4, '0'));
+    if (filterDusun) query = query.eq('kode_dusun', String(filterDusun).padStart(4, '0'));
+
+    // Batasan dusun kader
+    if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0 && !filterDusun) {
+      query = query.in('kode_dusun', userKodeDusunList);
+    }
+
+    let { data, error } = await query.order('id_pus', { ascending: true }).limit(20);
     resultBox.innerHTML = "";
 
     if (error) {
@@ -8110,12 +8201,12 @@ function checkAndLockKbTable() {
     if (!data || data.length === 0) {
       resultBox.innerHTML = `
         <div style='padding:15px; font-size:12.5px; color:#ef4444; text-align:center;'>
-          Data PUS dengan kata kunci "<b>${keywordInput}</b>" tidak ditemukan.
+          Data PUS tidak ditemukan untuk kriteria pencarian dan wilayah tersebut.
         </div>`;
       return;
     }
 
-    // Render kartu hasil pencarian persis format kartu Cari PUS
+    // Render hasil pencarian
     data.forEach(item => {
       const hlId = highlightText(item.id_pus, keywordInput);
       const hlIstri = highlightText(item.nama_istri, keywordInput);
