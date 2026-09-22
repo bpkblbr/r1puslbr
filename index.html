@@ -1743,9 +1743,9 @@
             <!-- Tanggal Rencana Tindakan -->
             <div class="form-col-kb">
               <label for="reg_tgl_rencana" class="label-field-kb">
-                Tanggal Rencana Tindakan:
+                Tanggal Rencana Tindakan <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <input type="date" id="reg_tgl_rencana" class="input-control-kb">
+              <input type="date" id="reg_tgl_rencana" class="input-control-kb" required>
             </div>
 
           </div>
@@ -1756,9 +1756,9 @@
             <!-- Tempat / Fasilitas Pelayanan -->
             <div class="form-col-kb">
               <label for="reg_faskes_tujuan" class="label-field-kb">
-                Tempat / Fasilitas Pelayanan:
+                Tempat / Fasilitas Pelayanan <span style="color: #ef4444; margin-left: 3px;">*</span>
               </label>
-              <input type="text" id="reg_faskes_tujuan" class="input-control-kb" placeholder="CONTOH: RSUD / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()">
+              <input type="text" id="reg_faskes_tujuan" class="input-control-kb" required placeholder="CONTOH: RSUD / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()">
             </div>
 
             <!-- Nama Kader Pendamping -->
@@ -8557,26 +8557,32 @@ function checkAndLockKbTable() {
 
       // Validasi Bagian 2: Rencana Pelayanan & Tindakan KB
       const rencanaMetode = (document.getElementById("reg_rencana_metode")?.value || "").trim();
+      const jenisAkseptor = (document.getElementById("reg_jenis_akseptor")?.value || "").trim();
       const bulanRencana = (document.getElementById("reg_bulan_rencana")?.value || "").trim();
+      const tglRencana = (document.getElementById("reg_tgl_rencana")?.value || "").trim();
+      const faskesTujuan = (document.getElementById("reg_faskes_tujuan")?.value || "").trim();
       const namaKader = (document.getElementById("reg_nama_kader")?.value || "").trim();
 
       if (!rencanaMetode) {
         errors.push("Metode Kontrasepsi belum dipilih");
       }
-      
-      const jenisAkseptor = (document.getElementById("reg_jenis_akseptor")?.value || "").trim();
       if (!jenisAkseptor) {
         errors.push("Jenis Akseptor belum dipilih");
       }
-      
       if (!bulanRencana) {
         errors.push("Bulan Pelayanan belum dipilih");
+      }
+      // VALIDASI WAJIB BARU: Tanggal dan Tempat Pelayanan
+      if (!tglRencana) {
+        errors.push("Tanggal Rencana Tindakan wajib diisi");
+      }
+      if (!faskesTujuan) {
+        errors.push("Tempat / Fasilitas Pelayanan wajib diisi");
       }
       if (!namaKader) {
         errors.push("Nama Kader / Petugas Pendamping wajib diisi");
       }
 
-      // Pengecekan error form
       if (errors.length > 0) {
         const errorListHtml = errors.map(err => `<li style="margin-bottom: 5px;">${err}</li>`).join("");
         Swal.fire({
@@ -8597,35 +8603,74 @@ function checkAndLockKbTable() {
 
       const btn = document.getElementById("btnSimpanPendaftaranLayanan");
       btn.disabled = true;
-      btn.innerText = "Mendaftarkan...";
-      
-      const payload = {
-        id_pus: idPus,
-        tahun: parseInt(document.getElementById("reg_tahun").value, 10),
-        bulan_rencana: parseInt(bulanRencana, 10),
-        tgl_rencana_layanan: document.getElementById("reg_tgl_rencana").value || null,
-        nama_istri: namaIstri,
-        nik_istri: nikIstri,
-        nama_suami: document.getElementById("reg_nama_suami").value,
-        nik_suami: document.getElementById("reg_nik_suami").value || null,
-        kode_kab: userKodeKab || "01",
-        kode_kec: document.getElementById("reg_kode_kec").value,
-        kode_desa: document.getElementById("reg_kode_desa").value,
-        kode_dusun: document.getElementById("reg_kode_dusun").value,
-        kode_rt: document.getElementById("reg_kode_rt").value || null,
-        jenis_pelayanan: jenisPelayanan,
-        rencana_metode: rencanaMetode,
-        jenis_akseptor: jenisAkseptor, // <-- Properti disimpan di sini
-        faskes_tujuan: document.getElementById("reg_faskes_tujuan").value.trim() || null,
-        nama_kader: namaKader.toUpperCase(),
-        catatan: document.getElementById("reg_catatan").value.trim() || null,
-        status: 'TERDAFTAR',
-        created_by: currentUser || "Kader"
-      };
+      btn.innerText = "Memeriksa data & mendaftarkan...";
 
-      try {
-        const { error } = await db.from('pendaftaran_layanan_kb').insert([payload]);
-        if (error) throw error;
+      const targetTahun = parseInt(document.getElementById("reg_tahun").value, 10);
+      const targetBulan = parseInt(bulanRencana, 10);
+
+      try {        
+        const { data: antreanExisting, error: errCheck } = await db
+          .from('pendaftaran_layanan_kb')
+          .select('id, status, rencana_metode, faskes_tujuan')
+          .eq('nik_istri', nikIstri)
+          .eq('tahun', targetTahun)
+          .eq('bulan_rencana', targetBulan)
+          .in('status', ['TERDAFTAR', 'SELESAI']);
+
+        if (errCheck) throw errCheck;
+
+        if (antreanExisting && antreanExisting.length > 0) {
+          const itemLama = antreanExisting[0];
+          const statusTeks = itemLama.status === 'TERDAFTAR' ? 'masih dalam antrean' : 'telah selesai dilayani';
+          
+          btn.disabled = false;
+          btn.innerText = "💾 DAFTARKAN CALON AKSEPTOR";
+
+          Swal.fire({
+            icon: 'warning',
+            title: 'Pendaftaran Duplikat!',
+            html: `
+              <div style="text-align: left; font-size: 13px; color: #334155; line-height: 1.45;">
+                PUS atas nama <b>${namaIstri}</b> (NIK: <code>${nikIstri}</code>) <b>sudah didaftarkan</b> pada bulan yang sama.<br><br>
+                <b>Detail data sebelumnya:</b><br>
+                • Status: <span style="color:#0284c7; font-weight:bold;">${statusTeks.toUpperCase()}</span><br>
+                • Metode: <b>${itemLama.rencana_metode || '-'}</b><br>
+                • Tempat: <b>${itemLama.faskes_tujuan || '-'}</b><br><br>
+                <small style="color:#64748b;">*Satu akseptor tidak dapat didaftarkan lebih dari satu kali pada bulan pelayanan yang sama kecuali pendaftaran sebelumnya dibatalkan.</small>
+              </div>
+            `,
+            confirmButtonColor: '#0284c7'
+          });
+          return;
+        }
+
+        // Susun payload
+        const payload = {
+          id_pus: idPus,
+          tahun: targetTahun,
+          bulan_rencana: targetBulan,
+          tgl_rencana_layanan: tglRencana,
+          nama_istri: namaIstri,
+          nik_istri: nikIstri,
+          nama_suami: document.getElementById("reg_nama_suami").value,
+          nik_suami: document.getElementById("reg_nik_suami").value || null,
+          kode_kab: document.getElementById("reg_kode_kab")?.value || userKodeKab || "01",
+          kode_kec: document.getElementById("reg_kode_kec").value,
+          kode_desa: document.getElementById("reg_kode_desa").value,
+          kode_dusun: document.getElementById("reg_kode_dusun").value,
+          kode_rt: document.getElementById("reg_kode_rt").value || null,
+          jenis_pelayanan: jenisPelayanan,
+          rencana_metode: rencanaMetode,
+          jenis_akseptor: jenisAkseptor,
+          faskes_tujuan: faskesTujuan,
+          nama_kader: namaKader.toUpperCase(),
+          catatan: document.getElementById("reg_catatan").value.trim() || null,
+          status: 'TERDAFTAR',
+          created_by: currentUser || "Kader"
+        };
+
+        const { error: insertErr } = await db.from('pendaftaran_layanan_kb').insert([payload]);
+        if (insertErr) throw insertErr;
 
         Swal.fire({
           icon: 'success',
@@ -8637,7 +8682,7 @@ function checkAndLockKbTable() {
 
         resetFormPendaftaranLayanan();
         switchLayananTab('antrean');
-        if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();      
+        if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
 
       } catch (err) {
         Swal.fire("Gagal Mendaftar", err.message, "error");
