@@ -2481,15 +2481,28 @@
     });
   }
 
-  function populateDesaByKec(kdKec, targetSelectId) {
+  function populateDesaByKec(kdKec, targetSelectId, kdKab = "") {
     const sel = document.getElementById(targetSelectId);
     if (!sel) return;
     sel.innerHTML = '<option value="">-- PILIH DESA --</option>';
+    
     let cleanKec = String(kdKec).padStart(2, '0');
-    if (dataDesa[cleanKec]) {
-      for (let kd in dataDesa[cleanKec]) {
-        sel.add(new Option(dataDesa[cleanKec][kd].toUpperCase(), kd));
+    let cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+    let compositeKey = cleanKab + "_" + cleanKec;
+
+    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
+
+    if (Object.keys(desas).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + cleanKec)) {
+          desas = dataDesa[k];
+          break;
+        }
       }
+    }
+
+    for (let kd in desas) {
+      sel.add(new Option(desas[kd].toUpperCase(), String(kd).padStart(4, '0')));
     }
   }
 
@@ -6274,11 +6287,31 @@
     selDesa.innerHTML = '<option value="">-- PILIH DESA --</option>';
 
     if (!kdKec) return;
-    let cleanKd = String(kdKec).padStart(2, '0');
-    let desas = dataDesa[cleanKd] || {};
+    
+    let cleanKec = String(kdKec).padStart(2, '0');
+    let cleanKab = String(userKodeKab || "01").padStart(2, '0');
+
+    // Gunakan composite key kdKab_kdKec dengan fallback ke cleanKec
+    let compositeKey = cleanKab + "_" + cleanKec;
+    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
+
+    // Jika masih belum ketemu, cari pencocokan di seluruh dataDesa
+    if (Object.keys(desas).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + cleanKec)) {
+          desas = dataDesa[k];
+          break;
+        }
+      }
+    }
 
     for (let kd in desas) {
       selDesa.add(new Option(desas[kd].toUpperCase(), String(kd).padStart(4, '0')));
+    }
+
+    // Reset checklist dusun jika kecamatan diganti
+    if (typeof onUserDesaChange === "function") {
+      onUserDesaChange();
     }
   }
 
