@@ -7959,6 +7959,152 @@
   // =========================================================================
   let cachedAntreanLayanan = [];
 
+  // 1. Inisialisasi Filter Wilayah Antrean Layanan KB (Tingkat Kabupaten)
+  function initLayananWilayahFilter() {
+    const cKec = document.getElementById("filterExpLayananKecContainer");
+    const selKec = document.getElementById("filterExpLayananKec");
+    const wDesa = document.getElementById("filterExpLayananDesaWrapper");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    if (wDesa) wDesa.style.display = "none";
+    if (wDusun) wDusun.style.display = "none";
+
+    if (isDesaRole()) {
+      if (cKec) cKec.style.display = "none";
+      // User Desa langsung diarahkan ke checklist Dusun di desanya
+      renderLayananDusunCheckboxes(userKodeKec, userKodeDesa);
+    } else if (isKecRole()) {
+      if (cKec) cKec.style.display = "none";
+      // Admin Kecamatan langsung menampilkan checklist Desa di kecamatannya
+      renderLayananDesaCheckboxes(userKodeKec);
+    } else {
+      // Admin Kabupaten: Tampilkan dropdown Kecamatan
+      if (cKec) {
+        cKec.style.display = "block";
+        selKec.innerHTML = '<option value="">-- SEMUA KECAMATAN --</option>';
+        for (let kdKab in dataKecamatan) {
+          for (let kd in dataKecamatan[kdKab]) {
+            selKec.add(new Option(dataKecamatan[kdKab][kd].toUpperCase(), String(kd).padStart(2, '0')));
+          }
+        }
+      }
+      loadAntreanLayananTable();
+    }
+  }
+
+  // 2. Handler saat dropdown Kecamatan dipilih oleh Admin Kabupaten
+  function onLayananKecChange() {
+    const kdKec = document.getElementById("filterExpLayananKec").value;
+    const wDesa = document.getElementById("filterExpLayananDesaWrapper");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    if (kdKec) {
+      renderLayananDesaCheckboxes(kdKec);
+    } else {
+      if (wDesa) wDesa.style.display = "none";
+      if (wDusun) wDusun.style.display = "none";
+      loadAntreanLayananTable();
+    }
+  }
+
+  // 3. Render Checkbox Desa ke dalam Grid
+  function renderLayananDesaCheckboxes(kdKec) {
+    const wrapper = document.getElementById("filterExpLayananDesaWrapper");
+    const grid = document.getElementById("filterExpLayananDesaGrid");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    if (!wrapper || !grid) return;
+    grid.innerHTML = "";
+    if (wDusun) wDusun.style.display = "none";
+
+    let cleanKab = String(userKodeKab || "01").padStart(2, '0');
+    let cleanKec = String(kdKec).padStart(2, '0');
+    let desaKey = cleanKab + "_" + cleanKec;
+    let desas = dataDesa[desaKey] || dataDesa[cleanKec] || {};
+
+    let listDesaKeys = Object.keys(desas);
+    if (listDesaKeys.length === 0) {
+      wrapper.style.display = "none";
+      loadAntreanLayananTable();
+      return;
+    }
+
+    wrapper.style.display = "block";
+    listDesaKeys.forEach(kd => {
+      const cleanKd = String(kd).padStart(4, '0');
+      const label = document.createElement("label");
+      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      label.innerHTML = `
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}')" style="accent-color: #0284c7;">
+        <span>${desas[kd]}</span>
+      `;
+      grid.appendChild(label);
+    });
+
+    loadAntreanLayananTable();
+  }
+
+  // 4. Logika: Jika 1 Desa dicentang, otomatis muncul Checkbox Dusun
+  function onLayananDesaCheckboxChange(kdKec) {
+    const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => cb.value);
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
+    if (checkedDesa.length === 1) {
+      // Tampilkan checklist Dusun dari desa yang dipilih
+      renderLayananDusunCheckboxes(kdKec, checkedDesa[0]);
+    } else {
+      // Sembunyikan checklist Dusun jika memilih lebih dari 1 desa atau tidak ada desa dipilih
+      if (wDusun) wDusun.style.display = "none";
+      loadAntreanLayananTable();
+    }
+  }
+
+  // 5. Render Checkbox Dusun ke dalam Grid
+  function renderLayananDusunCheckboxes(kdKec, kdDesa) {
+    const wrapper = document.getElementById("filterExpLayananDusunWrapper");
+    const grid = document.getElementById("filterExpLayananDusunGrid");
+    if (!wrapper || !grid) return;
+    grid.innerHTML = "";
+
+    const dsnMap = getDusunList(kdKec, kdDesa);
+    if (!dsnMap || Object.keys(dsnMap).length === 0) {
+      wrapper.style.display = "none";
+      loadAntreanLayananTable();
+      return;
+    }
+
+    wrapper.style.display = "block";
+    for (let kd in dsnMap) {
+      let cleanKd = String(kd).padStart(4, '0');
+      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+        if (!userAllowedDusun.includes(cleanKd)) continue;
+      }
+
+      const label = document.createElement("label");
+      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      label.innerHTML = `
+        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="accent-color: #0284c7;">
+        <span>${dsnMap[kd].nama}</span>
+      `;
+      grid.appendChild(label);
+    }
+
+    loadAntreanLayananTable();
+  }
+
+  // 6. Tombol Pilih Semua / Hapus Semua Checkbox Layanan
+  function toggleAllLayananCheckboxes(name, status) {
+    const boxes = document.querySelectorAll(`input[name="${name}"]`);
+    boxes.forEach(cb => cb.checked = status);
+
+    if (name === 'cb_layanan_desa') {
+      const kec = isKecRole() ? userKodeKec : (document.getElementById("filterExpLayananKec")?.value || userKodeKec);
+      onLayananDesaCheckboxChange(kec);
+    } else {
+      loadAntreanLayananTable();
+    }
+  }
+
   function onLayananPeriodeChange() {
     const bMulai = document.getElementById("filterLayananBulanMulai").value;
     const bSampai = document.getElementById("filterLayananBulanSampai").value;
