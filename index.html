@@ -8865,7 +8865,6 @@
     }
   }
 
-  // 4. Konfirmasi Pelayanan & OTOMATIS MERUBAH TABEL data_pus
   function promptSelesaikanPelayanan(tiketId, idPus, tahun, bulanRencana, rencanaMetode, namaIstri) {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const todayStr = new Date().toISOString().split('T')[0];
@@ -8939,58 +8938,6 @@
     });
   }
 
-  async function eksekusiUpdateDataPusPelayanan(tiketId, idPus, tahun, bulan, metode, tgl) {
-    const monthColumns = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
-    const targetCol = monthColumns[bulan - 1];
-
-    Swal.fire({
-      title: 'Memproses...',
-      text: 'Menyimpan realisasi & memperbarui data PUS...',
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
-    });
-
-    try {
-      // 1. Update status di tabel pendaftaran_layanan_kb menjadi SELESAI
-      const { error: errTiket } = await db.from('pendaftaran_layanan_kb')
-        .update({
-          status: 'SELESAI',
-          metode_realisasi: metode,
-          tgl_layanan_realisasi: tgl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', tiketId);
-
-      if (errTiket) throw errTiket;
-
-      // 2. OTOMATIS MERUBAH DATA DI TABEL data_pus
-      const updateDataPus = {};
-      updateDataPus[targetCol] = metode; // misal: IMPLAN, IUD, SUNTIK
-      updateDataPus['timestamp'] = new Date().toISOString();
-
-      const { error: errPus } = await db.from('data_pus')
-        .update(updateDataPus)
-        .eq('id_pus', idPus)
-        .eq('tahun', tahun);
-
-      if (errPus) throw errPus;
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Pelayanan Berhasil Dicatat!',
-        text: `Status PUS ${idPus} otomatis diperbarui menjadi "${metode}" pada bulan ${monthColumns[bulan-1].replace('kb_', '').toUpperCase()}.`
-      });
-
-      loadAntreanLayananTable();
-      if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
-
-    } catch (err) {
-      console.error("Gagal realisasi layanan:", err);
-      Swal.fire("Gagal", "Terjadi kesalahan: " + err.message, "error");
-    }
-  }
-
-  // 5. Pembatalan Antrean Layanan
   function batalkanAntreanLayanan(tiketId, namaIstri) {
     Swal.fire({
       title: 'Batalkan Pendaftaran?',
