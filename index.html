@@ -8460,6 +8460,134 @@ function checkAndLockKbTable() {
     `;
   }
 
+  function renderSatuFormKIV(item) {
+    const nmDesa = item.desa_nama || 'DESA';
+    const nmKec = item.kecamatan_nama || 'KECAMATAN';
+    const nmKab = item.kabupaten_nama || 'KABUPATEN/KOTA';
+    const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
+    const [yL, mL, dL] = tglRef.split('-');
+
+    return `
+      <div class="sheet-a4-doc">
+        <div style="border: 2px solid #1f4e78; padding: 12mm; height: calc(100% - 24mm); box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <!-- Header Dokumen -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1f4e78; padding-bottom: 3mm; margin-bottom: 5mm;">
+              <div style="display: flex; align-items: center; gap: 4mm;">
+                <img src="https://raw.githubusercontent.com/lsrwgi07/r1pus/main/Logo1.png" style="height: 16mm;" alt="Logo">
+                <div>
+                  <div style="font-size: 13pt; font-weight: 900; color: #1f4e78; line-height: 1.1;">BADAN KEPENDUDUKAN DAN KELUARGA BERENCANA NASIONAL</div>
+                  <div style="font-size: 10pt; font-weight: bold; color: #334155;">REGISTER PELAYANAN KB FASILITAS KESEHATAN</div>
+                </div>
+              </div>
+              <div style="border: 2px solid #1f4e78; padding: 1.5mm 3mm; font-weight: 900; font-size: 10pt; color: #1f4e78;">
+                K/IV/KB/15
+              </div>
+            </div>
+
+            <div style="text-align: center; font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 5mm;">
+              FORMULIR PELAYANAN KONTRASEPSI
+            </div>
+
+            <!-- Tabel Data Akseptor -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt; line-height: 1.8;">
+              <tr><td style="width: 35%; font-weight: bold;">1. Nomor Seri Kartu (ID PUS)</td><td style="width: 3%;">:</td><td style="font-family: monospace; font-weight: bold;">${item.id_pus || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">2. Nama Calon Akseptor</td><td>:</td><td style="font-weight: bold; text-transform: uppercase;">${item.nama_istri || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">3. Nomor Induk Kependudukan (NIK)</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">4. Nama Suami</td><td>:</td><td style="text-transform: uppercase;">${item.nama_suami || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">5. Tanggal Lahir / Umur Istri</td><td>:</td><td>${item.tgl_lahir_istri || '-'} (${item.umur_istri || 0} Tahun)</td></tr>
+              <tr><td style="font-weight: bold;">6. Alamat Domisili</td><td>:</td><td>RT ${item.kode_rt || '-'}, Dusun ${item.dusun_nama || '-'}, Desa ${nmDesa}, Kec. ${nmKec}</td></tr>
+              <tr><td style="font-weight: bold;">7. Kepesertaan JKN</td><td>:</td><td style="font-weight: bold;">${item.peserta_jkn || 'TIDAK MEMILIKI'}</td></tr>
+              <tr><td style="font-weight: bold;">8. Jumlah Anak Hidup</td><td>:</td><td>${item.jumlah_anak ?? 0} Orang (Anak terkecil: ${item.umur_anak_terkecil ?? 0} Thn)</td></tr>
+              <tr><td style="font-weight: bold;">9. Metode Kontrasepsi Yang Dipilih</td><td>:</td><td style="font-weight: bold; color: #0284c7; font-size: 10pt;">${item.rencana_metode || item.metode_realisasi || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">10. Jenis Tindakan Pelayanan</td><td>:</td><td>${item.jenis_pelayanan || 'PEMASANGAN/PEMAKAIAN BARU'}</td></tr>
+              <tr><td style="font-weight: bold;">11. Fasilitas Kesehatan Rujukan</td><td>:</td><td>${item.faskes_tujuan || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">12. Kader Pendamping</td><td>:</td><td>${item.nama_kader || '-'}</td></tr>
+            </table>
+
+            <div style="margin-top: 5mm; padding: 3mm; border: 1px dashed #94a3b8; background-color: #f8fafc; font-size: 8pt; line-height: 1.4;">
+              <b>Catatan / Tindakan Medis:</b><br>
+              Telah dilakukan penapisan (skrining) kelayakan medis sebelum tindakan pelayanan kontrasepsi.<br>
+              Kondisi Pasien: Baik / Tensi Normal / Memenuhi Syarat Kontrasepsi.
+            </div>
+          </div>
+
+          <!-- Tanda Tangan -->
+          <div style="display: flex; justify-content: space-between; margin-top: 8mm; font-size: 9pt;">
+            <div style="text-align: center; width: 45%;">
+              Calon Akseptor KB,<br><br><br><br>
+              <b>( ${item.nama_istri || '................................'} )</b>
+            </div>
+            <div style="text-align: center; width: 45%;">
+              ${nmDesa}, ${dL} ${mL} ${yL}<br>
+              Pelaksana Pelayanan / Bidan / Dokter,<br><br><br><br>
+              <b>( ............................................................ )</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Template HTML Informed Consent (Persetujuan Tindakan Medis KB 1 Lembar A4)
+  function renderSatuConsent(item) {
+    const nmDesa = item.desa_nama || 'DESA';
+    const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
+    const [yL, mL, dL] = tglRef.split('-');
+    const alkon = item.rencana_metode || item.metode_realisasi || 'KONTRASEPSI';
+
+    return `
+      <div class="sheet-a4-doc">
+        <div style="border: 2px solid #1f4e78; padding: 12mm; height: calc(100% - 24mm); box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <!-- Header Dokumen -->
+            <div style="text-align: center; border-bottom: 2px solid #1f4e78; padding-bottom: 3mm; margin-bottom: 5mm;">
+              <div style="font-size: 13pt; font-weight: 900; color: #1f4e78;">SURAT PERSETUJUAN TINDAKAN MEDIS (INFORMED CONSENT)</div>
+              <div style="font-size: 10pt; font-weight: bold; color: #334155;">PELAYANAN KELUARGA BERENCANA</div>
+            </div>
+
+            <div style="font-size: 9pt; line-height: 1.6; text-align: justify; margin-bottom: 4mm;">
+              Yang bertanda tangan di bawah ini, saya selaku Calon Akseptor Kontrasepsi:
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 9pt; line-height: 1.8; margin-left: 3mm;">
+              <tr><td style="width: 32%; font-weight: bold;">Nama Lengkap</td><td style="width: 3%;">:</td><td style="font-weight: bold; text-transform: uppercase;">${item.nama_istri || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">NIK</td><td>:</td><td style="font-family: monospace;">${item.nik_istri || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">Umur / Tanggal Lahir</td><td>:</td><td>${item.umur_istri || 0} Tahun (${item.tgl_lahir_istri || '-'})</td></tr>
+              <tr><td style="font-weight: bold;">Nama Suami</td><td>:</td><td style="text-transform: uppercase;">${item.nama_suami || '-'}</td></tr>
+              <tr><td style="font-weight: bold;">Alamat</td><td>:</td><td>RT ${item.kode_rt || '-'}, Dusun ${item.dusun_nama || '-'}, Desa ${nmDesa}</td></tr>
+            </table>
+
+            <div style="font-size: 9pt; line-height: 1.6; text-align: justify; margin-top: 5mm;">
+              Menyatakan dengan sesungguhnya bahwa setelah mendapatkan penjelasan lengkap dari petugas kesehatan mengenai jenis, manfaat, efek samping, dan risiko tindakan pelayanan kontrasepsi:
+            </div>
+
+            <div style="text-align: center; margin: 4mm 0; font-size: 11pt; font-weight: 900; color: #1f4e78; background: #e0f2fe; padding: 2mm; border-radius: 4px; border: 1px solid #bae6fd;">
+              METODE: ${alkon}
+            </div>
+
+            <div style="font-size: 9pt; line-height: 1.6; text-align: justify;">
+              Maka dengan ini saya menyatakan <b>SETUJU / TIDAK BERKEBERATAN</b> untuk dilakukan tindakan medis pemasangan/pelayanan kontrasepsi tersebut secara sadar tanpa paksaan dari pihak mana pun.
+            </div>
+          </div>
+
+          <!-- Tanda Tangan Saksi & Pasien -->
+          <div style="display: flex; justify-content: space-between; margin-top: 8mm; font-size: 9pt;">
+            <div style="text-align: center; width: 45%;">
+              Suami / Saksi Keluarga,<br><br><br><br>
+              <b>( ${item.nama_suami || '................................'} )</b>
+            </div>
+            <div style="text-align: center; width: 45%;">
+              ${nmDesa}, ${dL} ${mL} ${yL}<br>
+              Yang Memberikan Persetujuan,<br><br><br><br>
+              <b>( ${item.nama_istri || '................................'} )</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function cetakBatchKiKbA4(daftarAkseptor) {
     const list = daftarAkseptor || cachedAntreanLayanan;
     if (!list || list.length === 0) {
@@ -8569,6 +8697,79 @@ function checkAndLockKbTable() {
       setTimeout(() => {
         iframe.remove();
       }, 300);
+    };
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 600);
+  }
+
+  function cetakBatchDokumenA4(daftarAkseptor, jenisDoc) {
+    const list = daftarAkseptor || cachedAntreanLayanan;
+    if (!list || list.length === 0) {
+      Swal.fire("Perhatian", "Tidak ada data akseptor untuk dicetak!", "warning");
+      return;
+    }
+
+    let fullHtml = '';
+    list.forEach(item => {
+      if (jenisDoc === 'KIV') {
+        fullHtml += renderSatuFormKIV(item);
+      } else if (jenisDoc === 'CONSENT') {
+        fullHtml += renderSatuConsent(item);
+      }
+    });
+
+    // Buat frame cetak tersembunyi
+    let oldFrame = document.getElementById('print_frame_doc');
+    if (oldFrame) oldFrame.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print_frame_doc';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${jenisDoc === 'KIV' ? 'Formulir K/IV/KB/15' : 'Informed Consent KB'}</title>
+          <style>
+            @page { size: A4 portrait; margin: 0; }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            html, body { margin: 0; padding: 0; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
+            .sheet-a4-doc {
+              width: 210mm;
+              height: 297mm;
+              box-sizing: border-box;
+              padding: 10mm;
+              page-break-after: always;
+              break-after: page;
+              background: #ffffff;
+            }
+          </style>
+        </head>
+        <body>
+          ${fullHtml}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow.onafterprint = function() {
+      setTimeout(() => { iframe.remove(); }, 300);
     };
 
     setTimeout(() => {
@@ -10808,7 +11009,7 @@ function checkAndLockKbTable() {
       });
     }
 
-    async function eksekusiCetakPilihan(jenisDoc) {
+    function eksekusiCetakPilihan(jenisDoc) {
       const rangeStr = document.getElementById("inputRangeCetak")?.value || "";
       const total = cachedAntreanLayanan.length;
       const indices = parseRangeNomorUrut(rangeStr, total);
@@ -10820,88 +11021,15 @@ function checkAndLockKbTable() {
 
       const selectedData = indices.map(idx => cachedAntreanLayanan[idx]);
       
-      // Tutup dialog input SweetAlert terlebih dahulu agar tidak freeze
+      // Tutup dialog SweetAlert seketika agar layar tidak membeku
       Swal.close();
 
       if (jenisDoc === 'KI') {
-        // Cetak Kartu K/I/KB/13
+        // Cetak Kartu K/I/KB/13 (4 kartu per lembar A4 bolak-balik presisi)
         cetakBatchKiKbA4(selectedData);
-        return;
-      }
-
-      // CETAK BATCH K/IV/KB ATAU INFORMED CONSENT DALAM 1 FILE PDF
-      Swal.fire({
-        title: 'Memproses Dokumen PDF...',
-        html: `Menggabungkan <b>${selectedData.length}</b> dokumen terpilih ke 1 file PDF...`,
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-      });
-
-      try {
-        const { jsPDF } = window.jspdf;
-        let masterDoc = null;
-
-        for (let i = 0; i < selectedData.length; i++) {
-          const item = selectedData[i];
-          
-          // Ambil detail lengkap PUS jika belum termuat
-          let pusDetail = { ...item };
-          if (item.id_pus) {
-            const { data: dPus } = await db.from('data_pus')
-              .select('*')
-              .eq('id_pus', item.id_pus)
-              .eq('tahun', item.tahun || new Date().getFullYear())
-              .maybeSingle();
-            if (dPus) pusDetail = { ...item, ...dPus };
-          }
-
-          // Generate halaman dokumen menggunakan fungsi internal yang sudah ada
-          if (jenisDoc === 'KIV') {
-            if (!masterDoc) {
-              masterDoc = new jsPDF('portrait', 'pt', 'a4');
-            } else {
-              masterDoc.addPage('a4', 'portrait');
-            }
-            if (typeof renderHalamanKIV === "function") {
-              renderHalamanKIV(masterDoc, pusDetail);
-            } else {
-              masterDoc.setFontSize(14);
-              masterDoc.text(`FORM K/IV/KB/15 - ${pusDetail.nama_istri} (${pusDetail.id_pus})`, 40, 50);
-            }
-          } else if (jenisDoc === 'CONSENT') {
-            if (!masterDoc) {
-              masterDoc = new jsPDF('portrait', 'pt', 'a4');
-            } else {
-              masterDoc.addPage('a4', 'portrait');
-            }
-            if (typeof renderHalamanConsent === "function") {
-              renderHalamanConsent(masterDoc, pusDetail);
-            } else {
-              masterDoc.setFontSize(14);
-              masterDoc.text(`INFORMED CONSENT - ${pusDetail.nama_istri} (${pusDetail.id_pus})`, 40, 50);
-            }
-          }
-        }
-
-        Swal.close();
-
-        const timeStamp = new Date().toISOString().slice(0, 10);
-        const namaFile = jenisDoc === 'KIV' 
-          ? `BATCH_FORM_KIV_KB_${selectedData.length}_AKSEPTOR_${timeStamp}.pdf`
-          : `BATCH_INFORMED_CONSENT_${selectedData.length}_AKSEPTOR_${timeStamp}.pdf`;
-
-        // Download 1 file utuh tanpa memicu popup blocker
-        masterDoc.save(namaFile);
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil Diunduh!',
-          text: `Sebanyak ${selectedData.length} dokumen telah disatukan dalam satu file PDF.`
-        });
-
-      } catch (err) {
-        console.error("Error Batch PDF:", err);
-        Swal.fire("Gagal", "Terjadi kesalahan saat memproses dokumen PDF: " + err.message, "error");
+      } else {
+        // Cetak Form K/IV/KB/15 atau Informed Consent (1 akseptor per lembar A4 penuh)
+        cetakBatchDokumenA4(selectedData, jenisDoc);
       }
     }
 
