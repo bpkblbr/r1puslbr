@@ -3027,14 +3027,7 @@
         populateDesaByKec(selKec.value, "bnbaDesa");
       }
     }
-  }
-
-  function toggleAdvMultiDropdown() {
-    const panel = document.getElementById("advMultiDropdownPanel");
-    if (panel) {
-      panel.style.display = (panel.style.display === "block") ? "none" : "block";
-    }
-  }
+  }  
 
   // Tutup panel jika klik di luar
   document.addEventListener('click', function(e) {
@@ -3043,27 +3036,7 @@
     if (wrapper && panel && !wrapper.contains(e.target)) {
       panel.style.display = "none";
     }
-  });
-
-  function updateAdvMultiLabel() {
-    const checked = document.querySelectorAll('input[name="bnba_adv_cb"]:checked');
-    const label = document.getElementById("advMultiSelectedText");
-    if (!label) return;
-
-    if (checked.length === 0) {
-      label.innerText = "-- BERI CENTANG PADA PILIHAN --";
-    } else if (checked.length === 1) {
-      label.innerText = checked[0].value;
-    } else {
-      label.innerText = `${checked.length} Nilai Dipilih`;
-    }
-  }
-
-  // Helper pilih / bersihkan semua checkbox
-  function setAllAdvCheckboxes(status) {
-    const checkboxes = document.querySelectorAll('input[name="bnba_adv_cb"]');
-    checkboxes.forEach(cb => cb.checked = status);
-  }
+  });  
 
   function onBnbaAdvCategoryChange() {
     const cat = document.getElementById("bnbaFilterAdvCategory").value;
@@ -3457,9 +3430,7 @@
       document.getElementById("loginContainer").style.display = "none";
       document.getElementById("appContainer").style.display = "block";
       
-      showDashboardView();
-      if (typeof initRealtimePelayananKb === "function") initRealtimePelayananKb();
-
+      showDashboardView();      
       if (typeof initRealtimePelayananKb === "function") {
         initRealtimePelayananKb();
       }
