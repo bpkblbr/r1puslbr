@@ -8738,8 +8738,7 @@
     const parsed = evaluateKbStatus(statusTerakhirRaw);
     let hasilDeteksi = "KB BARU (MURNI)";
     let keterangan = statusTerakhirRaw ? `Alkon sebelumnya: ${statusTerakhirRaw}` : "Belum ada riwayat KB tercatat";
-
-    // --- LOGIKA ATURAN JENIS PELAYANAN ---
+    
     if (jenisLayanan === "CABUT/LEPAS") {
       hasilDeteksi = "CABUT/LEPAS";
       keterangan = `Pencabutan alkon ${metodeBaru}`;
@@ -8752,8 +8751,7 @@
         hasilDeteksi = "GANTI CARA";
         keterangan = `Bongkar pasang ganti alkon (sebelumnya: ${parsed.method || statusTerakhirRaw || 'Non-KB'})`;
       }
-    } else {
-      // PEMASANGAN/PEMAKAIAN BARU
+    } else {      
       let pernahKbSebelumnya = false;
       for (let i = 0; i < 12; i++) {
         let val = String(pusTerpilihDataLayanan[mKeys[i]] || "").trim().toUpperCase();
@@ -8795,8 +8793,7 @@
       infoText.innerText = `💡 Terdeteksi: ${hasilDeteksi} (${keterangan})`;
     }
   }
-
-  // 3. Update Reset Form Pendaftaran
+  
   function resetFormPendaftaranLayanan() {
     document.getElementById("formPendaftaranLayanan").reset();
     document.getElementById("reg_id_pus").value = "";
@@ -8850,8 +8847,7 @@
     event.preventDefault();
 
     const errors = [];
-
-    // Validasi Bagian 1: Identitas Calon Akseptor
+    
     const idPus = (document.getElementById("reg_id_pus")?.value || "").trim();
     const namaIstri = (document.getElementById("reg_nama_istri")?.value || "").trim();
     const nikIstri = (document.getElementById("reg_nik_istri")?.value || "").trim();
@@ -8864,8 +8860,7 @@
     if (!jenisPelayanan) {
       errors.push("Jenis Pelayanan belum dipilih");
     }
-
-    // Validasi Bagian 2: Rencana Pelayanan & Tindakan KB
+    
     const rencanaMetode = (document.getElementById("reg_rencana_metode")?.value || "").trim();
     const jenisAkseptor = (document.getElementById("reg_jenis_akseptor")?.value || "").trim();
     const bulanRencana = (document.getElementById("reg_bulan_rencana")?.value || "").trim();
@@ -9100,10 +9095,7 @@
       }
     });
   }
-
-  // =========================================================================
-  // FUNGSI EKSPOR: TABEL CALON AKSEPTOR & TABEL PELAYANAN KB
-  // =========================================================================
+  
   function getCleanLayananExportData() {
     if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
       return null;
@@ -9155,10 +9147,7 @@
 
     return { judulTabel, filePrefix, headers, rows };
   }
-
-  // =========================================================================
-  // LOGIKA KONTROL WILAYAH BERTINGKAT UNTUK PELAYANAN KB
-  // =========================================================================
+  
   function initLayananWilayahFilter() {
     const cKec = document.getElementById("filterExpLayananKecContainer");
     const selKec = document.getElementById("filterExpLayananKec");
@@ -9484,8 +9473,7 @@
       </html>
     `);
     printWindow.document.close();
-
-  // 1. Ekspor Excel (.xlsx) dengan Header Judul Tabel
+  
   function exportLayananToExcel() {
     const data = getCleanLayananExportData();
     if (!data) {
@@ -9535,8 +9523,7 @@
       Swal.fire("Error", "Gagal mengekspor file Excel: " + err.message, "error");
     }
   }
-
-  // 2. Ekspor PDF (.pdf) dengan Judul Tabel Jelas
+  
   function exportLayananToPDF() {
     const data = getCleanLayananExportData();
     if (!data) {
@@ -9696,10 +9683,7 @@
       </div>
     `;
   }
-
-  // =========================================================================
-  // FUNGSI RENDER SATU KARTU K/I/KB/13 (BELAKANG - HITUNG CABUT IMPLAN & IUD)
-  // =========================================================================
+  
   function renderSatuKartuBelakang(item) {
     const alkon = String(item.rencana_metode || item.metode_realisasi || '-').toUpperCase();
     const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
@@ -9876,10 +9860,7 @@
       iframe.contentWindow.print();
     }, 600);
   }
-
-  // =========================================================================
-  // 1. RENDER K/IV/KB/15 DENGAN TEMPLATE ASLI (1 AKSEPTOR PER HALAMAN A4)
-  // =========================================================================
+  
   function renderSatuFormKIV(item) {
     const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
     const pTgl = tglFormatted.split('-');
@@ -10172,10 +10153,7 @@
       </div>
     `;
   }
-
-  // =========================================================================
-  // 2. RENDER INFORMED CONSENT DENGAN TEMPLATE ASLI (1 AKSEPTOR PER HALAMAN A4)
-  // =========================================================================
+  
   function renderSatuConsent(item) {
     const tglFormatted = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
     const pTgl = tglFormatted.split('-');
@@ -10430,10 +10408,7 @@
       </div>
     `;
   }
-
-  // =========================================================================
-  // 3. CETAK BATCH FORM K/IV/KB/15 ATAU INFORMED CONSENT DENGAN IFRAME
-  // =========================================================================
+  
   function cetakBatchDokumenA4(daftarAkseptor, jenisDoc) {
     const list = daftarAkseptor || cachedAntreanLayanan;
     if (!list || list.length === 0) {
@@ -10608,10 +10583,7 @@
       iframe.contentWindow.print();
     }, 600);
   }
-
-  // =========================================================================
-  // 4. PARSER RENTANG NOMOR URUT (CONTOH: 1-10 ATAU 1,3,5)
-  // =========================================================================
+  
   function parseRangeNomorUrut(inputStr, totalData) {
     if (!inputStr || inputStr.trim() === "") {
       return Array.from({ length: totalData }, (_, i) => i);
@@ -10643,10 +10615,7 @@
 
     return Array.from(selectedIndices).sort((a, b) => a - b);
   }
-
-  // =========================================================================
-  // 5. MODAL DIALOG CETAK MASSAL & EKSEKUSI
-  // =========================================================================
+  
   function bukaModalCetakMassal() {
     if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
       Swal.fire("Perhatian", "Tidak ada data calon akseptor di tabel untuk dicetak!", "warning");
@@ -10733,8 +10702,7 @@
         }, 300);
       }
     });
-  }
-  
+  }  
 </script>
 </body>
 </html>
