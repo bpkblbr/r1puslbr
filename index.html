@@ -8382,18 +8382,39 @@ function checkAndLockKbTable() {
   }
 
   function renderSatuKartuBelakang(item) {
-    const alkon = item.rencana_metode || item.metode_realisasi || '-';
+    const alkon = String(item.rencana_metode || item.metode_realisasi || '-').toUpperCase();
     const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
     const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
     const yShort = yLayanan.slice(-2);
+
+    let dCabut = "", mCabut = "", yCabutShort = "";
+
+    // Logika Otomatis Tanggal Cabut: Implan +3 Tahun, IUD +8 Tahun
+    if (alkon.includes("IMPLAN") || alkon.includes("IMP") || alkon.includes("IUD")) {
+      const tglPasang = new Date(tglRef);
+      if (!isNaN(tglPasang.getTime())) {
+        const tambahTahun = (alkon.includes("IMPLAN") || alkon.includes("IMP")) ? 3 : 8;
+        tglPasang.setFullYear(tglPasang.getFullYear() + tambahTahun);
+
+        const yC = String(tglPasang.getFullYear());
+        mCabut = String(tglPasang.getMonth() + 1).padStart(2, '0');
+        dCabut = String(tglPasang.getDate()).padStart(2, '0');
+        yCabutShort = yC.slice(-2);
+      }
+    }
 
     return `
       <div class="ki-page-card">
         <div class="ki-inner-border" style="padding:2.5mm 3mm;">
           <table class="tbl-back-top">
-            <tr><td class="b-text" style="width:44%;">Metode Kontrasepsi</td><td class="b-text" style="width:3%;">:</td><td class="b-text" style="width:53%;">${alkon}</td></tr>
             <tr>
-              <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td><td class="b-text">:</td>
+              <td class="b-text" style="width:44%;">Metode Kontrasepsi</td>
+              <td class="b-text" style="width:3%;">:</td>
+              <td class="b-text" style="width:53%;">${alkon}</td>
+            </tr>
+            <tr>
+              <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td>
+              <td class="b-text">:</td>
               <td>
                 <div style="display:inline-flex; align-items:center;">
                   <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span>&nbsp;&nbsp;
@@ -8407,16 +8428,19 @@ function checkAndLockKbTable() {
               <td class="b-text" style="vertical-align:top;">:</td>
               <td style="vertical-align:top;">
                 <div style="display:inline-flex; align-items:center;">
-                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
-                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
-                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>
+                  <span class="box-digit">${dCabut ? dCabut.charAt(0) : '&nbsp;'}</span><span class="box-digit">${dCabut ? dCabut.charAt(1) : '&nbsp;'}</span>&nbsp;&nbsp;
+                  <span class="box-digit">${mCabut ? mCabut.charAt(0) : '&nbsp;'}</span><span class="box-digit">${mCabut ? mCabut.charAt(1) : '&nbsp;'}</span>&nbsp;&nbsp;
+                  <span class="box-digit">${yCabutShort ? yCabutShort.charAt(0) : '&nbsp;'}</span><span class="box-digit">${yCabutShort ? yCabutShort.charAt(1) : '&nbsp;'}</span>
                 </div>
               </td>
             </tr>
           </table>
           <table class="tbl-back-table">
             <thead>
-              <tr><th style="width:30%;">DIPESAN<br>KEMBALI</th><th style="width:70%;">KETERANGAN</th></tr>
+              <tr>
+                <th style="width:30%;">DIPESAN<br>KEMBALI</th>
+                <th style="width:70%;">KETERANGAN</th>
+              </tr>
             </thead>
             <tbody>
               <tr><td style="padding:2.2mm 0;">&nbsp;</td><td>&nbsp;</td></tr>
@@ -8443,21 +8467,13 @@ function checkAndLockKbTable() {
       return;
     }
 
-    // Tampilkan indikator persiapan sejenak
-    Swal.fire({
-      title: 'Menyiapkan Dokumen...',
-      text: 'Menyusun tata letak cetak A4...',
-      allowOutsideClick: false,
-      didOpen: () => { Swal.showLoading(); }
-    });
-
     const contentCards = generateBatchKiKbPrint(list);
 
     // Buat iframe tersembunyi
-    let iframe = document.getElementById('print_frame_kikb');
-    if (iframe) iframe.remove();
+    let oldFrame = document.getElementById('print_frame_kikb');
+    if (oldFrame) oldFrame.remove();
 
-    iframe = document.createElement('iframe');
+    const iframe = document.createElement('iframe');
     iframe.id = 'print_frame_kikb';
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -8476,6 +8492,11 @@ function checkAndLockKbTable() {
           <title>Cetak Kartu K/I/KB/13</title>
           <style>
             @page { size: A4 portrait; margin: 0; }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
             html, body { margin: 0; padding: 0; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
             .sheet-a4 {
               width: 210mm;
@@ -8495,12 +8516,32 @@ function checkAndLockKbTable() {
               box-sizing: border-box;
               overflow: hidden;
               border: 0.2mm dashed #cbd5e1;
-              background: #fff;
+              background: #ffffff !important;
               position: relative;
             }
-            .ki-inner-border { border: 1.5px solid #1f4e78; margin: 2mm; height: calc(100% - 4mm); box-sizing: border-box; padding: 1.5mm; display: flex; flex-direction: column; }
-            .ki-bar-top { height: 4mm; background: #1f4e78; margin-bottom: 1.5mm; }
-            .ki-bar-bottom { height: 2.5mm; background: #1f4e78; margin-top: 1.5mm; margin-bottom: 1.5mm; }
+            .ki-inner-border {
+              border: 1.5px solid #1f4e78;
+              margin: 2mm;
+              height: calc(100% - 4mm);
+              box-sizing: border-box;
+              padding: 1.5mm;
+              display: flex;
+              flex-direction: column;
+            }
+            /* Baris Warna Biru Tua Atas & Pembatas (Wajib exact color) */
+            .ki-bar-top {
+              height: 4.5mm !important;
+              background-color: #1f4e78 !important;
+              margin-bottom: 1.5mm;
+              display: block !important;
+            }
+            .ki-bar-bottom {
+              height: 3mm !important;
+              background-color: #1f4e78 !important;
+              margin-top: 1.5mm;
+              margin-bottom: 1.5mm;
+              display: block !important;
+            }
             .ki-header-mid { display: flex; align-items: center; justify-content: space-between; padding: 0 1mm; }
             .ki-logo-wrap img { height: 11mm; }
             .ki-title-1 { font-size: 11pt; font-weight: 900; color: #1f4e78; line-height: 1; }
@@ -8513,7 +8554,7 @@ function checkAndLockKbTable() {
             .box-digit { display: inline-flex; align-items: center; justify-content: center; width: 3.2mm; height: 3.8mm; border: 1px solid #000; font-size: 6.5pt; font-weight: bold; margin-right: 0.4mm; }
             .sign-front-area { text-align: right; margin-top: auto; font-size: 6pt; line-height: 1.2; padding-right: 2mm; }
             .tbl-back-table th, .tbl-back-table td { border: 1px solid #000; font-size: 6pt; text-align: center; }
-            .tbl-back-table th { background: #f1f5f9; padding: 1mm; }
+            .tbl-back-table th { background-color: #f1f5f9 !important; padding: 1mm; }
           </style>
         </head>
         <body>
@@ -8523,12 +8564,17 @@ function checkAndLockKbTable() {
     `);
     doc.close();
 
-    // Berikan jeda sejenak agar logo & CSS termuat sempurna, lalu tutup dialog dan cetak
+    // Cegah freeze: bersihkan event listener dan hapus iframe setelah selesai cetak
+    iframe.contentWindow.onafterprint = function() {
+      setTimeout(() => {
+        iframe.remove();
+      }, 300);
+    };
+
     setTimeout(() => {
-      Swal.close(); // Pastikan modal SweetAlert tertutup sepenuhnya sebelum dialog print muncul
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
-    }, 700);
+    }, 600);
   }
 
   function simpanKePdfPresisi(elementId, namaFile = 'KARTU_KI_KB_A4.pdf') {
@@ -10762,28 +10808,100 @@ function checkAndLockKbTable() {
       });
     }
 
-    // Eksekusi cetak sesuai filter nomor urut
-    function eksekusiCetakPilihan(jenisDoc) {
+    async function eksekusiCetakPilihan(jenisDoc) {
       const rangeStr = document.getElementById("inputRangeCetak")?.value || "";
       const total = cachedAntreanLayanan.length;
       const indices = parseRangeNomorUrut(rangeStr, total);
 
       if (indices.length === 0) {
-        Swal.fire("Perhatian", "Nomor urut yang dimasukkan tidak valid!", "warning");
+        Swal.fire("Perhatian", "Nomor urut yang dimasukkan tidak valid atau di luar rentang!", "warning");
         return;
       }
 
       const selectedData = indices.map(idx => cachedAntreanLayanan[idx]);
       
-      // Tutup popup modal SweetAlert seketika
+      // Tutup dialog input SweetAlert terlebih dahulu agar tidak freeze
       Swal.close();
 
       if (jenisDoc === 'KI') {
+        // Cetak Kartu K/I/KB/13
         cetakBatchKiKbA4(selectedData);
-      } else if (jenisDoc === 'KIV' || jenisDoc === 'CONSENT') {
-        selectedData.forEach((_, i) => {
-          eksporDokumenKbKePDF(jenisDoc, indices[i]);
+        return;
+      }
+
+      // CETAK BATCH K/IV/KB ATAU INFORMED CONSENT DALAM 1 FILE PDF
+      Swal.fire({
+        title: 'Memproses Dokumen PDF...',
+        html: `Menggabungkan <b>${selectedData.length}</b> dokumen terpilih ke 1 file PDF...`,
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+
+      try {
+        const { jsPDF } = window.jspdf;
+        let masterDoc = null;
+
+        for (let i = 0; i < selectedData.length; i++) {
+          const item = selectedData[i];
+          
+          // Ambil detail lengkap PUS jika belum termuat
+          let pusDetail = { ...item };
+          if (item.id_pus) {
+            const { data: dPus } = await db.from('data_pus')
+              .select('*')
+              .eq('id_pus', item.id_pus)
+              .eq('tahun', item.tahun || new Date().getFullYear())
+              .maybeSingle();
+            if (dPus) pusDetail = { ...item, ...dPus };
+          }
+
+          // Generate halaman dokumen menggunakan fungsi internal yang sudah ada
+          if (jenisDoc === 'KIV') {
+            if (!masterDoc) {
+              masterDoc = new jsPDF('portrait', 'pt', 'a4');
+            } else {
+              masterDoc.addPage('a4', 'portrait');
+            }
+            if (typeof renderHalamanKIV === "function") {
+              renderHalamanKIV(masterDoc, pusDetail);
+            } else {
+              masterDoc.setFontSize(14);
+              masterDoc.text(`FORM K/IV/KB/15 - ${pusDetail.nama_istri} (${pusDetail.id_pus})`, 40, 50);
+            }
+          } else if (jenisDoc === 'CONSENT') {
+            if (!masterDoc) {
+              masterDoc = new jsPDF('portrait', 'pt', 'a4');
+            } else {
+              masterDoc.addPage('a4', 'portrait');
+            }
+            if (typeof renderHalamanConsent === "function") {
+              renderHalamanConsent(masterDoc, pusDetail);
+            } else {
+              masterDoc.setFontSize(14);
+              masterDoc.text(`INFORMED CONSENT - ${pusDetail.nama_istri} (${pusDetail.id_pus})`, 40, 50);
+            }
+          }
+        }
+
+        Swal.close();
+
+        const timeStamp = new Date().toISOString().slice(0, 10);
+        const namaFile = jenisDoc === 'KIV' 
+          ? `BATCH_FORM_KIV_KB_${selectedData.length}_AKSEPTOR_${timeStamp}.pdf`
+          : `BATCH_INFORMED_CONSENT_${selectedData.length}_AKSEPTOR_${timeStamp}.pdf`;
+
+        // Download 1 file utuh tanpa memicu popup blocker
+        masterDoc.save(namaFile);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil Diunduh!',
+          text: `Sebanyak ${selectedData.length} dokumen telah disatukan dalam satu file PDF.`
         });
+
+      } catch (err) {
+        console.error("Error Batch PDF:", err);
+        Swal.fire("Gagal", "Terjadi kesalahan saat memproses dokumen PDF: " + err.message, "error");
       }
     }
 
