@@ -3794,55 +3794,6 @@
     applyMutationAndAgeLocks();
   }
 
-  let birthYear, birthMonth, birthDay;
-
-  // Mendukung format YYYY-MM-DD maupun DD/MM/YYYY
-  if (tglLahirInput.includes("-")) {
-    const p = tglLahirInput.split("-");
-    if (p[0].length === 4) {
-      birthYear = parseInt(p[0], 10);
-      birthMonth = parseInt(p[1], 10);
-      birthDay = parseInt(p[2], 10);
-    } else {
-      birthYear = parseInt(p[2], 10);
-      birthMonth = parseInt(p[1], 10);
-      birthDay = parseInt(p[0], 10);
-    }
-  } else if (tglLahirInput.includes("/")) {
-    const p = tglLahirInput.split("/");
-    if (p[2].length === 4) {
-      birthYear = parseInt(p[2], 10);
-      birthMonth = parseInt(p[1], 10);
-      birthDay = parseInt(p[0], 10);
-    } else {
-      birthYear = parseInt(p[0], 10);
-      birthMonth = parseInt(p[1], 10);
-      birthDay = parseInt(p[2], 10);
-    }
-  }
-
-  if (!birthYear || isNaN(birthYear)) {
-    umurInput.value = 0;
-    applyMutationAndAgeLocks();
-    return;
-  }
-
-  // Patokan tanggal hari ini
-  const today = new Date();
-  const curYear = today.getFullYear();
-  const curMonth = today.getMonth() + 1; // 1 - 12
-  const curDay = today.getDate();
-
-    let age = curYear - birthYear;
-    // Kurangi 1 tahun jika bulan belum sampai, atau bulan sama tapi tanggal belum sampai
-    if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
-      age--;
-    }
-
-    umurInput.value = Math.max(0, age);
-    applyMutationAndAgeLocks();
-  }
-
   function hitungUmurPresisi(tglLahirInput, tahunPelaporan) {
     if (!tglLahirInput) return 0;
 
@@ -8724,7 +8675,6 @@
     if (!bulanRencana) {
       errors.push("Bulan Pelayanan belum dipilih");
     }
-    // VALIDASI WAJIB BARU: Tanggal dan Tempat Pelayanan
     if (!tglRencana) {
       errors.push("Tanggal Rencana Tindakan wajib diisi");
     }
@@ -8796,7 +8746,7 @@
         return;
       }
 
-      // Susun payload
+      // Susun payload pendaftaran layanan lengkap
       const payload = {
         id_pus: idPus,
         tahun: targetTahun,
