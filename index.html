@@ -6579,8 +6579,8 @@
     const filtered = allUsersData.filter(item => {
       const nmKec = getNamaKec(item.kode_kec).toLowerCase();
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa).toLowerCase();
-      const nmDusunRaw = (item.role === "User Desa" && item.kode_dusun_list) 
-        ? item.kode_dusun_list.toLowerCase() 
+      const nmDusunRaw = (item.role === "User Desa" && item.allowed_dusun) 
+        ? item.allowed_dusun.toLowerCase() 
         : "";
 
       return (item.nama_lengkap || '').toLowerCase().includes(filter) ||
@@ -9157,141 +9157,6 @@
     return { judulTabel, filePrefix, headers, rows };
   }  
 
-  function onLayananKecChange() {
-    const selKec = document.getElementById("filterExpLayananKec");
-    const kdKec = selKec ? selKec.value : "";
-    const curKab = String(userKodeKab || "01").padStart(2, '0');
-
-    if (kdKec) {
-      renderLayananDesaCheckboxes(kdKec, curKab);
-    } else {
-      const wDesa = document.getElementById("filterExpLayananDesaWrapper");
-      const wDusun = document.getElementById("filterExpLayananDusunWrapper");
-      if (wDesa) wDesa.style.display = "none";
-      if (wDusun) wDusun.style.display = "none";
-      loadAntreanLayananTable();
-    }
-  }
-
-  function renderLayananDesaCheckboxes(kdKec, kdKab) {
-    const wrapper = document.getElementById("filterExpLayananDesaWrapper");
-    const grid = document.getElementById("filterExpLayananDesaGrid");
-    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
-
-    if (!wrapper || !grid) return;
-    grid.innerHTML = "";
-    if (wDusun) wDusun.style.display = "none";
-
-    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
-    const cleanKec = String(kdKec).padStart(2, '0');
-
-    // Pencarian fleksibel: coba composite key kdKab_kdKec, lalu fallback ke kdKec
-    const compositeKey = cleanKab + "_" + cleanKec;
-    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
-
-    // Jika belum ketemu, telusuri isi dataDesa
-    if (Object.keys(desas).length === 0) {
-      for (let k in dataDesa) {
-        if (k.endsWith("_" + cleanKec)) {
-          desas = dataDesa[k];
-          break;
-        }
-      }
-    }
-
-    const desaKeys = Object.keys(desas);
-    if (desaKeys.length === 0) {
-      wrapper.style.display = "none";
-      loadAntreanLayananTable();
-      return;
-    }
-
-    // PAKSA TAMPILKAN WADAH DESA
-    wrapper.style.display = "block";
-
-    desaKeys.forEach(kd => {
-      const cleanKd = String(kd).padStart(4, '0');
-      const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 6px; font-size: 11.5px; cursor: pointer; color: #1e293b; background: #f8fafc; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0;";
-      label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')" style="width: 15px; height: 15px; accent-color: #0284c7; cursor: pointer;">
-        <span style="font-weight: 600;">${desas[kd]}</span>
-      `;
-      grid.appendChild(label);
-    });
-
-    loadAntreanLayananTable();
-  }
-
-  function onLayananDesaCheckboxChange(kdKec, kdKab) {
-    const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => cb.value);
-    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
-
-    // Jika HANYA 1 Desa yang dicentang -> Munculkan daftar Dusun dari desa tersebut
-    if (checkedDesa.length === 1) {
-      renderLayananDusunCheckboxes(kdKec, checkedDesa[0], kdKab);
-    } else {
-      // Sembunyikan Dusun jika memilih lebih dari 1 desa atau tidak ada desa yang dicentang
-      if (wDusun) wDusun.style.display = "none";
-      loadAntreanLayananTable();
-    }
-  }
-
-  function renderLayananDusunCheckboxes(kdKec, kdDesa, kdKab) {
-    const wrapper = document.getElementById("filterExpLayananDusunWrapper");
-    const grid = document.getElementById("filterExpLayananDusunGrid");
-    if (!wrapper || !grid) return;
-    
-    grid.innerHTML = "";
-
-    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
-    const cleanKec = String(kdKec).padStart(2, '0');
-    const cleanDesa = String(kdDesa).padStart(4, '0');
-
-    // Ambil daftar dusun
-    const dsnMap = getDusunList(cleanKec, cleanDesa, cleanKab);
-
-    if (!dsnMap || Object.keys(dsnMap).length === 0) {
-      wrapper.style.display = "none";
-      loadAntreanLayananTable();
-      return;
-    }
-
-    // PAKSA TAMPILKAN WADAH DUSUN
-    wrapper.style.display = "block";
-
-    for (let kd in dsnMap) {
-      let cleanKd = String(kd).padStart(4, '0');
-
-      // Batasi hak akses jika akun kader desa dikunci dusun tertentu
-      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
-        if (!userAllowedDusun.includes(cleanKd)) continue;
-      }
-
-      const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 6px; font-size: 11.5px; cursor: pointer; color: #1e293b; background: #f8fafc; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0;";
-      label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="width: 15px; height: 15px; accent-color: #0284c7; cursor: pointer;">
-        <span style="font-weight: 600;">${dsnMap[kd].nama}</span>
-      `;
-      grid.appendChild(label);
-    }
-
-    loadAntreanLayananTable();
-  }
-
-  function toggleAllLayananCheckboxes(name, status) {
-    const boxes = document.querySelectorAll(`input[name="${name}"]`);
-    boxes.forEach(cb => cb.checked = status);
-    
-    if (name === 'cb_layanan_desa') {
-      const kec = isKecRole() ? userKodeKec : document.getElementById("filterExpLayananKec").value;
-      onLayananDesaCheckboxChange(kec);
-    } else {
-      loadAntreanLayananTable();
-    }
-  }
-
   function bukaPilihanCetakDokumen(index) {
     const item = cachedAntreanLayanan[index];
     if (!item) return;
@@ -9361,7 +9226,7 @@
   }
   
   function toggleAllCetakMassal(status) {
-    const boxes = document.querySelectorAll('input[name="cb_cetak_massal"]');
+    const boxes = document.querySelectorAll('input[name="cb_cetak_akseptor"]');
     boxes.forEach(cb => cb.checked = status);
   }
   
@@ -9397,11 +9262,11 @@
     let printHtml = "";
 
     if (formatDokumen === "KIV") {
-      printHtml = generateKivHtml(targetAkseptor);
+      printHtml = targetAkseptor.map(item => renderSatuFormKIV(item)).join('');
     } else if (formatDokumen === "KI") {
-      printHtml = generateKiHtml(targetAkseptor);
+      printHtml = generateBatchKiKbPrint(targetAkseptor);
     } else {
-      printHtml = generateConsentHtml(targetAkseptor);
+      printHtml = targetAkseptor.map(item => renderSatuConsent(item)).join('');
     }
 
     // Validasi akhir: pastikan string cetak bukan konten kosong
