@@ -1650,6 +1650,9 @@
           <button type="button" class="btn-nav btn-danger" style="flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; font-weight: bold;" onclick="exportLayananToPDF()">
             📄 Ekspor PDF (.pdf)
           </button>
+          <button type="button" class="btn-nav btn-action" style="flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; font-weight: bold; background-color: #0284c7;" onclick="bukaModalCetakMassal()">
+            🖨️ Cetak Form
+          </button>
         </div>
       </div>
 
@@ -8199,10 +8202,6 @@ function checkAndLockKbTable() {
           <button type="button" class="btn-nav btn-action" style="padding: 4px 8px; font-size: 11px; background-color:#16a34a;" onclick="promptSelesaikanPelayanan('${item.id}', '${item.id_pus}', ${item.tahun || new Date().getFullYear()}, ${item.bulan_rencana || 1}, '${cleanMetode}', '${cleanNamaIstri}')" title="Catat Tindakan Selesai">
             💉 Layani
           </button>
-          <!-- TOMBOL PRINT DISISIPKAN DI SINI -->
-          <button type="button" class="btn-nav btn-secondary" style="padding: 4px 8px; font-size: 11px; background-color:#475569;" onclick="bukaPilihanCetakDokumen(${idx})" title="Cetak Formulir Pelayanan KB">
-            🖨️ Cetak
-          </button>
           <button type="button" class="btn-nav btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="batalkanAntreanLayanan('${item.id}', '${cleanNamaIstri}')" title="Batalkan Pendaftaran">
             ❌
           </button>
@@ -8294,6 +8293,215 @@ function checkAndLockKbTable() {
     }
 
     return fullHtml;
+  }
+
+  function renderSatuKartuDepan(item) {
+    const isPbi = String(item.peserta_jkn || '').toUpperCase().includes('PBI') && !String(item.peserta_jkn || '').toUpperCase().includes('BUKAN');
+    const isNonPbi = String(item.peserta_jkn || '').toUpperCase().includes('BUKAN PBI') || String(item.peserta_jkn || '').toUpperCase().includes('SWASTA');
+    const isNonJkn = String(item.peserta_jkn || '').toUpperCase().includes('TIDAK') || (!isPbi && !isNonPbi);
+
+    const tglLahirTeks = (item.tgl_lahir_istri ? item.tgl_lahir_istri : '-') + (item.umur_istri ? ` / ${item.umur_istri} TH` : '');
+    const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${item.dusun_nama || '-'}, DESA ${item.desa_nama || '-'}, KEC. ${item.kecamatan_nama || '-'}`;
+
+    const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
+    const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
+    const nmDesa = item.desa_nama || 'DESA';
+
+    return `
+      <div class="ki-page-card">
+        <div class="ki-inner-border">
+          <div class="ki-bar-top"></div>
+          <div class="ki-header-mid">
+            <div class="ki-logo-wrap"><img src="https://raw.githubusercontent.com/lsrwgi07/r1pus/main/Logo1.png" alt="Logo KKB"></div>
+            <div class="ki-title-wrap">
+              <div class="ki-title-1">KARTU</div>
+              <div class="ki-title-2">PESERTA KB</div>
+            </div>
+            <div class="ki-kikb-box">K/I/KB/13</div>
+          </div>
+          <div class="ki-bar-bottom"></div>
+          <div class="ki-body-front">
+            <table class="tbl-front-data">
+              <tr><td class="b-text" style="width:37%;">Nama Peserta KB</td><td class="b-text" style="width:3%;">:</td><td class="b-text" style="width:60%;">${item.nama_istri || '-'}</td></tr>
+              <tr><td class="b-text">Nama Suami/Istri</td><td class="b-text">:</td><td class="b-text">${item.nama_suami || '-'}</td></tr>
+              <tr><td class="b-text">Tgl. Lahir/Umur Istri</td><td class="b-text">:</td><td class="b-text">${tglLahirTeks}</td></tr>
+              <tr><td class="b-text" style="vertical-align:top;">Alamat Peserta KB</td><td class="b-text" style="vertical-align:top;">:</td><td class="b-text">${alamatLengkap}</td></tr>
+              <tr><td class="b-text">Tahapan KS</td><td class="b-text">:</td><td class="b-text">KPS</td></tr>
+              <tr>
+                <td class="b-text" style="vertical-align:top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
+                <td class="b-text" style="vertical-align:top;">:</td>
+                <td>
+                  <table style="width:100%; border-collapse:collapse; font-size:7pt;">
+                    <tr>
+                      <td style="width:14px; vertical-align:middle; padding:0.5mm 0;"><span class="box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span></td>
+                      <td style="vertical-align:middle; padding:0.5mm 0;" class="b-text">Peserta JKN :</td>
+                    </tr>
+                    <tr>
+                      <td></td>
+                      <td style="padding-left:4.5mm;">
+                        <div style="display:flex; align-items:center; margin-bottom:0.5mm;"><span class="box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
+                        <div style="display:flex; align-items:center; margin-bottom:0.5mm;"><span class="box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
+                        <div style="display:flex; align-items:center;"><span class="box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td class="b-text">Nomor Seri Kartu</td><td class="b-text">:</td>
+                <td>
+                  <div style="display:inline-flex; align-items:center;">
+                    <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>
+                  </div>
+                </td>
+              </tr>
+              <tr><td class="b-text">Nama Faskes KB</td><td class="b-text">:</td><td class="b-text">${item.faskes_tujuan || '-'}</td></tr>
+              <tr>
+                <td class="b-text">Nomor Kode Faskes KB</td><td class="b-text">:</td>
+                <td>
+                  <div style="display:inline-flex; align-items:center;">
+                    <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
+                    <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
+                    <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            <div class="sign-front-area">
+              <span class="b-text">${nmDesa}, ${dLayanan} ${mLayanan} ${yLayanan}</span><br>
+              <span class="b-text">Penanggung jawab Faskes KB/</span><br>
+              <span class="b-text">Praktik Dokter/Praktik Bidan Mandiri,</span><br><br><br><br>
+              ( ............................................................ )
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSatuKartuBelakang(item) {
+    const alkon = item.rencana_metode || item.metode_realisasi || '-';
+    const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
+    const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
+    const yShort = yLayanan.slice(-2);
+
+    return `
+      <div class="ki-page-card">
+        <div class="ki-inner-border" style="padding:2.5mm 3mm;">
+          <table class="tbl-back-top">
+            <tr><td class="b-text" style="width:44%;">Metode Kontrasepsi</td><td class="b-text" style="width:3%;">:</td><td class="b-text" style="width:53%;">${alkon}</td></tr>
+            <tr>
+              <td class="b-text">Tgl/Bln/Thn Mulai Dipakai</td><td class="b-text">:</td>
+              <td>
+                <div style="display:inline-flex; align-items:center;">
+                  <span class="box-digit">${dLayanan.charAt(0)}</span><span class="box-digit">${dLayanan.charAt(1)}</span>&nbsp;&nbsp;
+                  <span class="box-digit">${mLayanan.charAt(0)}</span><span class="box-digit">${mLayanan.charAt(1)}</span>&nbsp;&nbsp;
+                  <span class="box-digit">${yShort.charAt(0)}</span><span class="box-digit">${yShort.charAt(1)}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="b-text" style="vertical-align:top;">Tgl/Bln/Thn Dicabut/Dilepas<br><span style="font-size:5.5pt; font-weight:normal;">(Khusus Implant/IUD)</span></td>
+              <td class="b-text" style="vertical-align:top;">:</td>
+              <td style="vertical-align:top;">
+                <div style="display:inline-flex; align-items:center;">
+                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
+                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>&nbsp;&nbsp;
+                  <span class="box-digit">&nbsp;</span><span class="box-digit">&nbsp;</span>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <table class="tbl-back-table">
+            <thead>
+              <tr><th style="width:30%;">DIPESAN<br>KEMBALI</th><th style="width:70%;">KETERANGAN</th></tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td>&nbsp;</td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+              <tr><td style="padding:2.2mm 0;">&nbsp;</td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function cetakBatchKiKbA4(daftarAkseptor) {
+    const list = daftarAkseptor || cachedAntreanLayanan;
+    if (!list || list.length === 0) {
+      Swal.fire("Perhatian", "Tidak ada data akseptor untuk dicetak!", "warning");
+      return;
+    }
+
+    const contentCards = generateBatchKiKbPrint(list);
+    const printWin = window.open('', '_blank');
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Cetak Kartu K/I/KB/13 (Batch A4)</title>
+          <style>
+            @page { size: A4 portrait; margin: 0; }
+            body { margin: 0; padding: 0; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
+            .sheet-a4 {
+              width: 210mm;
+              height: 297mm;
+              box-sizing: border-box;
+              padding: 23.5mm 15mm;
+              display: grid;
+              grid-template-columns: 90mm 90mm;
+              grid-template-rows: 125mm 125mm;
+              gap: 0;
+              page-break-after: always;
+              break-after: page;
+            }
+            .ki-page-card {
+              width: 90mm !important;
+              height: 125mm !important;
+              box-sizing: border-box;
+              overflow: hidden;
+              border: 0.2mm dashed #cbd5e1;
+              background: #fff;
+              position: relative;
+            }
+            .ki-inner-border { border: 1.5px solid #1f4e78; margin: 2mm; height: calc(100% - 4mm); box-sizing: border-box; padding: 1.5mm; display: flex; flex-direction: column; }
+            .ki-bar-top { height: 4mm; background: #1f4e78; margin-bottom: 1.5mm; }
+            .ki-bar-bottom { height: 2.5mm; background: #1f4e78; margin-top: 1.5mm; margin-bottom: 1.5mm; }
+            .ki-header-mid { display: flex; align-items: center; justify-content: space-between; padding: 0 1mm; }
+            .ki-logo-wrap img { height: 11mm; }
+            .ki-title-1 { font-size: 11pt; font-weight: 900; color: #1f4e78; line-height: 1; }
+            .ki-title-2 { font-size: 9pt; font-weight: 900; color: #1f4e78; line-height: 1.1; }
+            .ki-kikb-box { border: 1px solid #1f4e78; font-size: 6.5pt; font-weight: bold; padding: 1mm 2mm; }
+            .b-text { font-size: 6.5pt; font-weight: bold; color: #000; line-height: 1.25; }
+            .tbl-front-data, .tbl-back-top, .tbl-back-table { width: 100%; border-collapse: collapse; }
+            .tbl-front-data td, .tbl-back-top td { padding: 0.4mm 0; }
+            .box-check { display: inline-flex; align-items: center; justify-content: center; width: 3mm; height: 3mm; border: 1px solid #000; font-size: 6pt; margin-right: 1.5mm; vertical-align: middle; }
+            .box-digit { display: inline-flex; align-items: center; justify-content: center; width: 3.2mm; height: 3.8mm; border: 1px solid #000; font-size: 6.5pt; font-weight: bold; margin-right: 0.4mm; }
+            .sign-front-area { text-align: right; margin-top: auto; font-size: 6pt; line-height: 1.2; padding-right: 2mm; }
+            .tbl-back-table th, .tbl-back-table td { border: 1px solid #000; font-size: 6pt; text-align: center; }
+            .tbl-back-table th { background: #f1f5f9; padding: 1mm; }
+          </style>
+        </head>
+        <body>
+          ${contentCards}
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
   }
 
   function simpanKePdfPresisi(elementId, namaFile = 'KARTU_KI_KB_A4.pdf') {
@@ -10454,6 +10662,102 @@ function checkAndLockKbTable() {
 
       } catch (err) {
         Swal.fire("Error", "Gagal mengekspor PDF: " + err.message, "error");
+      }
+    }
+
+    // Helper mem-parse string seperti "1-5, 8, 10-12" menjadi array indeks data
+    function parseRangeNomorUrut(inputStr, totalData) {
+      if (!inputStr || inputStr.trim() === "") {
+        // Jika dikosongkan, cetak semua data yang tampil di tabel
+        return Array.from({ length: totalData }, (_, i) => i);
+      }
+
+      const selectedIndices = new Set();
+      const parts = inputStr.split(',');
+
+      parts.forEach(part => {
+        const trimmed = part.trim();
+        if (trimmed.includes('-')) {
+          const [startStr, endStr] = trimmed.split('-');
+          const start = parseInt(startStr, 10);
+          const end = parseInt(endStr, 10);
+          if (!isNaN(start) && !isNaN(end)) {
+            const min = Math.max(1, Math.min(start, end));
+            const max = Math.min(totalData, Math.max(start, end));
+            for (let i = min; i <= max; i++) {
+              selectedIndices.add(i - 1); // Indeks array berbasis 0
+            }
+          }
+        } else {
+          const num = parseInt(trimmed, 10);
+          if (!isNaN(num) && num >= 1 && num <= totalData) {
+            selectedIndices.add(num - 1);
+          }
+        }
+      });
+
+      return Array.from(selectedIndices).sort((a, b) => a - b);
+    }
+
+    // Modal dialog pemilihan dokumen dan filter baris
+    function bukaModalCetakMassal() {
+      if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
+        Swal.fire("Perhatian", "Tidak ada data akseptor di tabel untuk dicetak!", "warning");
+        return;
+      }
+
+      const total = cachedAntreanLayanan.length;
+
+      Swal.fire({
+        title: 'Cetak Dokumen Pelayanan KB',
+        html: `
+          <div style="text-align: left; font-size: 12.5px; color: #334155; margin-bottom: 12px;">
+            Total data akseptor saat ini: <b>${total} orang</b>.<br>
+            Tentukan nomor urut yang akan dicetak (kosongkan jika ingin mencetak <b>SEMUA</b>):
+          </div>
+          <input type="text" id="inputRangeCetak" class="swal2-input" placeholder="Contoh: 1-10 atau 1,3,5,7" style="font-size: 13px; margin: 0 0 15px 0; width: 100%; box-sizing: border-box;">
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #0284c7;" onclick="eksekusiCetakPilihan('KI')">
+              📋 Cetak K/I/KB/13 (Batch 4 Kartu/A4 Bolak-Balik)
+            </button>
+            <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #0d9488;" onclick="eksekusiCetakPilihan('KIV')">
+              📄 Cetak Form K/IV/KB/15
+            </button>
+            <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #d97706;" onclick="eksekusiCetakPilihan('CONSENT')">
+              ✍️ Cetak Informed Consent
+            </button>
+          </div>
+        `,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'Tutup'
+      });
+    }
+
+    // Eksekusi cetak sesuai filter nomor urut
+    function eksekusiCetakPilihan(jenisDoc) {
+      const rangeStr = document.getElementById("inputRangeCetak")?.value || "";
+      const total = cachedAntreanLayanan.length;
+      const indices = parseRangeNomorUrut(rangeStr, total);
+
+      if (indices.length === 0) {
+        Swal.fire("Perhatian", "Nomor urut yang Anda masukkan tidak valid atau di luar rentang data!", "warning");
+        return;
+      }
+
+      const selectedData = indices.map(idx => cachedAntreanLayanan[idx]);
+      Swal.close();
+
+      if (jenisDoc === 'KI') {
+        // Cetak Kartu K/I/KB/13 format 4 per lembar A4 bolak-balik presisi
+        cetakBatchKiKbA4(selectedData);
+      } else if (jenisDoc === 'KIV' || jenisDoc === 'CONSENT') {
+        // Cetak Form K/IV atau Informed Consent untuk data terpilih secara berurutan
+        selectedData.forEach((_, i) => {
+          const originalIdx = indices[i];
+          eksporDokumenKbKePDF(jenisDoc, originalIdx);
+        });
       }
     }
 
