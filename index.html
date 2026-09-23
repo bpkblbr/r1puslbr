@@ -1906,7 +1906,7 @@
   let userKodeKab = "";
   let userKodeKec = "";
   let userKodeDesa = "";
-  let userKodeDusunList = [];
+  let userAllowedDusun = [];
 
   let dataProvinsi = {};
   let dataKabupaten = {};
@@ -2044,7 +2044,7 @@
         userKodeKab = parsed.userKodeKab || "";
         userKodeKec = parsed.userKodeKec || "";
         userKodeDesa = parsed.userKodeDesa || "";
-        userKodeDusunList = parsed.userKodeDusunList || [];
+        userAllowedDusun = Array.isArray(parsed.allowed_dusun) ? parsed.allowed_dusun : [];
 
         // 1. Tampilkan kontainer dashboard terlebih dahulu
         document.getElementById("loginContainer").style.display = "none";
@@ -2174,14 +2174,20 @@
       let kdDsn  = String(r.kode_dusun).padStart(4, '0');
 
       dataProvinsi[kdProv] = r.provinsi;
+      
       if (!dataKabupaten[kdProv]) dataKabupaten[kdProv] = {};
       dataKabupaten[kdProv][kdKab] = r.kabupaten;
+
       if (!dataKecamatan[kdKab]) dataKecamatan[kdKab] = {};
       dataKecamatan[kdKab][kdKec] = r.kecamatan;
-      if (!dataDesa[kdKec]) dataDesa[kdKec] = {};
-      dataDesa[kdKec][kdDesa] = r.desa;
+
+      // Composite Key Desa: kdKab_kdKec
+      let desaKey = kdKab + "_" + kdKec;
+      if (!dataDesa[desaKey]) dataDesa[desaKey] = {};
+      dataDesa[desaKey][kdDesa] = r.desa;
       
-      let dsnKey = kdKec + "_" + kdDesa;
+      // Composite Key Dusun: kdKab_kdKec_kdDesa
+      let dsnKey = kdKab + "_" + kdKec + "_" + kdDesa;
       if (!dataDusun[dsnKey]) dataDusun[dsnKey] = {};
       dataDusun[dsnKey][kdDsn] = { nama: r.dusun, jumlah_rt: r.jumlah_rt || 1 };
     });
@@ -2195,66 +2201,66 @@
   }
 
   // Helper mengecek kelengkapan data wilayah dan identitas PUS
-function isIdentitasDanWilayahLengkap() {
-  const missingFields = [];
+  function isIdentitasDanWilayahLengkap() {
+    const missingFields = [];
 
-  // Validasi Wilayah Asal
-  if (!document.getElementById("provinsi").value) missingFields.push("Provinsi");
-  if (!document.getElementById("kabupaten").value) missingFields.push("Kabupaten / Kota");
-  if (!document.getElementById("kecamatan").value) missingFields.push("Kecamatan");
-  if (!document.getElementById("desa").value) missingFields.push("Desa");
-  if (!document.getElementById("dusun").value) missingFields.push("Dusun");
-  if (!document.getElementById("rt").value) missingFields.push("RT");
+    // Validasi Wilayah Asal
+    if (!document.getElementById("provinsi").value) missingFields.push("Provinsi");
+    if (!document.getElementById("kabupaten").value) missingFields.push("Kabupaten / Kota");
+    if (!document.getElementById("kecamatan").value) missingFields.push("Kecamatan");
+    if (!document.getElementById("desa").value) missingFields.push("Desa");
+    if (!document.getElementById("dusun").value) missingFields.push("Dusun");
+    if (!document.getElementById("rt").value) missingFields.push("RT");
 
-  // Validasi Identitas PUS
-  const namaSuami = document.getElementById("nama_suami").value.trim();
-  const nikSuami  = document.getElementById("nik_suami").value.trim();
-  const namaIstri = document.getElementById("nama_istri").value.trim();
-  const nikIstri  = document.getElementById("nik_istri").value.trim();
-  const tglLahir  = document.getElementById("tgl_lahir_istri").value;
-  const jkn       = document.getElementById("peserta_jkn").value;
+    // Validasi Identitas PUS
+    const namaSuami = document.getElementById("nama_suami").value.trim();
+    const nikSuami  = document.getElementById("nik_suami").value.trim();
+    const namaIstri = document.getElementById("nama_istri").value.trim();
+    const nikIstri  = document.getElementById("nik_istri").value.trim();
+    const tglLahir  = document.getElementById("tgl_lahir_istri").value;
+    const jkn       = document.getElementById("peserta_jkn").value;
 
-  if (!namaSuami) missingFields.push("Nama Suami");
-  if (!nikSuami || nikSuami.length !== 16) missingFields.push("NIK Suami (16 digit)");
-  if (!namaIstri) missingFields.push("Nama Istri");
-  if (!nikIstri || nikIstri.length !== 16) missingFields.push("NIK Istri (16 digit)");
-  if (!tglLahir)  missingFields.push("Tanggal Lahir Istri");
-  if (!jkn)       missingFields.push("Kepesertaan JKN");
+    if (!namaSuami) missingFields.push("Nama Suami");
+    if (!nikSuami || nikSuami.length !== 16) missingFields.push("NIK Suami (16 digit)");
+    if (!namaIstri) missingFields.push("Nama Istri");
+    if (!nikIstri || nikIstri.length !== 16) missingFields.push("NIK Istri (16 digit)");
+    if (!tglLahir)  missingFields.push("Tanggal Lahir Istri");
+    if (!jkn)       missingFields.push("Kepesertaan JKN");
 
-  return {
-    isLengkap: missingFields.length === 0,
-    missing: missingFields
-  };
-}
+    return {
+      isLengkap: missingFields.length === 0,
+      missing: missingFields
+    };
+  }
 
-// Fungsi pengunci tabel KB jika data belum lengkap
-function checkAndLockKbTable() {
-  const check = isIdentitasDanWilayahLengkap();
+  // Fungsi pengunci tabel KB jika data belum lengkap
+  function checkAndLockKbTable() {
+    const check = isIdentitasDanWilayahLengkap();
 
-  for (let i = 1; i <= 12; i++) {
-    const sel = document.getElementById("kb_" + i);
-    if (!sel) continue;
+    for (let i = 1; i <= 12; i++) {
+      const sel = document.getElementById("kb_" + i);
+      if (!sel) continue;
 
-    if (!check.isLengkap) {
-      // Kunci jika data wilayah & PUS belum lengkap
-      sel.style.backgroundColor = "#e9ecef";
-      sel.style.pointerEvents = "none";
-      sel.tabIndex = -1;
-      sel.title = "Lengkapi data Wilayah dan Identitas PUS terlebih dahulu";
-    } else {
-      // Buka kunci jika sudah lengkap (kemudian aturan umur 50+ / mutasi akan menyesuaikan)
-      sel.style.backgroundColor = "#ffffff";
-      sel.style.pointerEvents = "auto";
-      sel.tabIndex = 0;
-      sel.title = "";
+      if (!check.isLengkap) {
+        // Kunci jika data wilayah & PUS belum lengkap
+        sel.style.backgroundColor = "#e9ecef";
+        sel.style.pointerEvents = "none";
+        sel.tabIndex = -1;
+        sel.title = "Lengkapi data Wilayah dan Identitas PUS terlebih dahulu";
+      } else {
+        // Buka kunci jika sudah lengkap (kemudian aturan umur 50+ / mutasi akan menyesuaikan)
+        sel.style.backgroundColor = "#ffffff";
+        sel.style.pointerEvents = "auto";
+        sel.tabIndex = 0;
+        sel.title = "";
+      }
+    }
+
+    // Jika sudah lengkap, jalankan proteksi usia/mutasi
+    if (check.isLengkap) {
+      applyMutationAndAgeLocks();
     }
   }
-
-  // Jika sudah lengkap, jalankan proteksi usia/mutasi
-  if (check.isLengkap) {
-    applyMutationAndAgeLocks();
-  }
-}
   
   function applyMutationAndAgeLocks() {
     const tglLahir = document.getElementById("tgl_lahir_istri").value;
@@ -2487,10 +2493,21 @@ function checkAndLockKbTable() {
     }
   }
 
-  function getDusunList(kdKec, kdDesa) {
+  function getDusunList(kdKec, kdDesa, kdKab = "") {
+    let cleanKab = String(kdKab || userKodeKab || document.getElementById("kode_kab")?.value || "").padStart(2, '0');
     let cleanKec = String(kdKec).padStart(2, '0');
     let cleanDesa = String(kdDesa).padStart(4, '0');
-    return dataDusun[cleanKec + "_" + cleanDesa] || null;
+    
+    let fullKey = cleanKab + "_" + cleanKec + "_" + cleanDesa;
+    if (dataDusun[fullKey]) return dataDusun[fullKey];
+
+    // Fallback pencarian kunci berakhiran kec_desa
+    for (let k in dataDusun) {
+      if (k.endsWith("_" + cleanKec + "_" + cleanDesa)) {
+        return dataDusun[k];
+      }
+    }
+    return null;
   }
   
   function isKabRole() {
@@ -3348,14 +3365,7 @@ function checkAndLockKbTable() {
       userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
       userKodeDesa = String(data.kode_desa || "").trim().padStart(4, '0');
 
-      if (data.kode_dusun_list) {
-        userKodeDusunList = data.kode_dusun_list
-          .split(',')
-          .map(k => k.trim().padStart(4, '0'))
-          .filter(k => k !== "");
-      } else {
-        userKodeDusunList = [];
-      }
+      userAllowedDusun = Array.isArray(data.allowed_dusun) ? data.allowed_dusun : [];
       
       const sessionData = {
         currentUser: data.username,
@@ -3611,23 +3621,24 @@ function checkAndLockKbTable() {
     });
   }
   
+  // Helper validasi kode dusun (diadopsi dari Kabupaten)
   function cleanTargetDusunValid(kd) {
-    return kd && kd !== "0000" && kd !== "null" && kd !== "undefined";
+    return kd && kd !== "0000" && kd !== "null" && kd !== "undefined" && String(kd).trim() !== "";
   }
 
+  // Fungsi accept mutasi yang diselaraskan:
   function acceptAndAutoFillMutasi(index) {
     const item = cachedPendingMutasiList[index];
     if (!item || !item.payload) return;
 
     const payloadData = typeof item.payload === "string" ? JSON.parse(item.payload) : item.payload;
 
-    // --- PERBAIKAN: Hapus/Kosongkan status mutasi pada bulan-bulan KB di data payload ---
+    // Hapus status mutasi dari riwayat bulan KB agar data di wilayah baru bersih
     const monthPayloadKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
     monthPayloadKeys.forEach(mKey => {
       let val = String(payloadData[mKey] || "").toUpperCase();
-      // Jika statusnya adalah mutasi (PINDAH, BERCERAI, atau SUAMI/ISTRI MENINGGAL), kosongkan agar tidak masuk ke desa tujuan
-      if (val === "PINDAH" || val === "BERCERAI" || val === "SUAMI/ISTRI MENINGGAL") {
-        payloadData[mKey] = ""; 
+      if (val.includes("PINDAH") || val.includes("CERAI") || val.includes("MENINGGAL")) {
+        payloadData[mKey] = "";
       }
     });
 
@@ -3637,6 +3648,8 @@ function checkAndLockKbTable() {
 
     document.getElementById("id_mutasi_tiket").value = item.id;
     document.getElementById("id_pus").value = "";
+    if (document.getElementById("old_id_pus")) document.getElementById("old_id_pus").value = "";
+    if (document.getElementById("original_id_pus")) document.getElementById("original_id_pus").value = "";
 
     if (document.getElementById("tahun_input")) {
       document.getElementById("tahun_input").value = payloadData.tahun || item.tahun;
@@ -3660,23 +3673,23 @@ function checkAndLockKbTable() {
       if (payloadData[mKey]) {
         setSelectValueCaseInsensitive("kb_" + m, payloadData[mKey]);
       } else {
-        // Pastikan dropdown bulan yang tadinya mutasi dikosongkan di form
         document.getElementById("kb_" + m).value = "";
       }
     }
 
+    // Set dusun tujuan menggunakan validasi aman cleanTargetDusunValid
     const targetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
     if (cleanTargetDusunValid(targetDsn)) {
       setSelectValueCaseInsensitive("dusun", targetDsn);
       updateRT();
     }
-    
-    checkAndLockKbTable();
+
+    applyMutationAndAgeLocks();
 
     Swal.fire({
       icon: 'info',
       title: 'Data Mutasi Dimuat!',
-      text: `Data PUS [${item.nama_istri}] berhasil disalin (status pindah telah dibersihkan untuk wilayah baru). Silakan lengkapi DUSUN dan RT di wilayah Anda, lalu klik SIMPAN DATA.`
+      text: `Data PUS [${item.nama_istri}] berhasil disalin (riwayat mutasi lama telah dibersihkan). Silakan lengkapi DUSUN dan RT, lalu klik SIMPAN DATA.`
     });
   }
   
@@ -3766,13 +3779,19 @@ function checkAndLockKbTable() {
   }
 
   function hitungUmurIstri() {
-  const tglLahirInput = document.getElementById("tgl_lahir_istri").value;
-  const umurInput = document.getElementById("umur_istri");
+    const tglLahirInput = document.getElementById("tgl_lahir_istri").value;
+    const umurInput = document.getElementById("umur_istri");
+    const tahunPelaporan = parseInt(document.getElementById("tahun_input")?.value || new Date().getFullYear(), 10);
 
-  if (!tglLahirInput) {
-    umurInput.value = 0;
+    if (!tglLahirInput) {
+      umurInput.value = 0;
+      applyMutationAndAgeLocks();
+      return;
+    }
+
+    const umur = hitungUmurPresisi(tglLahirInput, tahunPelaporan);
+    umurInput.value = umur;
     applyMutationAndAgeLocks();
-    return;
   }
 
   let birthYear, birthMonth, birthDay;
@@ -3824,53 +3843,52 @@ function checkAndLockKbTable() {
     applyMutationAndAgeLocks();
   }
 
-  function hitungUmurPresisi(tglLahirInput) {
-  if (!tglLahirInput) return 0;
+  function hitungUmurPresisi(tglLahirInput, tahunPelaporan) {
+    if (!tglLahirInput) return 0;
 
-  let birthYear, birthMonth, birthDay;
+    let birthYear, birthMonth, birthDay;
 
-  // Tangani format YYYY-MM-DD maupun DD/MM/YYYY
-  if (typeof tglLahirInput === "string") {
-    if (tglLahirInput.includes("-")) {
-      const p = tglLahirInput.split("-");
-      if (p[0].length === 4) {
-        birthYear = parseInt(p[0], 10);
-        birthMonth = parseInt(p[1], 10);
-        birthDay = parseInt(p[2], 10);
-      } else {
-        birthYear = parseInt(p[2], 10);
-        birthMonth = parseInt(p[1], 10);
-        birthDay = parseInt(p[0], 10);
-      }
-    } else if (tglLahirInput.includes("/")) {
-      const p = tglLahirInput.split("/");
-      if (p[2].length === 4) {
-        birthYear = parseInt(p[2], 10);
-        birthMonth = parseInt(p[1], 10);
-        birthDay = parseInt(p[0], 10);
-      } else {
-        birthYear = parseInt(p[0], 10);
-        birthMonth = parseInt(p[1], 10);
-        birthDay = parseInt(p[2], 10);
+    if (typeof tglLahirInput === "string") {
+      if (tglLahirInput.includes("-")) {
+        const p = tglLahirInput.split("-");
+        if (p[0].length === 4) {
+          birthYear = parseInt(p[0], 10);
+          birthMonth = parseInt(p[1], 10);
+          birthDay = parseInt(p[2], 10);
+        } else {
+          birthYear = parseInt(p[2], 10);
+          birthMonth = parseInt(p[1], 10);
+          birthDay = parseInt(p[0], 10);
+        }
+      } else if (tglLahirInput.includes("/")) {
+        const p = tglLahirInput.split("/");
+        if (p[2].length === 4) {
+          birthYear = parseInt(p[2], 10);
+          birthMonth = parseInt(p[1], 10);
+          birthDay = parseInt(p[0], 10);
+        } else {
+          birthYear = parseInt(p[0], 10);
+          birthMonth = parseInt(p[1], 10);
+          birthDay = parseInt(p[2], 10);
+        }
       }
     }
+
+    if (!birthYear || isNaN(birthYear)) return 0;
+    
+    const today = new Date();
+    const targetYear = tahunPelaporan ? parseInt(tahunPelaporan, 10) : today.getFullYear();
+    let refYear = targetYear;
+    let refMonth = (targetYear === today.getFullYear()) ? (today.getMonth() + 1) : 12;
+    let refDay = (targetYear === today.getFullYear()) ? today.getDate() : 31;
+
+    let age = refYear - birthYear;
+    if (refMonth < birthMonth || (refMonth === birthMonth && refDay < birthDay)) {
+      age--;
+    }
+
+    return Math.max(0, age);
   }
-
-  if (!birthYear || isNaN(birthYear)) return 0;
-
-  // Bandingkan dengan tanggal dan bulan hari ini
-  const today = new Date();
-  const curYear = today.getFullYear();
-  const curMonth = today.getMonth() + 1; // 1 - 12
-  const curDay = today.getDate();
-
-  let age = curYear - birthYear;
-  if (curMonth < birthMonth || (curMonth === birthMonth && curDay < birthDay)) {
-    age--;
-  }
-
-  return Math.max(0, age);
-}
   
   function checkJumlahAnak() {
     const val = parseInt(document.getElementById("jumlah_anak").value, 10);
@@ -6438,16 +6456,19 @@ function checkAndLockKbTable() {
       checkedBoxes.forEach(cb => selectedDusun.push(cb.value));
     }
 
+    const checkedBoxes = document.querySelectorAll('input[name="user_dusun_checkbox"]:checked');
+    const selectedDusun = Array.from(checkedBoxes).map(cb => cb.value.padStart(4, '0'));
+
     const payload = {
       username: document.getElementById("user_name_input").value.trim(),
-      nama_lengkap: document.getElementById("user_namalengkap_input").value.trim() || null,
+      nama_lengkap: document.getElementById("user_namalengkap_input")?.value.trim() || null,
       password_hash: document.getElementById("user_pass_input").value.trim(),
       role: roleVal,
       kode_kab: userKodeKab || "01",
-      kode_kec: targetKec,
-      kode_desa: targetDesa,
-      kode_dusun_list: selectedDusun.length > 0 ? selectedDusun.join(',') : null // <-- Simpan ke kolom baru
-    };    
+      kode_kec: targetKec ? targetKec.padStart(2, '0') : null,
+      kode_desa: targetDesa ? targetDesa.padStart(4, '0') : null,
+      allowed_dusun: (roleVal === "User Desa" && selectedDusun.length > 0) ? selectedDusun : null
+    };
 
     try {
       let res;
