@@ -320,6 +320,78 @@
     }
 
     .chart-container { position: relative; height: 250px; width: 100%; }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+      .sheet-a4 {
+        page-break-after: always;
+        width: 210mm;
+        height: 297mm;
+        box-sizing: border-box;
+        padding: 23mm 15mm; /* Margin agar kartu berada tepat di tengah */
+        display: grid;
+        grid-template-columns: 90mm 90mm;
+        grid-template-rows: 125mm 125mm;
+        gap: 0; /* Tanpa celah agar bolak-balik presisi tanpa pergeseran */
+      }
+      .ki-page-card {
+        width: 90mm !important;
+        height: 125mm !important;
+        box-sizing: border-box;
+        overflow: hidden;
+        border: 0.2mm dashed #ccc; /* Garis panduan potong gunting */
+      }
+    }
+
+    .sheet-a4 {
+      width: 210mm;
+      height: 297mm;
+      box-sizing: border-box;
+      padding: 23.5mm 15mm; /* 23.5mm atas-bawah & 15mm kiri-kanan memusatkan kartu 180x250mm tepat di tengah */
+      display: grid;
+      grid-template-columns: 90mm 90mm;
+      grid-template-rows: 125mm 125mm;
+      gap: 0;
+      margin: 0 auto;
+      background: #ffffff;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .ki-page-card {
+      width: 90mm !important;
+      height: 125mm !important;
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative;
+      border: 0.2mm dashed #cbd5e1; /* Garis panduan potong */
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0; /* Menghilangkan margin bawaan driver printer */
+      }
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff;
+      }
+      .sheet-a4 {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -8188,6 +8260,63 @@ function checkAndLockKbTable() {
       showCancelButton: true,
       cancelButtonText: 'Tutup'
     });
+  }
+
+  function generateBatchKiKbPrint(listAkseptor) {
+    let fullHtml = '';
+    
+    // Pecah per 4 akseptor
+    for (let i = 0; i < listAkseptor.length; i += 4) {
+      const chunk = listAkseptor.slice(i, i + 4);
+      
+      // Pastikan slot selalu terisi 4 item (isi null jika akseptor kurang dari 4)
+      const slot = [
+        chunk[0] || null,
+        chunk[1] || null,
+        chunk[2] || null,
+        chunk[3] || null
+      ];
+
+      // 1. LEMBAR DEPAN (Urutan: 1, 2, 3, 4)
+      fullHtml += `<div class="sheet-a4">`;
+      slot.forEach(item => {
+        fullHtml += item ? renderSatuKartuDepan(item) : `<div class="ki-page-card"></div>`;
+      });
+      fullHtml += `</div>`;
+
+      // 2. LEMBAR BELAKANG (Urutan dicerminkan: 2, 1, 4, 3)
+      const slotBelakang = [slot[1], slot[0], slot[3], slot[2]];
+      fullHtml += `<div class="sheet-a4">`;
+      slotBelakang.forEach(item => {
+        fullHtml += item ? renderSatuKartuBelakang(item) : `<div class="ki-page-card"></div>`;
+      });
+      fullHtml += `</div>`;
+    }
+
+    return fullHtml;
+  }
+
+  function simpanKePdfPresisi(elementId, namaFile = 'KARTU_KI_KB_A4.pdf') {
+    const element = document.getElementById(elementId);
+
+    const opt = {
+      margin:       0, // Wajib 0 agar tidak menggeser grid CSS yang sudah simetris
+      filename:     namaFile,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2,           // Render resolusi tinggi
+        useCORS: true,      // Mengizinkan render logo dari URL eksternal
+        letterRendering: true 
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+
+    // Generate dan unduh PDF
+    html2pdf().set(opt).from(element).save();
   }
 
   // Inisialisasi dropdown filter pencarian calon akseptor skala Kabupaten
