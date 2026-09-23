@@ -1613,79 +1613,80 @@
     </div>
 
     <!-- TAB 1: DAFTAR ANTREAN & REALISASI LAYANAN -->
-    <div id="layananTabAntrean" style="display: block;">
-      <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
-        
-        <!-- BARIS 1: FILTER STATUS, TAHUN & PERIODE BULAN (MULAI - SAMPAI) -->
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <!-- Filter Status Data -->
-          <div style="flex: 1; min-width: 150px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Status:</label>
-            <select id="filterStatusLayanan" onchange="updateStatusTombolCetak(); loadAntreanLayananTable();" style="...">
-              <option value="TERDAFTAR" selected>Calon Akseptor</option>
-              <option value="SELESAI">Akseptor Terlayani</option>
-              <option value="BATAL">Batal</option>
-              <option value="SEMUA">Semua Status</option>
-            </select>
-          </div>
+    <div style="display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(100px, 0.8fr) minmax(130px, 1fr) minmax(130px, 1fr) auto; gap: 10px; align-items: end; width: 100%; box-sizing: border-box;">
+  
+      <!-- Filter Status Data -->
+      <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin: 0; white-space: nowrap;">STATUS:</label>
+        <select id="filterStatusLayanan" onchange="updateStatusTombolCetak(); loadAntreanLayananTable();" style="height: 38px !important; min-height: 38px !important; width: 100% !important; padding: 0 10px !important; font-size: 12.5px !important; font-weight: bold; border-radius: 6px !important; border: 1.5px solid #cbd5e1 !important; background-color: #fff; box-sizing: border-box !important;">
+          <option value="TERDAFTAR" selected>CALON AKSEPTOR</option>
+          <option value="SELESAI">AKSEPTOR TERLAYANI</option>
+          <option value="BATAL">BATAL</option>
+          <option value="SEMUA">SEMUA STATUS</option>
+        </select>
+      </div>
 
-          <!-- Filter Tahun -->
-          <div style="flex: 1; min-width: 110px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Tahun:</label>
-            <select id="filterLayananTahun" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-              <option value="2029">2029</option>
-              <option value="2030">2030</option>
-            </select>
-          </div>
+      <!-- Filter Tahun -->
+      <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin: 0; white-space: nowrap;">TAHUN:</label>
+        <select id="filterLayananTahun" onchange="onLayananPeriodeChange()" style="height: 38px !important; min-height: 38px !important; width: 100% !important; padding: 0 10px !important; font-size: 12.5px !important; border-radius: 6px !important; border: 1.5px solid #cbd5e1 !important; background-color: #fff; box-sizing: border-box !important;">
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+        </select>
+      </div>
 
-          <!-- Bulan Mulai -->
-          <div style="flex: 1; min-width: 130px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Bulan Mulai:</label>
-            <select id="filterLayananBulanMulai" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
-              <option value="">-- PILIH --</option>
-              <option value="1">JANUARI</option>
-              <option value="2">FEBRUARI</option>
-              <option value="3">MARET</option>
-              <option value="4">APRIL</option>
-              <option value="5">MEI</option>
-              <option value="6">JUNI</option>
-              <option value="7">JULI</option>
-              <option value="8">AGUSTUS</option>
-              <option value="9">SEPTEMBER</option>
-              <option value="10">OKTOBER</option>
-              <option value="11">NOVEMBER</option>
-              <option value="12">DESEMBER</option>
-            </select>
-          </div>
+      <!-- Bulan Mulai -->
+      <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin: 0; white-space: nowrap;">BULAN MULAI:</label>
+        <select id="filterLayananBulanMulai" onchange="onLayananPeriodeChange()" style="height: 38px !important; min-height: 38px !important; width: 100% !important; padding: 0 10px !important; font-size: 12.5px !important; border-radius: 6px !important; border: 1.5px solid #cbd5e1 !important; background-color: #fff; box-sizing: border-box !important;">
+          <option value="">-- PILIH --</option>
+          <option value="1">JANUARI</option>
+          <option value="2">FEBRUARI</option>
+          <option value="3">MARET</option>
+          <option value="4">APRIL</option>
+          <option value="5">MEI</option>
+          <option value="6">JUNI</option>
+          <option value="7">JULI</option>
+          <option value="8">AGUSTUS</option>
+          <option value="9">SEPTEMBER</option>
+          <option value="10">OKTOBER</option>
+          <option value="11">NOVEMBER</option>
+          <option value="12">DESEMBER</option>
+        </select>
+      </div>
 
-          <!-- Bulan Sampai -->
-          <div style="flex: 1; min-width: 130px;">
-            <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Bulan Sampai:</label>
-            <select id="filterLayananBulanSampai" onchange="onLayananPeriodeChange()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%;">
-              <option value="">-- PILIH --</option>
-              <option value="1">JANUARI</option>
-              <option value="2">FEBRUARI</option>
-              <option value="3">MARET</option>
-              <option value="4">APRIL</option>
-              <option value="5">MEI</option>
-              <option value="6">JUNI</option>
-              <option value="7">JULI</option>
-              <option value="8">AGUSTUS</option>
-              <option value="9">SEPTEMBER</option>
-              <option value="10">OKTOBER</option>
-              <option value="11">NOVEMBER</option>
-              <option value="12">DESEMBER</option>
-            </select>
-          </div>
+      <!-- Bulan Sampai -->
+      <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+        <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; margin: 0; white-space: nowrap;">BULAN SAMPAI:</label>
+        <select id="filterLayananBulanSampai" onchange="onLayananPeriodeChange()" style="height: 38px !important; min-height: 38px !important; width: 100% !important; padding: 0 10px !important; font-size: 12.5px !important; border-radius: 6px !important; border: 1.5px solid #cbd5e1 !important; background-color: #fff; box-sizing: border-box !important;">
+          <option value="">-- PILIH --</option>
+          <option value="1">JANUARI</option>
+          <option value="2">FEBRUARI</option>
+          <option value="3">MARET</option>
+          <option value="4">APRIL</option>
+          <option value="5">MEI</option>
+          <option value="6">JUNI</option>
+          <option value="7">JULI</option>
+          <option value="8">AGUSTUS</option>
+          <option value="9">SEPTEMBER</option>
+          <option value="10">OKTOBER</option>
+          <option value="11">NOVEMBER</option>
+          <option value="12">DESEMBER</option>
+        </select>
+      </div>
 
-          <div style="align-self: flex-end;">
-            <button type="button" class="btn-nav btn-secondary" style="padding: 7px 12px; font-size: 12px;" onclick="loadAntreanLayananTable()">🔄 Segarkan</button>
-          </div>
-        </div>
+      <!-- Tombol Segarkan -->
+      <div style="min-width: 0;">
+        <button type="button" class="btn-nav btn-secondary" style="height: 38px !important; min-height: 38px !important; padding: 0 14px !important; font-size: 12.5px !important; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; white-space: nowrap;" onclick="loadAntreanLayananTable()">
+          🔄 Segarkan
+        </button>
+      </div>
+
+    </div>
 
         <!-- KONTAINER FILTER WILAYAH (TERSEMBUNYI SECARA DEFAULT HINGGA PERIODE DIPILIH) -->
         <div id="filterWilayahLayananWrapper" style="display: none; flex-direction: column; gap: 10px;">
