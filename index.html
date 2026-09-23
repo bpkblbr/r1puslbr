@@ -8279,11 +8279,12 @@
   function updateStatusTombolCetak() {
     const statusFilter = document.getElementById("filterStatusLayanan")?.value;
     const btnCetak = document.getElementById("btnCetakMassal");
-    
     if (!btnCetak) return;
 
-    // Hanya aktif jika status adalah 'TERDAFTAR' (Calon Akseptor)
-    if (statusFilter === "TERDAFTAR") {
+    const adaDataTerdaftar = (cachedAntreanLayanan || []).some(item => item && item.status === 'TERDAFTAR');
+
+    // Hanya aktif jika filter berstatus TERDAFTAR dan benar-benar ada datanya di tabel
+    if (statusFilter === "TERDAFTAR" && adaDataTerdaftar) {
       btnCetak.disabled = false;
       btnCetak.style.opacity = "1";
       btnCetak.style.cursor = "pointer";
@@ -8292,7 +8293,7 @@
       btnCetak.disabled = true;
       btnCetak.style.opacity = "0.45";
       btnCetak.style.cursor = "not-allowed";
-      btnCetak.title = "Tombol cetak hanya aktif untuk status Calon Akseptor";
+      btnCetak.title = "Tombol cetak hanya aktif jika ada akseptor berstatus TERDAFTAR";
     }
   }
 
@@ -9371,22 +9372,39 @@
   }
   
   function bukaModalCetakMassal() {
+    // 1. Validasi utama: cegah jika tabel antrean belum dimuat atau kosong sama sekali
     if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
-      Swal.fire("Perhatian", "Tidak ada antrean pelayanan yang ditampilkan pada tabel!", "warning");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Data Antrean Kosong!',
+        text: 'Tidak ada data antrean pelayanan yang tampil pada tabel untuk dicetak.'
+      });
       return;
     }
 
-    const container = document.getElementById("cetakMassalListContainer");
-    container.innerHTML = "";
+    // 2. Filter akseptor yang benar-benar berstatus TERDAFTAR
+    const daftarAkseptor = cachedAntreanLayanan.filter(item => item && item.status === 'TERDAFTAR');
 
-    cachedAntreanLayanan.forEach((item, idx) => {
+    if (daftarAkseptor.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak Ada Calon Akseptor!',
+        text: 'Tidak ada akseptor berstatus TERDAFTAR pada periode/wilayah yang dipilih.'
+      });
+      return;
+    }
+
+    const listContainer = document.getElementById("cetakMassalListContainer");
+    listContainer.innerHTML = "";
+
+    daftarAkseptor.forEach((item, idx) => {
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; color: #334155; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;";
+      label.style.cssText = "display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;";
       label.innerHTML = `
-        <input type="checkbox" name="cb_cetak_massal" value="${idx}" checked style="accent-color: #0284c7;">
-        <span><b>${item.nama_istri}</b> (${item.id_pus}) - <i>${item.rencana_metode}</i> [Desa ${item.desa_nama || '-'}]</span>
+        <input type="checkbox" name="cb_cetak_akseptor" value="${item.id}" checked style="accent-color:#0284c7;">
+        <span><b>${idx + 1}. ${item.nama_istri}</b> (${item.nik_istri || '-'}) - ${item.rencana_metode || '-'}</span>
       `;
-      container.appendChild(label);
+      listContainer.appendChild(label);
     });
 
     document.getElementById("modalCetakMassalLayanan").style.display = "block";
@@ -9402,16 +9420,69 @@
   }
   
   function prosesCetakMassal() {
-    const checked = Array.from(document.querySelectorAll('input[name="cb_cetak_massal"]:checked')).map(cb => parseInt(cb.value, 10));
-    if (checked.length === 0) {
-      Swal.fire("Peringatan", "Pilih minimal 1 akseptor untuk dicetak!", "warning");
+    const selectedBoxes = document.querySelectorAll('input[name="cb_cetak_akseptor"]:checked');
+    const selectedIds = Array.from(selectedBoxes).map(cb => cb.value);
+
+    // Kunci 1: Cegah jika tidak ada yang dicentang
+    if (selectedIds.length === 0) {
+      Swal.fire("Peringatan", "Beri centang minimal pada salah satu akseptor!", "warning");
       return;
     }
 
-    const jenis = document.getElementById("cetakMassalJenisDokumen").value;
+    // Kunci 2: Ambil objek data nyata
+    const targetAkseptor = (cachedAntreanLayanan || []).filter(item => 
+      item && selectedIds.includes(String(item.id)) && item.status === 'TERDAFTAR'
+    );
+
+    // Kunci 3: Tolak dan jangan buka window.print jika data akseptor kosong
+    if (targetAkseptor.length === 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Cetak Dibatalkan',
+        text: 'Data akseptor yang dipilih tidak valid atau sudah tidak ada di antrean.'
+      });
+      tutupModalCetakMassal();
+      return;
+    }
+
     tutupModalCetakMassal();
-    eksporDokumenKbKePDF(jenis, checked);
-  }
+
+    const formatDokumen = document.getElementById("cetakMassalJenisDokumen").value;
+    let printHtml = "";
+
+    if (formatDokumen === "KIV") {
+      printHtml = generateKivHtml(targetAkseptor);
+    } else if (formatDokumen === "KI") {
+      printHtml = generateKiHtml(targetAkseptor);
+    } else {
+      printHtml = generateConsentHtml(targetAkseptor);
+    }
+
+    // Validasi akhir: pastikan string cetak bukan konten kosong
+    if (!printHtml || printHtml.trim() === "") {
+      Swal.fire("Perhatian", "Gagal memproses dokumen cetak karena konten kosong.", "warning");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Cetak Dokumen Pelayanan KB</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; color: #000; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .page-break { page-break-after: always; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${printHtml}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
 
   // 1. Ekspor Excel (.xlsx) dengan Header Judul Tabel
   function exportLayananToExcel() {
