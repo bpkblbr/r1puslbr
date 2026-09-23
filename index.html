@@ -1541,7 +1541,7 @@
           <!-- Filter Status Data -->
           <div style="flex: 1; min-width: 150px;">
             <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Status:</label>
-            <select id="filterStatusLayanan" onchange="updateStatusTombolCetak(); loadAntreanLayananTable();" ...>
+            <select id="filterStatusLayanan" onchange="updateStatusTombolCetak(); loadAntreanLayananTable();" style="...">
               <option value="TERDAFTAR" selected>Calon Akseptor</option>
               <option value="SELESAI">Akseptor Terlayani</option>
               <option value="BATAL">Batal</option>
@@ -8184,6 +8184,8 @@
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">Silakan pilih periode Bulan Mulai & Sampai terlebih dahulu.</td></tr>`;
     }
+
+    updateStatusTombolCetak();
   }
 
   function closePelayananKbModal() {
@@ -8288,26 +8290,22 @@
   }
 
   function updateStatusTombolCetak() {
-    const statusFilter = String(document.getElementById("filterStatusLayanan")?.value || "").toUpperCase().trim();
-    const btnCetak = document.getElementById("btnCetakMassal");
-    if (!btnCetak) return;
-    
-    const adaDataTerdaftar = (cachedAntreanLayanan || []).some(
-      item => item && String(item.status || "").toUpperCase().trim() === 'TERDAFTAR'
-    );
-    
-    if (statusFilter === "TERDAFTAR" && adaDataTerdaftar) {
-      btnCetak.disabled = false;
-      btnCetak.style.opacity = "1";
-      btnCetak.style.cursor = "pointer";
-      btnCetak.title = "Cetak formulir pelayanan KB";
-    } else {
-      btnCetak.disabled = true;
-      btnCetak.style.opacity = "0.45";
-      btnCetak.style.cursor = "not-allowed";
-      btnCetak.title = "Tombol cetak hanya aktif jika filter status 'Calon Akseptor' dipilih dan memiliki data antrean";
-    }
+  const statusFilter = String(document.getElementById("filterStatusLayanan")?.value || "").toUpperCase().trim();
+  const btnCetak = document.getElementById("btnCetakMassal");
+  if (!btnCetak) return;
+  
+  if (statusFilter === "TERDAFTAR") {
+    btnCetak.disabled = false;
+    btnCetak.style.opacity = "1";
+    btnCetak.style.cursor = "pointer";
+    btnCetak.title = "Cetak formulir pelayanan KB";
+  } else {    
+    btnCetak.disabled = true;
+    btnCetak.style.opacity = "0.45";
+    btnCetak.style.cursor = "not-allowed";
+    btnCetak.title = "Tombol cetak hanya aktif pada pilihan Calon Akseptor";
   }
+}
 
   async function updateDashboardBadgeLayanan() {
     if (!currentUser) return;
@@ -9189,39 +9187,53 @@
     });
   }
 
-  function bukaModalCetakMassal() {
-    if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
-      Swal.fire("Perhatian", "Tidak ada data calon akseptor di tabel untuk dicetak!", "warning");
+  function bukaModalCetakMassal() {    
+    const statusFilter = String(document.getElementById("filterStatusLayanan")?.value || "").toUpperCase().trim();
+    if (statusFilter !== "TERDAFTAR") {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Akses Cetak Terbatas',
+        text: 'Formulir pelayanan hanya dapat dicetak untuk kategori Calon Akseptor.'
+      });
       return;
     }
 
-    const total = cachedAntreanLayanan.length;
+    // 2. Cek apakah tabel/data kosong
+    if (!cachedAntreanLayanan || cachedAntreanLayanan.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Data Masih Kosong',
+        text: 'Tabel antrean belum memiliki data Calon Akseptor untuk dicetak. Pastikan periode Bulan Mulai & Sampai sudah dipilih.'
+      });
+      return;
+    }
 
-    Swal.fire({
-      title: 'Cetak Dokumen Pelayanan KB',
-      html: `
-        <div style="text-align: left; font-size: 12.5px; color: #334155; margin-bottom: 12px;">
-          Total data akseptor saat ini: <b>${total} orang</b>.<br>
-          Tentukan nomor urut yang akan dicetak (kosongkan jika ingin mencetak <b>SEMUA</b>):
-        </div>
-        <input type="text" id="inputRangeCetak" class="swal2-input" placeholder="Contoh: 1-10 atau 1,3,5,7" style="font-size: 13px; margin: 0 0 15px 0; width: 100%; box-sizing: border-box;">
+    // 3. Cek apakah ada akseptor yang benar-benar berstatus TERDAFTAR
+    const daftarAkseptor = cachedAntreanLayanan.filter(item => item && String(item.status || "").toUpperCase() === 'TERDAFTAR');
+    if (daftarAkseptor.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Tidak Ada Data Terdaftar',
+        text: 'Tidak ada akseptor berstatus Calon Akseptor yang dapat dicetak.'
+      });
+      return;
+    }
 
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #0284c7;" onclick="eksekusiCetakPilihan('KI')">
-            📋 Cetak K/I/KB/13 (Batch 4 Kartu/A4 Bolak-Balik)
-          </button>
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #0d9488;" onclick="eksekusiCetakPilihan('KIV')">
-            📄 Cetak Form K/IV/KB/15 (1 Lembar A4)
-          </button>
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #d97706;" onclick="eksekusiCetakPilihan('CONSENT')">
-            ✍️ Cetak Informed Consent (1 Lembar A4)
-          </button>
-        </div>
-      `,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Tutup'
+    // 4. Jika data tersedia, buka modal checklist cetak
+    const listContainer = document.getElementById("cetakMassalListContainer");
+    listContainer.innerHTML = "";
+
+    daftarAkseptor.forEach((item, idx) => {
+      const label = document.createElement("label");
+      label.style.cssText = "display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;";
+      label.innerHTML = `
+        <input type="checkbox" name="cb_cetak_akseptor" value="${item.id}" checked style="accent-color:#0284c7;">
+        <span><b>${idx + 1}. ${item.nama_istri}</b> (${item.nik_istri || '-'}) - ${item.rencana_metode || '-'}</span>
+      `;
+      listContainer.appendChild(label);
     });
+
+    document.getElementById("modalCetakMassalLayanan").style.display = "block";
   }
     
   function tutupModalCetakMassal() {
