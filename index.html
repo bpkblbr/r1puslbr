@@ -8106,9 +8106,11 @@
   }
 
   function onLayananPeriodeChange() {
-    const bMulai = document.getElementById("filterLayananBulanMulai").value;
-    const bSampai = document.getElementById("filterLayananBulanSampai").value;
+    const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
+    const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
     const wrapperWilayah = document.getElementById("filterWilayahLayananWrapper");
+
+    if (!wrapperWilayah) return;
 
     if (bMulai && bSampai) {
       if (parseInt(bMulai, 10) > parseInt(bSampai, 10)) {
@@ -8117,11 +8119,10 @@
         return;
       }
       
-      // Tampilkan panel wilayah jika periode valid
+      // Buka wadah utama pembungkus filter wilayah
       wrapperWilayah.style.display = "flex";
       initLayananWilayahFilter();
     } else {
-      // Sembunyikan panel wilayah jika periode belum lengkap
       wrapperWilayah.style.display = "none";
       const tbody = document.getElementById("antreanLayananTbody");
       if (tbody) {
@@ -9162,77 +9163,108 @@
     const wDesa = document.getElementById("filterExpLayananDesaWrapper");
     const wDusun = document.getElementById("filterExpLayananDusunWrapper");
 
-    wDesa.style.display = "none";
-    wDusun.style.display = "none";
+    if (wDesa) wDesa.style.display = "none";
+    if (wDusun) wDusun.style.display = "none";
+
+    const curKab = String(userKodeKab || "01").padStart(2, '0');
 
     if (isDesaRole()) {
-      cKec.style.display = "none";
-      renderLayananDusunCheckboxes(userKodeKec, userKodeDesa);
-    } else if (isKecRole()) {
-      cKec.style.display = "none";
-      renderLayananDesaCheckboxes(userKodeKec);
-    } else {
-      // Admin Kabupaten: Tampilkan dropdown kecamatan
-      cKec.style.display = "block";
-      selKec.innerHTML = '<option value="" selected>-- SEMUA KECAMATAN --</option>';
+      // User Desa: Langsung munculkan checkbox DUSUN
+      if (cKec) cKec.style.display = "none";
+      renderLayananDusunCheckboxes(userKodeKec, userKodeDesa, curKab);
 
-      // Muat kecamatan khusus kabupaten akun tersebut
-      const addedKec = {};
-      for (let kdKab in dataKecamatan) {
-        if (!userKodeKab || kdKab === userKodeKab) {
+    } else if (isKecRole()) {
+      // Admin Kecamatan: Langsung munculkan checkbox DESA di kecamatannya
+      if (cKec) cKec.style.display = "none";
+      renderLayananDesaCheckboxes(userKodeKec, curKab);
+
+    } else {
+      // Admin Kabupaten: Tampilkan Dropdown Kecamatan
+      if (cKec && selKec) {
+        cKec.style.display = "block";
+        selKec.innerHTML = '<option value="">-- SEMUA KECAMATAN --</option>';
+        
+        const added = {};
+        for (let kdKab in dataKecamatan) {
           for (let kd in dataKecamatan[kdKab]) {
-            let cleanKd = String(kd).padStart(2, '0');
-            if (!addedKec[cleanKd]) {
-              addedKec[cleanKd] = true;
-              selKec.add(new Option(dataKecamatan[kdKab][kd].toUpperCase(), cleanKd));
+            let clean = String(kd).padStart(2, '0');
+            if (!added[clean]) {
+              added[clean] = true;
+              selKec.add(new Option(dataKecamatan[kdKab][kd].toUpperCase(), clean));
             }
           }
         }
       }
       
-      // Muat seluruh antrean se-kabupaten secara default
-      loadAntreanLayananTable();
+      // Jika sebelumnya kecamatan sudah terpilih, langsung buka desanya
+      const selectedKec = selKec ? selKec.value : "";
+      if (selectedKec) {
+        renderLayananDesaCheckboxes(selectedKec, curKab);
+      } else {
+        loadAntreanLayananTable();
+      }
     }
   }
 
   function onLayananKecChange() {
-    const kdKec = document.getElementById("filterExpLayananKec").value;
+    const selKec = document.getElementById("filterExpLayananKec");
+    const kdKec = selKec ? selKec.value : "";
+    const curKab = String(userKodeKab || "01").padStart(2, '0');
+
     if (kdKec) {
-      renderLayananDesaCheckboxes(kdKec);
+      renderLayananDesaCheckboxes(kdKec, curKab);
     } else {
-      document.getElementById("filterExpLayananDesaWrapper").style.display = "none";
-      document.getElementById("filterExpLayananDusunWrapper").style.display = "none";
+      const wDesa = document.getElementById("filterExpLayananDesaWrapper");
+      const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+      if (wDesa) wDesa.style.display = "none";
+      if (wDusun) wDusun.style.display = "none";
       loadAntreanLayananTable();
     }
   }
 
-  function renderLayananDesaCheckboxes(kdKec) {
+  function renderLayananDesaCheckboxes(kdKec, kdKab) {
     const wrapper = document.getElementById("filterExpLayananDesaWrapper");
     const grid = document.getElementById("filterExpLayananDesaGrid");
     const wDusun = document.getElementById("filterExpLayananDusunWrapper");
-    
+
+    if (!wrapper || !grid) return;
     grid.innerHTML = "";
-    wDusun.style.display = "none";
+    if (wDusun) wDusun.style.display = "none";
 
-    let cleanKec = String(kdKec).padStart(2, '0');
-    let desas = dataDesa[cleanKec] || {};
+    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+    const cleanKec = String(kdKec).padStart(2, '0');
 
-    let listDesaKeys = Object.keys(desas);
-    if (listDesaKeys.length === 0) {
+    // Pencarian fleksibel: coba composite key kdKab_kdKec, lalu fallback ke kdKec
+    const compositeKey = cleanKab + "_" + cleanKec;
+    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
+
+    // Jika belum ketemu, telusuri isi dataDesa
+    if (Object.keys(desas).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + cleanKec)) {
+          desas = dataDesa[k];
+          break;
+        }
+      }
+    }
+
+    const desaKeys = Object.keys(desas);
+    if (desaKeys.length === 0) {
       wrapper.style.display = "none";
       loadAntreanLayananTable();
       return;
     }
 
+    // PAKSA TAMPILKAN WADAH DESA
     wrapper.style.display = "block";
-    listDesaKeys.forEach(kd => {
+
+    desaKeys.forEach(kd => {
       const cleanKd = String(kd).padStart(4, '0');
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
-      // DIBUAT KOSONG (tanpa atribut checked)
+      label.style.cssText = "display: flex; align-items: center; gap: 6px; font-size: 11.5px; cursor: pointer; color: #1e293b; background: #f8fafc; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0;";
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}')" style="accent-color: #0284c7;">
-        <span>${desas[kd]}</span>
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')" style="width: 15px; height: 15px; accent-color: #0284c7; cursor: pointer;">
+        <span style="font-weight: 600;">${desas[kd]}</span>
       `;
       grid.appendChild(label);
     });
@@ -9240,47 +9272,56 @@
     loadAntreanLayananTable();
   }
 
-  function onLayananDesaCheckboxChange(kdKec) {
+  function onLayananDesaCheckboxChange(kdKec, kdKab) {
     const checkedDesa = Array.from(document.querySelectorAll('input[name="cb_layanan_desa"]:checked')).map(cb => cb.value);
     const wDusun = document.getElementById("filterExpLayananDusunWrapper");
 
-    // Jika tepat memilih 1 desa, munculkan checkbox dusun
+    // Jika HANYA 1 Desa yang dicentang -> Munculkan daftar Dusun dari desa tersebut
     if (checkedDesa.length === 1) {
-      renderLayananDusunCheckboxes(kdKec, checkedDesa[0]);
+      renderLayananDusunCheckboxes(kdKec, checkedDesa[0], kdKab);
     } else {
-      wDusun.style.display = "none";
+      // Sembunyikan Dusun jika memilih lebih dari 1 desa atau tidak ada desa yang dicentang
+      if (wDusun) wDusun.style.display = "none";
       loadAntreanLayananTable();
     }
   }
 
-  function renderLayananDusunCheckboxes(kdKec, kdDesa) {
+  function renderLayananDusunCheckboxes(kdKec, kdDesa, kdKab) {
     const wrapper = document.getElementById("filterExpLayananDusunWrapper");
     const grid = document.getElementById("filterExpLayananDusunGrid");
+    if (!wrapper || !grid) return;
+    
     grid.innerHTML = "";
 
-    const dsnMap = getDusunList(kdKec, kdDesa);
+    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+    const cleanKec = String(kdKec).padStart(2, '0');
+    const cleanDesa = String(kdDesa).padStart(4, '0');
+
+    // Ambil daftar dusun
+    const dsnMap = getDusunList(cleanKec, cleanDesa, cleanKab);
+
     if (!dsnMap || Object.keys(dsnMap).length === 0) {
       wrapper.style.display = "none";
       loadAntreanLayananTable();
       return;
     }
 
+    // PAKSA TAMPILKAN WADAH DUSUN
     wrapper.style.display = "block";
+
     for (let kd in dsnMap) {
       let cleanKd = String(kd).padStart(4, '0');
 
-      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-        if (!userKodeDusunList.includes(cleanKd)) {
-          continue;
-        }
+      // Batasi hak akses jika akun kader desa dikunci dusun tertentu
+      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+        if (!userAllowedDusun.includes(cleanKd)) continue;
       }
 
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
-      // DIBUAT KOSONG (tanpa atribut checked)
+      label.style.cssText = "display: flex; align-items: center; gap: 6px; font-size: 11.5px; cursor: pointer; color: #1e293b; background: #f8fafc; padding: 4px 6px; border-radius: 4px; border: 1px solid #e2e8f0;";
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="accent-color: #0284c7;">
-        <span>${dsnMap[kd].nama}</span>
+        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="width: 15px; height: 15px; accent-color: #0284c7; cursor: pointer;">
+        <span style="font-weight: 600;">${dsnMap[kd].nama}</span>
       `;
       grid.appendChild(label);
     }
