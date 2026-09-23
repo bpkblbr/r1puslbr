@@ -8443,17 +8443,40 @@ function checkAndLockKbTable() {
       return;
     }
 
-    const contentCards = generateBatchKiKbPrint(list);
-    const printWin = window.open('', '_blank');
+    // Tampilkan indikator persiapan sejenak
+    Swal.fire({
+      title: 'Menyiapkan Dokumen...',
+      text: 'Menyusun tata letak cetak A4...',
+      allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }
+    });
 
-    printWin.document.write(`
+    const contentCards = generateBatchKiKbPrint(list);
+
+    // Buat iframe tersembunyi
+    let iframe = document.getElementById('print_frame_kikb');
+    if (iframe) iframe.remove();
+
+    iframe = document.createElement('iframe');
+    iframe.id = 'print_frame_kikb';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Cetak Kartu K/I/KB/13 (Batch A4)</title>
+          <title>Cetak Kartu K/I/KB/13</title>
           <style>
             @page { size: A4 portrait; margin: 0; }
-            body { margin: 0; padding: 0; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
+            html, body { margin: 0; padding: 0; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
             .sheet-a4 {
               width: 210mm;
               height: 297mm;
@@ -8495,13 +8518,17 @@ function checkAndLockKbTable() {
         </head>
         <body>
           ${contentCards}
-          <script>
-            window.onload = function() { window.print(); }
-          <\/script>
         </body>
       </html>
     `);
-    printWin.document.close();
+    doc.close();
+
+    // Berikan jeda sejenak agar logo & CSS termuat sempurna, lalu tutup dialog dan cetak
+    setTimeout(() => {
+      Swal.close(); // Pastikan modal SweetAlert tertutup sepenuhnya sebelum dialog print muncul
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 700);
   }
 
   function simpanKePdfPresisi(elementId, namaFile = 'KARTU_KI_KB_A4.pdf') {
@@ -10742,21 +10769,20 @@ function checkAndLockKbTable() {
       const indices = parseRangeNomorUrut(rangeStr, total);
 
       if (indices.length === 0) {
-        Swal.fire("Perhatian", "Nomor urut yang Anda masukkan tidak valid atau di luar rentang data!", "warning");
+        Swal.fire("Perhatian", "Nomor urut yang dimasukkan tidak valid!", "warning");
         return;
       }
 
       const selectedData = indices.map(idx => cachedAntreanLayanan[idx]);
+      
+      // Tutup popup modal SweetAlert seketika
       Swal.close();
 
       if (jenisDoc === 'KI') {
-        // Cetak Kartu K/I/KB/13 format 4 per lembar A4 bolak-balik presisi
         cetakBatchKiKbA4(selectedData);
       } else if (jenisDoc === 'KIV' || jenisDoc === 'CONSENT') {
-        // Cetak Form K/IV atau Informed Consent untuk data terpilih secara berurutan
         selectedData.forEach((_, i) => {
-          const originalIdx = indices[i];
-          eksporDokumenKbKePDF(jenisDoc, originalIdx);
+          eksporDokumenKbKePDF(jenisDoc, indices[i]);
         });
       }
     }
