@@ -9040,33 +9040,34 @@
         }
         return { metode: met, tanggal: tgl };
       }
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    }).then(async (res) => {
+      if (res.isConfirmed) {
+        Swal.fire({ title: 'Menyimpan Realisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         try {
-          const { error: errLayanan } = await db.from('pendaftaran_layanan_kb')
+          const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
+          const colName = mKeys[bulanRencana - 1];
+
+          const { error: errLayanan } = await db
+            .from('pendaftaran_layanan_kb')
             .update({
               status: 'SELESAI',
-              metode_realisasi: result.value.metode,
-              tgl_realisasi_layanan: result.value.tanggal,
+              metode_realisasi: res.value.metode,
+              tgl_realisasi: res.value.tanggal,
               updated_at: new Date().toISOString()
             })
             .eq('id', tiketId);
 
           if (errLayanan) throw errLayanan;
 
-          const mKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
-          const targetField = mKeys[bulanRencana - 1];
+          if (idPus && colName) {
+            const updateField = {};
+            updateField[colName] = res.value.metode;
+            await db.from('data_pus').update(updateField).eq('id_pus', idPus).eq('tahun', tahun);
+          }
 
-          await db.from('data_pus')
-            .update({ [targetField]: result.value.metode })
-            .eq('id_pus', idPus)
-            .eq('tahun', tahun);
-
-          Swal.fire('Berhasil!', `Pelayanan [${namaIstri}] telah selesai dicatat.`, 'success');
+          Swal.fire('Berhasil', 'Pelayanan berhasil dicatat dan status KB diperbarui.', 'success');
           loadAntreanLayananTable();
           if (typeof updateDashboardBadgeLayanan === "function") updateDashboardBadgeLayanan();
-
         } catch (err) {
           Swal.fire('Gagal', err.message, 'error');
         }
