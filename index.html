@@ -1541,7 +1541,7 @@
           <!-- Filter Status Data -->
           <div style="flex: 1; min-width: 150px;">
             <label style="font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Status:</label>
-            <select id="filterStatusLayanan" onchange="loadAntreanLayananTable()" style="padding: 7px; font-size: 12px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; width: 100%;">
+            <select id="filterStatusLayanan" onchange="updateStatusTombolCetak(); loadAntreanLayananTable();" ...>
               <option value="TERDAFTAR" selected>Calon Akseptor</option>
               <option value="SELESAI">Akseptor Terlayani</option>
               <option value="BATAL">Batal</option>
@@ -8210,8 +8210,7 @@
   }
 
   // 1. Ambil & Tampilkan Daftar Antrean
-  async function loadAntreanLayananTable() {
-    updateStatusTombolCetak();
+  async function loadAntreanLayananTable() {    
     const tbody = document.getElementById("antreanLayananTbody");
     const bMulai = document.getElementById("filterLayananBulanMulai")?.value;
     const bSampai = document.getElementById("filterLayananBulanSampai")?.value;
@@ -8278,21 +8277,25 @@
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center; padding:15px;">Gagal memuat: ${error ? error.message : 'Error koneksi'}</td></tr>`;
       }
+      cachedAntreanLayanan = [];
+      updateStatusTombolCetak();
       return;
     }
-
-    cachedAntreanLayanan = data;
-    renderAntreanLayananTable();
+    
+    cachedAntreanLayanan = data;    
+    renderAntreanLayananTable();    
+    updateStatusTombolCetak();
   }
 
   function updateStatusTombolCetak() {
-    const statusFilter = document.getElementById("filterStatusLayanan")?.value;
+    const statusFilter = String(document.getElementById("filterStatusLayanan")?.value || "").toUpperCase().trim();
     const btnCetak = document.getElementById("btnCetakMassal");
     if (!btnCetak) return;
-
-    const adaDataTerdaftar = (cachedAntreanLayanan || []).some(item => item && item.status === 'TERDAFTAR');
-
-    // Hanya aktif jika filter berstatus TERDAFTAR dan benar-benar ada datanya di tabel
+    
+    const adaDataTerdaftar = (cachedAntreanLayanan || []).some(
+      item => item && String(item.status || "").toUpperCase().trim() === 'TERDAFTAR'
+    );
+    
     if (statusFilter === "TERDAFTAR" && adaDataTerdaftar) {
       btnCetak.disabled = false;
       btnCetak.style.opacity = "1";
@@ -8302,7 +8305,7 @@
       btnCetak.disabled = true;
       btnCetak.style.opacity = "0.45";
       btnCetak.style.cursor = "not-allowed";
-      btnCetak.title = "Tombol cetak hanya aktif jika ada akseptor berstatus TERDAFTAR";
+      btnCetak.title = "Tombol cetak hanya aktif jika filter status 'Calon Akseptor' dipilih dan memiliki data antrean";
     }
   }
 
