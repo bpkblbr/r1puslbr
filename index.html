@@ -259,34 +259,45 @@
       padding-bottom: 6px;
     }
 
-    /* Card Container Form Layanan */
+    /* Container Card */
     .card-layanan-plan {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
-      padding: 22px;
+      padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
     }
 
-    /* Label Fleksibel & Teratur */
-    .label-field-kb {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #475569;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-      margin: 0;
-      line-height: 1.35;
-      min-height: 32px; /* Menyeragamkan ruang vertikal label agar kotak input di bawahnya sejajar */
+    /* Kolom Wrapper Input */
+    .form-col-kb {
       display: flex;
-      align-items: flex-end; /* Mengunci pangkal label tepat di atas kotak input */
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      width: 100%;
     }
 
-    /* Standarisasi Semua Elemen Input Form Layanan */
+    /* Standarisasi Label agar Simetris & Teks Tidak Terpotong */
+    .label-field-kb {
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      color: #475569 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.3px;
+      margin: 0 !important;
+      line-height: 1.35 !important;
+      min-height: 28px; /* Mengunci tinggi label agar input di bawahnya presisi sejajar */
+      display: flex;
+      align-items: flex-end; /* Mengunci teks label tepat menempel di atas input */
+      white-space: normal !important; /* Mencegah teks terpotong */
+      word-break: break-word;
+    }
+
+    /* Standarisasi Tinggi, Padding, dan Font Seluruh Input & Select */
     .input-control-kb {
-      height: 45px !important; /* Standar tinggi seragam yang ideal dan proporsional */
-      min-height: 45px !important;
+      height: 42px !important;
+      min-height: 42px !important;
       width: 100% !important;
       padding: 0 12px !important;
       border-radius: 6px !important;
@@ -295,27 +306,96 @@
       color: #1e293b !important;
       background-color: #ffffff;
       box-sizing: border-box !important;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.2s ease-in-out;
     }
 
     .input-control-kb:focus {
       border-color: #0284c7 !important;
       outline: none;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
     }
 
-    /* Wadah Field Dinamis */
-    .form-col-kb {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 0;
+    .input-control-kb[readonly],
+    .input-control-kb:disabled {
+      background-color: #f1f5f9 !important;
+      color: #475569 !important;
+      cursor: not-allowed;
+      border-color: #e2e8f0 !important;
     }
 
-    /* Responsif: Di desktop label tetap 1 baris jika muat, di HP otomatis membungkus rapi */
-    @media (min-width: 768px) {
+    /* Grid Grid Simetris Khusus Form Layanan */
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .grid-3-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    /* Penataan Checkbox & Label agar Sejajar, Tidak Bergeser, & Tidak Terpotong */
+    .checkbox-grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-item-kb {
+      display: flex !important;
+      align-items: center !important; /* Presisi vertikal di tengah */
+      gap: 8px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      color: #334155 !important;
+      cursor: pointer;
+      user-select: none;
+      margin: 0 !important;
+      line-height: 1.25;
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      transition: background 0.15s;
+    }
+
+    .checkbox-item-kb:hover {
+      background: #f1f5f9;
+    }
+
+    .checkbox-item-kb input[type="checkbox"] {
+      width: 16px !important;
+      height: 16px !important;
+      margin: 0 !important;
+      flex-shrink: 0;
+      accent-color: #0284c7;
+      cursor: pointer;
+    }
+
+    .checkbox-item-kb span {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: unset !important;
+    }
+
+    /* Responsif untuk Smartphone */
+    @media (max-width: 640px) {
+      .grid-2-col, .grid-3-col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
       .label-field-kb {
-        white-space: normal;
+        min-height: auto;
       }
     }
 
@@ -1711,77 +1791,60 @@
         <input type="hidden" id="reg_kode_rt" value="">
         <input type="hidden" id="reg_nik_suami" value="">
 
-        <!-- KARTU A: RINGKASAN IDENTITAS PUS TERPILIH -->
+        <!-- KARTU 1: IDENTITAS PUS TERPILIH (TERISI OTOMATIS) -->
         <div class="card-layanan-plan">
-          
-          <!-- Header Sub-Bagian -->
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="background: #0284c7; color: #ffffff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">1</span>
-              <span style="font-size: 13.5px; font-weight: 800; color: #1e293b; letter-spacing: 0.3px; text-transform: uppercase;">
+              <span style="background: #0284c7; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">1</span>
+              <span style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase;">
                 Data Identitas Calon Akseptor
               </span>
             </div>
             <span style="font-size: 11px; color: #64748b; font-weight: 600;">(Terisi Otomatis)</span>
           </div>
 
-          <!-- Baris 1: Nama Istri & NIK Istri (Grid 2 Kolom Simetris) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px;">
-            
+          <!-- Baris 1: Nama Istri & NIK Istri (Simetris 2 Kolom) -->
+          <div class="grid-2-col">
             <div class="form-col-kb">
-              <label for="reg_nama_istri" class="label-field-kb">
-                Nama Istri:
-              </label>
-              <input type="text" id="reg_nama_istri" class="input-control-kb" readonly placeholder="PILIH PUS TERLEBIH DAHULU" style="background: #f1f5f9; font-weight: 700; color: #0f172a; cursor: not-allowed;">
+              <label for="reg_nama_istri" class="label-field-kb">Nama Istri:</label>
+              <input type="text" id="reg_nama_istri" class="input-control-kb" readonly placeholder="PILIH PUS TERLEBIH DAHULU" style="font-weight: 700; color: #0f172a;">
             </div>
-
             <div class="form-col-kb">
-              <label for="reg_nik_istri" class="label-field-kb">
-                NIK Istri:
-              </label>
-              <input type="text" id="reg_nik_istri" class="input-control-kb" readonly placeholder="-" style="background: #f1f5f9; font-family: monospace; font-weight: 600; color: #334155; cursor: not-allowed;">
+              <label for="reg_nik_istri" class="label-field-kb">NIK Istri:</label>
+              <input type="text" id="reg_nik_istri" class="input-control-kb" readonly placeholder="-" style="font-family: monospace; font-weight: 600;">
             </div>
           </div>
 
-          <!-- Baris 2: Nama Suami & Wilayah Domisili (Grid 2 Kolom Simetris) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 6px;">            
+          <!-- Baris 2: Nama Suami & Wilayah Domisili (Simetris 2 Kolom) -->
+          <div class="grid-2-col" style="margin-bottom: 0;">
             <div class="form-col-kb">
-              <label for="reg_nama_suami" class="label-field-kb">
-                Nama Suami:
-              </label>
-              <input type="text" id="reg_nama_suami" class="input-control-kb" readonly placeholder="-" style="background: #f1f5f9; color: #334155; font-weight: 600; cursor: not-allowed;">
+              <label for="reg_nama_suami" class="label-field-kb">Nama Suami:</label>
+              <input type="text" id="reg_nama_suami" class="input-control-kb" readonly placeholder="-" style="font-weight: 600;">
             </div>
-
             <div class="form-col-kb">
-              <label for="reg_info_wilayah" class="label-field-kb">
-                Wilayah Domisili:
-              </label>
-              <input type="text" id="reg_info_wilayah" class="input-control-kb" readonly placeholder="-" style="background: #f1f5f9; font-size: 12.5px; color: #334155; cursor: not-allowed;" title="Wilayah Domisili Calon Akseptor">
+              <label for="reg_info_wilayah" class="label-field-kb">Wilayah Domisili:</label>
+              <input type="text" id="reg_info_wilayah" class="input-control-kb" readonly placeholder="-">
             </div>
           </div>
         </div>
 
-        <!-- KARTU B: FORM RENCANA PELAYANAN MEDIS -->
+        <!-- KARTU 2: RENCANA TINDAKAN KB -->
         <div class="card-layanan-plan">
-          
-          <!-- Header Sub-Bagian -->
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 16px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="background: #0284c7; color: #ffffff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;">2</span>
-              <span style="font-size: 13.5px; font-weight: 800; color: #1e293b; letter-spacing: 0.3px; text-transform: uppercase;">
+              <span style="background: #0284c7; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;">2</span>
+              <span style="font-size: 13px; font-weight: 800; color: #1e293b; text-transform: uppercase;">
                 Rencana Pelayanan & Tindakan KB
               </span>
             </div>
-            <span style="font-size: 11px; color: #ef4444; font-weight: 700;">* Wajib diisi</span>
+            <span style="font-size: 11px; color: #ef4444; font-weight: 700;">* Wajib Diisi</span>
           </div>
 
-          <!-- Baris 1: Jenis Pelayanan, Metode Kontrasepsi & Jenis Akseptor (Grid 3 Kolom Simetris) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 14px;">
-            
-            <!-- 1. Jenis Pelayanan -->
+          <!-- Baris 1: Jenis Pelayanan, Metode, & Jenis Akseptor (Simetris 3 Kolom) -->
+          <div class="grid-3-col">
             <div class="form-col-kb">
               <label for="reg_jenis_pelayanan" class="label-field-kb">
-                Jenis Pelayanan <span style="color: #ef4444; margin-left: 3px;">*</span>
+                Jenis Pelayanan <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
               <select id="reg_jenis_pelayanan" class="input-control-kb" onchange="onJenisPelayananChange()" required style="font-weight: 700;">
                 <option value="">-- PILIH PELAYANAN --</option>
@@ -1791,41 +1854,36 @@
               </select>
             </div>
 
-            <!-- 2. Metode Kontrasepsi -->
             <div class="form-col-kb">
               <label for="reg_rencana_metode" class="label-field-kb">
-                Metode Kontrasepsi <span style="color: #ef4444; margin-left: 3px;">*</span>
+                Metode Kontrasepsi <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
-              <select id="reg_rencana_metode" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="font-weight: 700; color: #0369a1; background-color: #f1f5f9;">
+              <select id="reg_rencana_metode" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" disabled required style="font-weight: 700; color: #0369a1;">
                 <option value=""></option>
               </select>
             </div>
 
-            <!-- 3. Jenis Akseptor (Otomatis) -->
             <div class="form-col-kb">
               <label class="label-field-kb">
-                Jenis Akseptor <span style="font-size: 10px; color: #0284c7; font-weight: 800; margin-left: 4px;">(OTOMATIS)</span>
+                Jenis Akseptor <span style="font-size: 10px; color: #0284c7; margin-left: 4px;">(OTOMATIS)</span>
               </label>
               <input type="hidden" id="reg_jenis_akseptor" value="">
-              <div id="badgeJenisAkseptorDisplay" class="input-control-kb" style="background: #f8fafc; font-weight: 700; color: #64748b; display: flex; align-items: center; user-select: none; border-style: dashed;">
-                Menunggu pemilihan metode...
+              <div id="badgeJenisAkseptorDisplay" class="input-control-kb" style="background: #f8fafc; font-weight: 700; color: #64748b; display: flex; align-items: center; border-style: dashed;">
+                Menunggu metode...
               </div>
             </div>
-
           </div>
 
-          <!-- Keterangan Deteksi Cerdas Riwayat KB -->
-          <div style="margin-bottom: 18px; padding: 2px 2px;">
+          <!-- Info Deteksi Cerdas Riwayat KB -->
+          <div style="margin-bottom: 14px;">
             <small id="infoRiwayatKb" style="font-size: 11.5px; font-weight: 600; color: #0369a1; display: block; line-height: 1.4;"></small>
           </div>
 
-          <!-- Baris 2: Bulan Pelayanan & Tanggal Rencana (Grid 2 Kolom Simetris) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px;">
-            
-            <!-- Bulan Pelayanan -->
+          <!-- Baris 2: Bulan & Tanggal Rencana (Simetris 2 Kolom) -->
+          <div class="grid-2-col">
             <div class="form-col-kb">
               <label for="reg_bulan_rencana" class="label-field-kb">
-                Bulan Pelayanan <span style="color: #ef4444; margin-left: 3px;">*</span>
+                Bulan Pelayanan <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
               <select id="reg_bulan_rencana" class="input-control-kb" onchange="evaluasiOtomatisJenisAkseptor()" required style="font-weight: 600;">
                 <option value="1">JANUARI</option><option value="2">FEBRUARI</option><option value="3">MARET</option>
@@ -1835,57 +1893,44 @@
               </select>
             </div>
 
-            <!-- Tanggal Rencana Tindakan -->
             <div class="form-col-kb">
-              <label for="reg_tgl_rencana" class="label-field-kb" style="width: auto !important;">
-                <span style="display: inline-flex; align-items: center; white-space: nowrap;">
-                  Tanggal Rencana Tindakan<span style="color: #ef4444; margin-left: 2px;">*</span>:
-                </span>
+              <label for="reg_tgl_rencana" class="label-field-kb">
+                Tanggal Rencana Tindakan <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
               <input type="date" id="reg_tgl_rencana" class="input-control-kb" required>
             </div>
-
           </div>
 
-          <!-- Baris 3: Fasilitas Pelayanan & Kader Pendamping (Grid 2 Kolom Simetris) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 18px;">
-            
-            <!-- Tempat / Fasilitas Pelayanan -->
+          <!-- Baris 3: Tempat Pelayanan & Kader Pendamping (Simetris 2 Kolom) -->
+          <div class="grid-2-col">
             <div class="form-col-kb">
-              <label for="reg_faskes_tujuan" class="label-field-kb" style="width: auto !important;">
-                <span style="display: inline-flex; align-items: center; white-space: nowrap;">
-                  Tempat / Fasilitas Pelayanan<span style="color: #ef4444; margin-left: 2px;">*</span>:
-                </span>
+              <label for="reg_faskes_tujuan" class="label-field-kb">
+                Tempat / Fasilitas Pelayanan <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
               <input type="text" id="reg_faskes_tujuan" class="input-control-kb" required placeholder="CONTOH: RSUD / PUSKESMAS / PMB" oninput="this.value = this.value.toUpperCase()">
             </div>
 
-            <!-- Nama Kader Pendamping -->
             <div class="form-col-kb">
               <label for="reg_nama_kader" class="label-field-kb">
-                Nama Kader Pendamping <span style="color: #ef4444; margin-left: 3px;">*</span>
+                Nama Kader Pendamping <span style="color:#ef4444; margin-left:2px;">*</span>
               </label>
               <input type="text" id="reg_nama_kader" class="input-control-kb" required placeholder="NAMA LENGKAP KADER" oninput="this.value = this.value.toUpperCase()" style="font-weight: 600;">
             </div>
-
           </div>
 
-          <!-- Baris 4: Catatan Tambahan (Full Width Simetris) -->
-          <div class="form-col-kb" style="margin-bottom: 6px;">
-            <label for="reg_catatan" class="label-field-kb" style="min-height: auto; margin-bottom: 2px;">
-              Catatan Tambahan:
-            </label>
+          <!-- Baris 4: Catatan Tambahan (Lebar Penuh) -->
+          <div class="form-col-kb">
+            <label for="reg_catatan" class="label-field-kb" style="min-height: auto;">Catatan Tambahan:</label>
             <input type="text" id="reg_catatan" class="input-control-kb" placeholder="Contoh: Riwayat tensi tinggi, ganti dari suntik 3 bulanan, dll." style="text-transform: none;">
           </div>
-
-        </div>         
+        </div>
 
         <!-- TOMBOL AKSI -->
         <div style="display: flex; gap: 10px;">
-          <button type="submit" id="btnSimpanPendaftaranLayanan" class="btn-submit" style="margin-top: 0; flex: 2; background-color: #0284c7; padding: 13px; font-size: 14px; cursor: pointer;">
+          <button type="submit" id="btnSimpanPendaftaranLayanan" class="btn-submit" style="margin-top: 0; flex: 2; background-color: #0284c7; padding: 12px; font-size: 14px;">
             💾 DAFTARKAN CALON AKSEPTOR
           </button>
-          <button type="button" class="btn-nav btn-secondary" style="flex: 1; justify-content: center; padding: 13px; font-size: 14px;" onclick="resetFormPendaftaranLayanan()">
+          <button type="button" class="btn-nav btn-secondary" style="flex: 1; justify-content: center; padding: 12px; font-size: 14px;" onclick="resetFormPendaftaranLayanan()">
             Bersihkan
           </button>
         </div>
@@ -8017,34 +8062,31 @@
   }
 
   // 3. Render Checkbox Desa ke dalam Grid
-  function renderLayananDesaCheckboxes(kdKec) {
+  function renderLayananDesaCheckboxes(kdKec, kdKab) {
     const wrapper = document.getElementById("filterExpLayananDesaWrapper");
     const grid = document.getElementById("filterExpLayananDesaGrid");
-    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
-
     if (!wrapper || !grid) return;
     grid.innerHTML = "";
-    if (wDusun) wDusun.style.display = "none";
 
-    let cleanKab = String(userKodeKab || "01").padStart(2, '0');
-    let cleanKec = String(kdKec).padStart(2, '0');
-    let desaKey = cleanKab + "_" + cleanKec;
-    let desas = dataDesa[desaKey] || dataDesa[cleanKec] || {};
+    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+    const cleanKec = String(kdKec).padStart(2, '0');
+    const compositeKey = cleanKab + "_" + cleanKec;
+    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
 
-    let listDesaKeys = Object.keys(desas);
-    if (listDesaKeys.length === 0) {
+    const desaKeys = Object.keys(desas);
+    if (desaKeys.length === 0) {
       wrapper.style.display = "none";
       loadAntreanLayananTable();
       return;
     }
 
     wrapper.style.display = "block";
-    listDesaKeys.forEach(kd => {
+    desaKeys.forEach(kd => {
       const cleanKd = String(kd).padStart(4, '0');
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      label.className = "checkbox-item-kb"; // Class standar rapi
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}')" style="accent-color: #0284c7;">
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')">
         <span>${desas[kd]}</span>
       `;
       grid.appendChild(label);
@@ -8069,13 +8111,17 @@
   }
 
   // 5. Render Checkbox Dusun ke dalam Grid
-  function renderLayananDusunCheckboxes(kdKec, kdDesa) {
+  function renderLayananDusunCheckboxes(kdKec, kdDesa, kdKab) {
     const wrapper = document.getElementById("filterExpLayananDusunWrapper");
     const grid = document.getElementById("filterExpLayananDusunGrid");
     if (!wrapper || !grid) return;
     grid.innerHTML = "";
 
-    const dsnMap = getDusunList(kdKec, kdDesa);
+    const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+    const cleanKec = String(kdKec).padStart(2, '0');
+    const cleanDesa = String(kdDesa).padStart(4, '0');
+    const dsnMap = getDusunList(cleanKec, cleanDesa, cleanKab);
+
     if (!dsnMap || Object.keys(dsnMap).length === 0) {
       wrapper.style.display = "none";
       loadAntreanLayananTable();
@@ -8090,9 +8136,9 @@
       }
 
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 5px; font-size: 11px; cursor: pointer; color: #334155;";
+      label.className = "checkbox-item-kb"; // Class standar rapi
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="accent-color: #0284c7;">
+        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()">
         <span>${dsnMap[kd].nama}</span>
       `;
       grid.appendChild(label);
