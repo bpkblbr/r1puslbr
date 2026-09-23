@@ -1710,7 +1710,7 @@
                 <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
               </div>
             </div>
-            <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;"></div>
+            <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; max-height: 140px; overflow-y: auto; background: #fff; border: 1.5px solid #cbd5e1; padding: 10px; border-radius: 6px;"></div>
           </div>
 
           <!-- BARIS 3: CHECKBOX FILTER DUSUN -->
@@ -1722,7 +1722,7 @@
                 <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_dusun', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
               </div>
             </div>
-            <div id="filterExpLayananDusunGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px;"></div>
+            <div id="filterExpLayananDusunGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; max-height: 140px; overflow-y: auto; background: #fff; border: 1.5px solid #cbd5e1; padding: 10px; border-radius: 6px;"></div>
           </div>
         </div>
 
@@ -8069,13 +8069,30 @@
   function renderLayananDesaCheckboxes(kdKec, kdKab) {
     const wrapper = document.getElementById("filterExpLayananDesaWrapper");
     const grid = document.getElementById("filterExpLayananDesaGrid");
+    const wDusun = document.getElementById("filterExpLayananDusunWrapper");
+
     if (!wrapper || !grid) return;
     grid.innerHTML = "";
+    if (wDusun) wDusun.style.display = "none";
+
+    // Pastikan grid memberi ruang cukup (minmax 180px)
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(180px, 1fr))";
+    grid.style.gap = "8px";
 
     const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
     const cleanKec = String(kdKec).padStart(2, '0');
     const compositeKey = cleanKab + "_" + cleanKec;
     let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
+
+    if (Object.keys(desas).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + cleanKec)) {
+          desas = dataDesa[k];
+          break;
+        }
+      }
+    }
 
     const desaKeys = Object.keys(desas);
     if (desaKeys.length === 0) {
@@ -8085,13 +8102,29 @@
     }
 
     wrapper.style.display = "block";
+
     desaKeys.forEach(kd => {
       const cleanKd = String(kd).padStart(4, '0');
       const label = document.createElement("label");
-      label.className = "checkbox-item-kb"; // Class standar rapi
+      // Flexbox dengan align-items center & text wrap agar tidak terpotong
+      label.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #1e293b;
+        background: #f8fafc;
+        padding: 6px 10px;
+        border-radius: 5px;
+        border: 1.5px solid #cbd5e1;
+        cursor: pointer;
+        box-sizing: border-box;
+        min-height: 38px;
+      `;
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')">
-        <span>${desas[kd]}</span>
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')" style="width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: #0284c7; cursor: pointer;">
+        <span style="white-space: normal; line-height: 1.25; overflow: visible; text-overflow: unset; word-break: break-word;">${desas[kd]}</span>
       `;
       grid.appendChild(label);
     });
@@ -8121,6 +8154,11 @@
     if (!wrapper || !grid) return;
     grid.innerHTML = "";
 
+    // Pastikan grid memberi ruang cukup (minmax 180px)
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(180px, 1fr))";
+    grid.style.gap = "8px";
+
     const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
     const cleanKec = String(kdKec).padStart(2, '0');
     const cleanDesa = String(kdDesa).padStart(4, '0');
@@ -8133,6 +8171,7 @@
     }
 
     wrapper.style.display = "block";
+
     for (let kd in dsnMap) {
       let cleanKd = String(kd).padStart(4, '0');
       if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
@@ -8140,10 +8179,24 @@
       }
 
       const label = document.createElement("label");
-      label.className = "checkbox-item-kb"; // Class standar rapi
+      label.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #1e293b;
+        background: #f8fafc;
+        padding: 6px 10px;
+        border-radius: 5px;
+        border: 1.5px solid #cbd5e1;
+        cursor: pointer;
+        box-sizing: border-box;
+        min-height: 38px;
+      `;
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()">
-        <span>${dsnMap[kd].nama}</span>
+        <input type="checkbox" name="cb_layanan_dusun" value="${cleanKd}" onchange="loadAntreanLayananTable()" style="width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: #0284c7; cursor: pointer;">
+        <span style="white-space: normal; line-height: 1.25; overflow: visible; text-overflow: unset; word-break: break-word;">${dsnMap[kd].nama}</span>
       `;
       grid.appendChild(label);
     }
