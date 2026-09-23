@@ -2079,12 +2079,7 @@
         }
         if (typeof initRealtimeMutasi === "function") {
           initRealtimeMutasi();
-        }
-
-        // Panggil fungsi realtime di dalam window.onload setelah sesi valid:
-        if (typeof initRealtimePelayananKb === "function") {
-          initRealtimePelayananKb();
-        }
+        }        
 
       } catch (err) {
         console.error("Gagal membaca session:", err);
@@ -3179,10 +3174,9 @@
       if (dsn) {
         for (let kd in dsn) {
           let cleanKd = String(kd).trim().padStart(4, '0');
-          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-            if (!userKodeDusunList.includes(cleanKd)) {
+          if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+            if (!userAllowedDusun.includes(cleanKd)) {
               continue;
-            }
           }
           dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
@@ -3295,10 +3289,9 @@
         for (let kd in dsn) {
           let cleanKd = String(kd).trim().padStart(4, '0');
           // Jika akun User Desa memiliki pembatasan dusun tertentu
-          if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-            if (!userKodeDusunList.includes(cleanKd)) {
-              continue; // Lewati dusun yang bukan hak aksesnya
-            }
+          if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+            if (!userAllowedDusun.includes(cleanKd)) {
+              continue;
           }
           sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
@@ -3309,7 +3302,8 @@
   // --- LOGIC SEARCH BERTINGKAT ---
   function onSearchKecamatanChange() {
     const kec = document.getElementById("searchKecamatan").value;
-    populateDesaByKec(kec, "searchDesa");
+    const kab = userKodeKab || "01";
+    populateDesaByKec(kec, "searchDesa", kab);
     document.getElementById("searchDusun").innerHTML = '<option value="">-- PILIH DUSUN --</option>';
     document.getElementById("searchRt").innerHTML = '<option value="">-- PILIH RT --</option>';
   }
@@ -3317,17 +3311,17 @@
   function onSearchDesaChange() {
     const kec = document.getElementById("searchKecamatan").value;
     const desa = document.getElementById("searchDesa").value;
+    const kab = userKodeKab || "01";
     const sel = document.getElementById("searchDusun");
     sel.innerHTML = '<option value="">-- PILIH DUSUN --</option>';
-    const dsn = getDusunList(kec, desa);
+    
+    const dsn = getDusunList(kec, desa, kab);
     if (dsn) {
       for (let kd in dsn) {
         let cleanKd = String(kd).trim().padStart(4, '0');
-        // Kunci HANYA dusun binaannya jika user desa dibatasi
-        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-          if (!userKodeDusunList.includes(cleanKd)) {
+        if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+          if (!userAllowedDusun.includes(cleanKd)) {
             continue;
-          }
         }
         sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
@@ -3743,24 +3737,34 @@
   }
 
   function updateDusun(selectedVal = "") {
+    const kodeKab = document.getElementById("kode_kab")?.value || userKodeKab || "01";
     const kodeKec = document.getElementById("kecamatan").value;
     const kodeDesa = document.getElementById("desa").value;
     document.getElementById("kode_desa").value = kodeDesa;
-    resetDropdown("dusun", "kode_dusun"); resetDropdown("rt", "kode_rt");
-    let dusunObj = getDusunList(kodeKec, kodeDesa);
+    resetDropdown("dusun", "kode_dusun"); 
+    resetDropdown("rt", "kode_rt");
+    
+    // Sertakan kodeKab agar composite key terbaca sempurna
+    let dusunObj = getDusunList(kodeKec, kodeDesa, kodeKab);
+    
     if (kodeDesa && dusunObj) {
       const dusunSelect = document.getElementById("dusun");
       dusunSelect.disabled = false;
       for (let kode in dusunObj) {
-        let cleanKd = String(kode).trim().padStart(4, '0');
-        if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-          if (!userKodeDusunList.includes(cleanKd)) {
+        let cleanKd = String(kode).trim().padStart(4, '0');        
+        
+        if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+          if (!userAllowedDusun.includes(cleanKd)) {
             continue;
           }
-        }
+        }        
+        
         dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), cleanKd));
       }
-      if (selectedVal) { setSelectValueCaseInsensitive("dusun", selectedVal); updateRT(); }
+      if (selectedVal) { 
+        setSelectValueCaseInsensitive("dusun", selectedVal); 
+        updateRT(); 
+      }
     }
   }
 
@@ -6525,21 +6529,24 @@
       return kdDesa;
     }
 
-    function getNamaDusunList(kdKec, kdDesa, kdDusunListStr, role) {
+    function getNamaDusunList(kdKab, kdKec, kdDesa, allowedDusunArr, role) {
       if (role !== "User Desa") return "-";
-      if (!kdDusunListStr || String(kdDusunListStr).trim() === "") {
+      if (!allowedDusunArr || (Array.isArray(allowedDusunArr) && allowedDusunArr.length === 0)) {
         return "<span style='color:#059669; font-weight:600;'>SEMUA DUSUN</span>";
       }
 
-      const dsnMap = getDusunList(kdKec, kdDesa);
-      const codes = kdDusunListStr.split(',').map(c => c.trim().padStart(4, '0'));
+      const dsnMap = getDusunList(kdKec, kdDesa, kdKab);
+      const arr = Array.isArray(allowedDusunArr) 
+        ? allowedDusunArr 
+        : String(allowedDusunArr).split(',').map(c => c.trim().padStart(4, '0'));
+        
       const names = [];
-
-      codes.forEach(c => {
-        if (dsnMap && dsnMap[c]) {
-          names.push(dsnMap[c].nama);
+      arr.forEach(c => {
+        let cleanCode = String(c).trim().padStart(4, '0');
+        if (dsnMap && dsnMap[cleanCode]) {
+          names.push(dsnMap[cleanCode].nama);
         } else {
-          names.push(c);
+          names.push(cleanCode);
         }
       });
 
@@ -6570,8 +6577,7 @@
       const tr = document.createElement("tr");
       const nmKec = getNamaKec(item.kode_kec);
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa);
-      const nmDusunText = getNamaDusunList(item.kode_kec, item.kode_desa, item.kode_dusun_list, item.role);
-
+      const nmDusunText = getNamaDusunList(item.kode_kab, item.kode_kec, item.kode_desa, item.allowed_dusun, item.role);
       // ==============================================================
       // LOGIKA PEMBATASAN HAK AKSES TOMBOL EDIT & HAPUS
       // ==============================================================
@@ -6632,18 +6638,23 @@
     populateUserKecDropdown();
 
     if (item.kode_kec) {
-      document.getElementById("user_kec_select").value = item.kode_kec.padStart(2, '0');
+      document.getElementById("user_kec_select").value = String(item.kode_kec).trim().padStart(2, '0');
       onUserKecChange();
     }
+
     if (item.kode_desa) {
-      document.getElementById("user_desa_select").value = item.kode_desa.padStart(4, '0');
+      document.getElementById("user_desa_select").value = String(item.kode_desa).trim().padStart(4, '0');
       onUserDesaChange();
       
-      if (item.kode_dusun_list) {
-        const dsnArr = item.kode_dusun_list.split(',').map(s => s.trim());
+      if (item.allowed_dusun) {
+        const dsnArr = Array.isArray(item.allowed_dusun)
+          ? item.allowed_dusun.map(s => String(s).trim().padStart(4, '0'))
+          : String(item.allowed_dusun).split(',').map(s => s.trim().padStart(4, '0'));
+
         const checkboxes = document.querySelectorAll('input[name="user_dusun_checkbox"]');
         checkboxes.forEach(cb => {
-          if (dsnArr.includes(cb.value)) cb.checked = true;
+          // Setel true jika ada dalam daftar, setel false jika tidak ada
+          cb.checked = dsnArr.includes(String(cb.value).trim().padStart(4, '0'));
         });
       }
     }
@@ -8077,8 +8088,8 @@
     const checkedDusun = Array.from(document.querySelectorAll('input[name="cb_layanan_dusun"]:checked')).map(cb => String(cb.value).padStart(4, '0'));
     if (checkedDusun.length > 0) {
       query = query.in('kode_dusun', checkedDusun);
-    } else if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {
-      query = query.in('kode_dusun', userKodeDusunList);
+    } else if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
+      query = query.in('kode_dusun', userAllowedDusun);
     }
 
     const { data, error } = await query;
@@ -8109,9 +8120,10 @@
                      .eq('kode_desa', String(userKodeDesa).padStart(4, '0'));
                      
         // Jika akun kader dibatasi dusun tertentu
-        if (userKodeDusunList && userKodeDusunList.length > 0) {
-          query = query.in('kode_dusun', userKodeDusunList);
+        if (userAllowedDusun && userAllowedDusun.length > 0) {
+          query = query.in('kode_dusun', userAllowedDusun);
         }
+      }
       } else if (isKecRole()) {
         query = query.eq('kode_kec', String(userKodeKec).padStart(2, '0'));
       } else if (userKodeKab) {
