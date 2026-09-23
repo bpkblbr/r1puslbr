@@ -2741,7 +2741,7 @@
             const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
             const dsnNama = (dsnSelect.selectedIndex > 0) ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
 
-            if (isSameDesa && (!dsnTujuan || dsnTujuan === "0000")) {
+            if (isSameDesa && !cleanTargetDusunValid(dsnTujuan)) {
               Swal.showValidationMessage('Pindah di dalam desa wajib memilih Dusun tujuan baru!');
               return false;
             }
@@ -3502,8 +3502,8 @@
           if (!matchDesa) return false;
 
           const cleanTargetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
-          if (cleanTargetDsn && cleanTargetDsn !== "0000" && userKodeDusunList && userKodeDusunList.length > 0) {
-            return userKodeDusunList.includes(cleanTargetDsn);
+          if (cleanTargetDusunValid(cleanTargetDsn) && userAllowedDusun && userAllowedDusun.length > 0) {
+            return userAllowedDusun.includes(cleanTargetDsn);
           }
           return true;
         }
@@ -3591,13 +3591,20 @@
       let lockReason = "";
       const cleanTargetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
 
-      if (isDesaRole() && userKodeDusunList && userKodeDusunList.length > 0) {        
-        if (cleanTargetDsn && cleanTargetDusunValid(cleanTargetDsn)) {
-          if (!userKodeDusunList.includes(cleanTargetDsn)) {
+      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {        
+        if (cleanTargetDusunValid(cleanTargetDsn)) {
+          if (!userAllowedDusun.includes(cleanTargetDsn)) {
             canAccept = false;
             lockReason = `Khusus Kader Dusun ${item.dusun_tujuan || cleanTargetDsn}`;
           }
         }
+      }
+
+      let infoDusunHtml = "";
+      if (cleanTargetDusunValid(cleanTargetDsn)) {
+        infoDusunHtml = `<br><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:bold;">Tujuan: Dusun ${item.dusun_tujuan || cleanTargetDsn}</span>`;
+      } else {
+        infoDusunHtml = `<br><span style="color:#64748b; font-size:10.5px;">(Pindahan Luar Desa - Dusun Ditentukan Kader Penerima)</span>`;
       }
       
       let infoDusunHtml = "";
@@ -3628,11 +3635,12 @@
       `;
       tbody.appendChild(tr);
     });
-  }
+  }  
   
-  // Helper validasi kode dusun (diadopsi dari Kabupaten)
   function cleanTargetDusunValid(kd) {
-    return kd && kd !== "0000" && kd !== "null" && kd !== "undefined" && String(kd).trim() !== "";
+    if (kd === null || kd === undefined) return false;    
+    const val = String(kd).trim().toLowerCase();    
+    return val !== "" && val !== "null" && val !== "undefined" && !/^0+$/.test(val);
   }
 
   // Fungsi accept mutasi yang diselaraskan:
