@@ -6400,15 +6400,14 @@
       targetDesa = isDesaRole() ? userKodeDesa : document.getElementById("user_desa_select").value;
     }
     
-    // Ambil daftar kode dusun terpilih
-    let selectedDusun = [];
+    // Ambil daftar kode dusun terpilih (cukup 1 deklarasi)
+    let selectedDusun = null;
     if (roleVal === "User Desa") {
       const checkedBoxes = document.querySelectorAll('input[name="user_dusun_checkbox"]:checked');
-      checkedBoxes.forEach(cb => selectedDusun.push(cb.value));
+      if (checkedBoxes.length > 0) {
+        selectedDusun = Array.from(checkedBoxes).map(cb => cb.value.padStart(4, '0'));
+      }
     }
-
-    const checkedBoxes = document.querySelectorAll('input[name="user_dusun_checkbox"]:checked');
-    const selectedDusun = Array.from(checkedBoxes).map(cb => cb.value.padStart(4, '0'));
 
     const payload = {
       username: document.getElementById("user_name_input").value.trim(),
@@ -6418,7 +6417,7 @@
       kode_kab: userKodeKab || "01",
       kode_kec: targetKec ? targetKec.padStart(2, '0') : null,
       kode_desa: targetDesa ? targetDesa.padStart(4, '0') : null,
-      allowed_dusun: (roleVal === "User Desa" && selectedDusun.length > 0) ? selectedDusun : null
+      allowed_dusun: (roleVal === "User Desa" && selectedDusun && selectedDusun.length > 0) ? selectedDusun : null
     };
 
     try {
