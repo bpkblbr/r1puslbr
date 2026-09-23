@@ -3177,6 +3177,7 @@
           if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
             if (!userAllowedDusun.includes(cleanKd)) {
               continue;
+            }
           }
           dsnSel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
@@ -3288,10 +3289,10 @@
       if (dsn) {
         for (let kd in dsn) {
           let cleanKd = String(kd).trim().padStart(4, '0');
-          // Jika akun User Desa memiliki pembatasan dusun tertentu
           if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
             if (!userAllowedDusun.includes(cleanKd)) {
               continue;
+            }
           }
           sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
         }
@@ -3322,6 +3323,7 @@
         if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
           if (!userAllowedDusun.includes(cleanKd)) {
             continue;
+          }
         }
         sel.add(new Option(dsn[kd].nama.toUpperCase(), cleanKd));
       }
@@ -3806,6 +3808,7 @@
       return;
     }
 
+    // hitungUmurPresisi di bawah ini yang membedah format tanggal secara fleksibel
     const umur = hitungUmurPresisi(tglLahirInput, tahunPelaporan);
     umurInput.value = umur;
     applyMutationAndAgeLocks();
@@ -3816,6 +3819,7 @@
 
     let birthYear, birthMonth, birthDay;
 
+    // 1. Antisipasi format pemisah tanda strip (-) baik YYYY-MM-DD maupun DD-MM-YYYY
     if (typeof tglLahirInput === "string") {
       if (tglLahirInput.includes("-")) {
         const p = tglLahirInput.split("-");
@@ -3828,6 +3832,7 @@
           birthMonth = parseInt(p[1], 10);
           birthDay = parseInt(p[0], 10);
         }
+      // 2. Antisipasi format pemisah garis miring (/) baik DD/MM/YYYY maupun YYYY/MM/DD
       } else if (tglLahirInput.includes("/")) {
         const p = tglLahirInput.split("/");
         if (p[2].length === 4) {
@@ -3844,6 +3849,7 @@
 
     if (!birthYear || isNaN(birthYear)) return 0;
     
+    // 3. Hitung umur berdasarkan Tahun Pelaporan
     const today = new Date();
     const targetYear = tahunPelaporan ? parseInt(tahunPelaporan, 10) : today.getFullYear();
     let refYear = targetYear;
