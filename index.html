@@ -3605,14 +3605,7 @@
         infoDusunHtml = `<br><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:bold;">Tujuan: Dusun ${item.dusun_tujuan || cleanTargetDsn}</span>`;
       } else {
         infoDusunHtml = `<br><span style="color:#64748b; font-size:10.5px;">(Pindahan Luar Desa - Dusun Ditentukan Kader Penerima)</span>`;
-      }
-      
-      let infoDusunHtml = "";
-      if (cleanTargetDsn && cleanTargetDusunValid(cleanTargetDsn)) {
-        infoDusunHtml = `<br><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:10.5px; font-weight:bold;">Tujuan: Dusun ${item.dusun_tujuan || cleanTargetDsn}</span>`;
-      } else {
-        infoDusunHtml = `<br><span style="color:#64748b; font-size:10.5px;">(Pindahan Luar Desa - Dusun Ditentukan Kader Penerima)</span>`;
-      }
+      }      
       
       const actionHtml = canAccept 
         ? `<button type="button" class="btn-nav btn-action" style="padding: 5px 10px; font-size: 11px;" onclick="acceptAndAutoFillMutasi(${idx})">📥 Terima / Input</button>`
