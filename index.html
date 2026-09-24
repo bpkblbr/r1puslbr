@@ -5970,6 +5970,7 @@
   }
 
    function resetMwForm() {
+    // 1. Kosongkan ID, Dusun, RT, dan kembalikan teks tombol
     document.getElementById("mw_id").value = "";
     document.getElementById("mw_dusun_nama").value = "";
     document.getElementById("mw_kode_dusun").value = "";
@@ -5987,13 +5988,22 @@
     const inDsnNama  = document.getElementById("mw_dusun_nama");
     const inDsnKode  = document.getElementById("mw_kode_dusun");
 
-    // Helper: Hanya lock jika nilai (valNama & valKode) BENAR-BENAR ADA di master wilayah
+    // 2. Kosongkan terlebih dahulu kolom yang fleksibel agar tidak ada sisa edit
+    if (!isDesaRole()) {
+      inDesaNama.value = "";
+      inDesaKode.value = "";
+    }
+    if (!isDesaRole() && !isKecRole()) {
+      inKecNama.value = "";
+      inKecKode.value = "";
+    }
+
+    // Helper: Mengatur lock & pengisian nilai hanya jika memang wajib terkunci
     const setFieldLock = (inputNama, inputKode, shouldLock, valNama = "", valKode = "") => {
-      // Jika disuruh lock tapi datanya kosong di DB -> BATALKAN lock agar user bisa input
       const actuallyLock = Boolean(shouldLock && valNama && valKode);
 
-      if (valNama) inputNama.value = valNama;
-      if (valKode) inputKode.value = valKode;
+      inputNama.value = actuallyLock ? valNama : (shouldLock ? "" : inputNama.value);
+      inputKode.value = actuallyLock ? valKode : (shouldLock ? "" : inputKode.value);
 
       inputNama.readOnly = actuallyLock;
       inputKode.readOnly = actuallyLock;
@@ -6001,7 +6011,7 @@
       inputKode.style.backgroundColor = actuallyLock ? "#e9ecef" : "#ffffff";
     };
 
-    // 1. Cek keberadaan data di master wilayah (cache)
+    // 3. Ambil data master cache wilayah pengguna aktif
     let curKdProv = "52";
     let curNamaProv = dataProvinsi[curKdProv] || "";
 
@@ -6028,17 +6038,14 @@
       curNamaDesa = dataDesa[curKdKec][curKdDesa];
     }
 
-    // 2. Evaluasi status ada/tidaknya data di database
     const hasProv = Boolean(curNamaProv && curKdProv);
     const hasKab  = Boolean(curNamaKab && curKdKab);
     const hasKec  = Boolean(curNamaKec && curKdKec);
     const hasDesa = Boolean(curNamaDesa && curKdDesa);
 
-    // 3. Atur perilaku form:
+    // 4. Kunci dan isi sesuai hierarki kewenangan
     if (isDesaRole()) {
-      // User Desa:
-      // Kunci HANYA jika datanya memang sudah tercatat di tabel master_wilayah.
-      // Jika belum ada di master wilayah, form tetap terbuka agar user/admin bisa mengisi awalnya.
+      // User Desa: Terkunci pada desanya
       setFieldLock(inProvNama, inProvKode, hasProv, curNamaProv, curKdProv);
       setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab, curKdKab);
       setFieldLock(inKecNama, inKecKode, hasKec, curNamaKec, curKdKec);
@@ -6046,21 +6053,17 @@
       setFieldLock(inDsnNama, inDsnKode, false, "", "");
 
     } else if (isKecRole()) {
-      // Admin Kecamatan:
+      // Admin Kecamatan: Terkunci di kecamatan, Desa & Dusun KOSONG dan terbuka
       setFieldLock(inProvNama, inProvKode, hasProv, curNamaProv, curKdProv);
       setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab, curKdKab);
-      // Kecamatan hanya terkunci jika sudah masuk master wilayah
       setFieldLock(inKecNama, inKecKode, hasKec, curNamaKec, curKdKec);
-      // Desa & Dusun selalu terbuka untuk Admin Kec
       setFieldLock(inDesaNama, inDesaKode, false, "", "");
       setFieldLock(inDsnNama, inDsnKode, false, "", "");
 
     } else {
-      // Admin Kabupaten:
-      // Provinsi & Kabupaten hanya terkunci jika sudah ada di DB
+      // Admin Kabupaten: Terkunci di kabupaten, Kecamatan s.d. Dusun KOSONG dan terbuka
       setFieldLock(inProvNama, inProvKode, hasKab, curNamaProv || "NUSA TENGGARA BARAT", curKdProv || "52");
       setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab || "LOMBOK BARAT", curKdKab || "01");
-      // Kecamatan s.d. Dusun terbuka bebas untuk Admin Kab
       setFieldLock(inKecNama, inKecKode, false, "", "");
       setFieldLock(inDesaNama, inDesaKode, false, "", "");
       setFieldLock(inDsnNama, inDsnKode, false, "", "");
