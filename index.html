@@ -9517,9 +9517,25 @@
   }
 
   function renderSatuKartuDepan(item) {
-    const isPbi = String(item.peserta_jkn || '').toUpperCase().includes('PBI') && !String(item.peserta_jkn || '').toUpperCase().includes('BUKAN');
-    const isNonPbi = String(item.peserta_jkn || '').toUpperCase().includes('BUKAN PBI') || String(item.peserta_jkn || '').toUpperCase().includes('SWASTA');
-    const isNonJkn = String(item.peserta_jkn || '').toUpperCase().includes('TIDAK') || (!isPbi && !isNonPbi);
+    const rawJkn = String(item.peserta_jkn || '').toUpperCase().trim();
+
+    let checkPesertaJkn = false;       // Kotak utama: Peserta JKN
+    let checkPbi = false;              // Sub: Penerima Bantuan Iuran
+    let checkBukanPbi = false;         // Sub: Bukan Penerima Bantuan Iuran
+    let checkBukanPesertaJkn = false;  // Kotak: Bukan Peserta JKN
+
+    if (rawJkn === "PBI" || (rawJkn.includes("PBI") && !rawJkn.includes("BUKAN"))) {
+      // 1. Jika PBI -> Centang Peserta JKN dan Penerima Bantuan Iuran
+      checkPesertaJkn = true;
+      checkPbi = true;
+    } else if (rawJkn.includes("BUKAN PBI") || rawJkn.includes("SWASTA") || rawJkn.includes("NON PBI") || rawJkn.includes("BPJS")) {
+      // 2. Jika BUKAN PBI atau SWASTA -> Centang Peserta JKN dan Bukan Penerima Bantuan Iuran
+      checkPesertaJkn = true;
+      checkBukanPbi = true;
+    } else {
+      // 3. Jika TIDAK MEMILIKI -> Hanya centang Bukan Peserta JKN
+      checkBukanPesertaJkn = true;
+    }
 
     const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
     const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
@@ -9613,23 +9629,39 @@
               <tr><td class="b-text">Nama Suami/Istri</td><td class="b-text">:</td><td class="b-text">${item.nama_suami || '-'}</td></tr>
               <tr><td class="b-text">Tgl. Lahir/Umur Istri</td><td class="b-text">:</td><td class="b-text">${tglLahirTeks}</td></tr>
               <tr><td class="b-text" style="vertical-align:top;">Alamat Peserta KB</td><td class="b-text" style="vertical-align:top;">:</td><td class="b-text">${alamatLengkap}</td></tr>
-              <tr><td class="b-text">Tahapan KS</td><td class="b-text">:</td><td class="b-text">KPS</td></tr>
+              <tr><td class="b-text">Tahapan KS</td><td class="b-text">:</td><td class="b-text"></td></tr>
               <tr>
                 <td class="b-text" style="vertical-align:top;">Status Peserta Jaminan<br>Kesehatan Nasional (JKN)</td>
                 <td class="b-text" style="vertical-align:top;">:</td>
                 <td>
                   <table style="width:100%; border-collapse:collapse; font-size:7pt;">
+                    <!-- BARIS 1: PESERTA JKN (SEJAJAR KIRI) -->
                     <tr>
-                      <td style="width:14px; vertical-align:middle; padding:0.5mm 0;"><span class="box-check">${(!isNonJkn) ? '&#10003;' : '&nbsp;'}</span></td>
+                      <td style="width:14px; vertical-align:middle; padding:0.5mm 0;">
+                        <span class="box-check">${checkPesertaJkn ? '&#10003;' : '&nbsp;'}</span>
+                      </td>
                       <td style="vertical-align:middle; padding:0.5mm 0;" class="b-text">Peserta JKN :</td>
                     </tr>
+
+                    <!-- SUB-PILIHAN PESERTA JKN (MASUK KE DALAM) -->
                     <tr>
                       <td></td>
                       <td style="padding-left:4.5mm;">
-                        <div style="display:flex; align-items:center; margin-bottom:0.5mm;"><span class="box-check">${isPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran</div>
-                        <div style="display:flex; align-items:center; margin-bottom:0.5mm;"><span class="box-check">${isNonPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran</div>
-                        <div style="display:flex; align-items:center;"><span class="box-check">${isNonJkn ? '&#10003;' : '&nbsp;'}</span> Bukan Peserta JKN</div>
+                        <div style="display:flex; align-items:center; margin-bottom:0.5mm;">
+                          <span class="box-check">${checkPbi ? '&#10003;' : '&nbsp;'}</span> Penerima Bantuan Iuran
+                        </div>
+                        <div style="display:flex; align-items:center; margin-bottom:0.8mm;">
+                          <span class="box-check">${checkBukanPbi ? '&#10003;' : '&nbsp;'}</span> Bukan Penerima Bantuan Iuran
+                        </div>
                       </td>
+                    </tr>
+
+                    <!-- BARIS 2: BUKAN PESERTA JKN (SEJAJAR DENGAN PESERTA JKN) -->
+                    <tr>
+                      <td style="width:14px; vertical-align:middle; padding:0.5mm 0;">
+                        <span class="box-check">${checkBukanPesertaJkn ? '&#10003;' : '&nbsp;'}</span>
+                      </td>
+                      <td style="vertical-align:middle; padding:0.5mm 0;" class="b-text">Bukan Peserta JKN</td>
                     </tr>
                   </table>
                 </td>
