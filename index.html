@@ -437,16 +437,14 @@
       }
     }
    
-    @media (max-width: 640px) {
-    /* 1. Sesuaikan pembungkus modal */
+    @media (max-width: 640px) {    
     #modalPelayananKb .modal-content {
       width: 95% !important;
       padding: 14px 10px !important;
       margin: 3% auto !important;
       max-height: 94vh !important;
     }
-
-    /* 2. Tab switcher (Antrean / Daftar) menjadi 1 kolom bertumpuk */
+    
     #modalPelayananKb .modal-content > div[style*="display: flex; gap: 10px; margin-bottom: 15px"] {
       flex-direction: column !important;
       gap: 8px !important;
@@ -457,8 +455,7 @@
       justify-content: center !important;
       padding: 10px !important;
     }
-
-    /* 3. Baris Filter Antrean (Status, Tahun, Bulan Mulai, Bulan Sampai, Tombol Segarkan) -> 1 kolom */
+    
     #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] {
       display: flex !important;
       flex-direction: column !important;
@@ -471,16 +468,14 @@
     #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] button {
       width: 100% !important;
     }
-
-    /* 4. Filter Checklist Desa & Dusun -> 1 kolom */
+    
     #filterExpLayananDesaGrid,
     #filterExpLayananDusunGrid {
       grid-template-columns: 1fr !important;
       width: 100% !important;
       max-height: 180px !important;
     }
-
-    /* 5. Tombol Ekspor (Excel, PDF, Cetak Form) -> 1 kolom bertumpuk */
+    
     #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] {
       flex-direction: column !important;
       gap: 8px !important;
@@ -488,8 +483,7 @@
     #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] button {
       width: 100% !important;
     }
-
-    /* 6. Form Tab Pendaftaran Akseptor: Filter Wilayah & Pencarian -> 1 kolom */
+    
     #layananTabDaftar div[style*="grid-template-columns: repeat(auto-fit"] {
       display: flex !important;
       flex-direction: column !important;
@@ -503,8 +497,7 @@
       width: 100% !important;
       padding: 10px !important;
     }
-
-    /* 7. Grid input dalam form kartu (Nama, NIK, Alkon, Tanggal, dll) -> 1 kolom */
+    
     #formPendaftaranLayanan .grid-2-col,
     #formPendaftaranLayanan .grid-3-col {
       grid-template-columns: 1fr !important;
@@ -513,8 +506,13 @@
     #formPendaftaranLayanan .card-layanan-plan {
       padding: 12px 10px !important;
     }
-
-    /* 8. Tombol Simpan & Bersihkan -> 1 kolom bertumpuk */
+    
+    #layananTabDaftar .card-layanan-plan > div[style*="justify-content: space-between"] {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+    }
+    
     #formPendaftaranLayanan > div[style*="display: flex; gap: 10px;"] {
       flex-direction: column !important;
       gap: 8px !important;
