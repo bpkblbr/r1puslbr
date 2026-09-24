@@ -276,44 +276,7 @@
       gap: 6px;
       min-width: 0;
       width: 100%;
-    }
-
-    /* Standarisasi Label agar Simetris & Teks Tidak Terpotong */
-    .label-field-kb {
-      font-size: 11.5px !important;
-      font-weight: 700 !important;
-      color: #475569 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.3px;
-      margin: 0 !important;
-      line-height: 1.35 !important;
-      min-height: 28px; /* Mengunci tinggi label agar input di bawahnya presisi sejajar */
-      display: flex;
-      align-items: flex-end; /* Mengunci teks label tepat menempel di atas input */
-      white-space: normal !important; /* Mencegah teks terpotong */
-      word-break: break-word;
-    }
-
-    /* Standarisasi Tinggi, Padding, dan Font Seluruh Input & Select */
-    .input-control-kb {
-      height: 42px !important;
-      min-height: 42px !important;
-      width: 100% !important;
-      padding: 0 12px !important;
-      border-radius: 6px !important;
-      border: 1.5px solid #cbd5e1 !important;
-      font-size: 13px !important;
-      color: #1e293b !important;
-      background-color: #ffffff;
-      box-sizing: border-box !important;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .input-control-kb:focus {
-      border-color: #0284c7 !important;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
-    }
+    }    
 
     .input-control-kb[readonly],
     .input-control-kb:disabled {
@@ -407,37 +370,7 @@
       }
     }
 
-    .chart-container { position: relative; height: 250px; width: 100%; }
-
-    @media print {
-      @page {
-        size: A4 portrait;
-        margin: 0;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #fff;
-      }
-      .sheet-a4 {
-        page-break-after: always;
-        width: 210mm;
-        height: 297mm;
-        box-sizing: border-box;
-        padding: 23mm 15mm; /* Margin agar kartu berada tepat di tengah */
-        display: grid;
-        grid-template-columns: 90mm 90mm;
-        grid-template-rows: 125mm 125mm;
-        gap: 0; /* Tanpa celah agar bolak-balik presisi tanpa pergeseran */
-      }
-      .ki-page-card {
-        width: 90mm !important;
-        height: 125mm !important;
-        box-sizing: border-box;
-        overflow: hidden;
-        border: 0.2mm dashed #ccc; /* Garis panduan potong gunting */
-      }
-    }
+    .chart-container { position: relative; height: 250px; width: 100%; }    
 
     .sheet-a4 {
       width: 210mm;
@@ -10637,6 +10570,21 @@
       focusCancel: true
     }).then((result) => {
       if (result.isConfirmed) {
+        // 1. Bersihkan listener realtime Supabase secara tuntas
+        if (realtimeLayananChannel) {
+          db.removeChannel(realtimeLayananChannel);
+          realtimeLayananChannel = null;
+        }
+
+        if (realtimeMutasiChannel) {
+          db.removeChannel(realtimeMutasiChannel);
+          realtimeMutasiChannel = null;
+        }
+
+        // 2. Hapus sesi login dari penyimpanan lokal perangkat
+        localStorage.removeItem("pus_app_session");
+
+        // 3. Tutup jendela atau alihkan ke halaman logout
         window.close();
         setTimeout(() => {
           window.location.href = "https://bpkblbr.github.io/r1puslbr/?status=out";
