@@ -438,90 +438,92 @@
     }
    
     @media (max-width: 640px) {
-      /* 1. Optimalisasi Ruang Modal */
-      #modalPelayananKb .modal-content {
-        width: 96% !important;
-        padding: 12px 10px !important;
-        margin: 4% auto !important;
-        max-height: 94vh !important;
-        border-radius: 8px !important;
-      }
-
-      /* 2. Tab Switcher Menu */
-      #modalPelayananKb .modal-content > div[style*="display: flex; gap: 10px; margin-bottom: 15px"] {
-        flex-direction: column !important;
-        gap: 6px !important;
-        margin-bottom: 10px !important;
-      }
-      #tabBtnLayananAntrean,
-      #tabBtnLayananDaftar {
-        width: 100% !important;
-        justify-content: center !important;
-        padding: 10px !important;
-      }
-
-      /* 3. Baris Filter Antrean (Status, Tahun, Bulan, Tombol Segarkan) */
-      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
-      }
-      /* Status dan tombol Segarkan dibuat penuh */
-      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] > div:nth-child(1),
-      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] > div:last-child {
-        grid-column: span 2 !important;
-      }
-      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] button {
-        width: 100% !important;
-      }
-
-      /* 4. Filter Wilayah Dropdown & Checklist Dusun */
-      #filterExpLayananDesaGrid {
-        grid-template-columns: 1fr !important;
-      }
-      #filterExpLayananDusunGrid {
-        grid-template-columns: 1fr !important;
-        max-height: 150px !important;
-      }
-
-      /* 5. Baris Tombol Aksi Ekspor & Cetak */
-      #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] {
-        flex-direction: column !important;
-        gap: 6px !important;
-      }
-      #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] button {
-        width: 100% !important;
-      }
-
-      /* 6. Form Tab Daftar Calon Akseptor */
-      #layananTabDaftar .card-layanan-plan {
-        padding: 12px 10px !important;
-        margin-bottom: 12px !important;
-      }
-
-      /* Filter Wilayah Pencarian */
-      #layananTabDaftar div[style*="grid-template-columns: repeat(auto-fit"] {
-        grid-template-columns: 1fr !important;
-      }
-
-      /* Baris Input Kata Kunci & Tombol Cari */
-      #layananTabDaftar div[style*="display: flex; gap: 8px;"] {
-        flex-direction: column !important;
-      }
-      #layananTabDaftar div[style*="display: flex; gap: 8px;"] button {
-        width: 100% !important;
-        padding: 10px !important;
-      }
-
-      /* Tombol Simpan Form Pendaftaran */
-      #formPendaftaranLayanan > div[style*="display: flex; gap: 10px;"] {
-        flex-direction: column !important;
-        gap: 8px !important;
-      }
-      #btnSimpanPendaftaranLayanan,
-      #formPendaftaranLayanan button[type="button"] {
-        width: 100% !important;
-      }
+    /* 1. Sesuaikan pembungkus modal */
+    #modalPelayananKb .modal-content {
+      width: 95% !important;
+      padding: 14px 10px !important;
+      margin: 3% auto !important;
+      max-height: 94vh !important;
     }
+
+    /* 2. Tab switcher (Antrean / Daftar) menjadi 1 kolom bertumpuk */
+    #modalPelayananKb .modal-content > div[style*="display: flex; gap: 10px; margin-bottom: 15px"] {
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    #tabBtnLayananAntrean,
+    #tabBtnLayananDaftar {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 10px !important;
+    }
+
+    /* 3. Baris Filter Antrean (Status, Tahun, Bulan Mulai, Bulan Sampai, Tombol Segarkan) -> 1 kolom */
+    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      width: 100% !important;
+    }
+    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] > div {
+      width: 100% !important;
+    }
+    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] button {
+      width: 100% !important;
+    }
+
+    /* 4. Filter Checklist Desa & Dusun -> 1 kolom */
+    #filterExpLayananDesaGrid,
+    #filterExpLayananDusunGrid {
+      grid-template-columns: 1fr !important;
+      width: 100% !important;
+      max-height: 180px !important;
+    }
+
+    /* 5. Tombol Ekspor (Excel, PDF, Cetak Form) -> 1 kolom bertumpuk */
+    #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] {
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] button {
+      width: 100% !important;
+    }
+
+    /* 6. Form Tab Pendaftaran Akseptor: Filter Wilayah & Pencarian -> 1 kolom */
+    #layananTabDaftar div[style*="grid-template-columns: repeat(auto-fit"] {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    #layananTabDaftar div[style*="display: flex; gap: 8px;"] {
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    #layananTabDaftar div[style*="display: flex; gap: 8px;"] button {
+      width: 100% !important;
+      padding: 10px !important;
+    }
+
+    /* 7. Grid input dalam form kartu (Nama, NIK, Alkon, Tanggal, dll) -> 1 kolom */
+    #formPendaftaranLayanan .grid-2-col,
+    #formPendaftaranLayanan .grid-3-col {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+    #formPendaftaranLayanan .card-layanan-plan {
+      padding: 12px 10px !important;
+    }
+
+    /* 8. Tombol Simpan & Bersihkan -> 1 kolom bertumpuk */
+    #formPendaftaranLayanan > div[style*="display: flex; gap: 10px;"] {
+      flex-direction: column !important;
+      gap: 8px !important;
+    }
+    #btnSimpanPendaftaranLayanan,
+    #formPendaftaranLayanan button[type="button"] {
+      width: 100% !important;
+    }
+  }
   </style>
 </head>
 <body>
