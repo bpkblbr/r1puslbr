@@ -3802,14 +3802,41 @@
   }
 
   function updateDesa(selectedVal = "") {
-    const kodeKec = document.getElementById("kecamatan").value;
+    const kodeKab = document.getElementById("kabupaten")?.value || userKodeKab || "01";
+    const kodeKec = document.getElementById("kecamatan")?.value;
     document.getElementById("kode_kec").value = kodeKec;
-    resetDropdown("desa", "kode_desa"); resetDropdown("dusun", "kode_dusun"); resetDropdown("rt", "kode_rt");
-    if (kodeKec && dataDesa[kodeKec]) {
-      const desaSelect = document.getElementById("desa");
-      desaSelect.disabled = false;
-      for (let kode in dataDesa[kodeKec]) desaSelect.add(new Option(dataDesa[kodeKec][kode].toUpperCase(), kode));
-      if (selectedVal) { setSelectValueCaseInsensitive("desa", selectedVal); updateDusun(); }
+
+    resetDropdown("desa", "kode_desa");
+    resetDropdown("dusun", "kode_dusun");
+    resetDropdown("rt", "kode_rt");
+
+    if (!kodeKec) return;
+
+    const cleanKab = String(kodeKab).padStart(2, '0');
+    const cleanKec = String(kodeKec).padStart(2, '0');
+    const compositeKey = cleanKab + "_" + cleanKec;
+
+    // Cari berdasarkan compositeKey, lalu fallback ke cleanKec atau penelusuran akhiran
+    let desas = dataDesa[compositeKey] || dataDesa[cleanKec] || {};
+    if (Object.keys(desas).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + cleanKec)) {
+          desas = dataDesa[k];
+          break;
+        }
+      }
+    }
+
+    const desaSelect = document.getElementById("desa");
+    desaSelect.disabled = false;
+
+    for (let kode in desas) {
+      desaSelect.add(new Option(desas[kode].toUpperCase(), String(kode).padStart(4, '0')));
+    }
+
+    if (selectedVal) {
+      setSelectValueCaseInsensitive("desa", selectedVal);
+      updateDusun();
     }
   }
 
