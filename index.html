@@ -333,19 +333,7 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
       margin-bottom: 14px;
-    }
-    
-    .checkbox-grid-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 8px;
-      max-height: 120px;
-      overflow-y: auto;
-      background: #ffffff;
-      border: 1.5px solid #cbd5e1;
-      padding: 10px;
-      border-radius: 6px;
-    }
+    }    
 
     .checkbox-item-kb {
       display: flex !important;
@@ -5546,33 +5534,6 @@
     }
   }  
 
-  // =========================================================================
-  // FUNGSI BONUS: UNDUH SATUAN GRAFIK SEBAGAI GAMBAR PNG
-  // =========================================================================
-  function downloadSingleChartAsPNG(canvasId, title) {
-    const originalCanvas = document.getElementById(canvasId);
-    if (!originalCanvas) return;
-
-    // Buat kanvas sementara untuk menambahkan background putih
-    const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = originalCanvas.width;
-    tempCanvas.height = originalCanvas.height;
-    const ctx = tempCanvas.getContext("2d");
-
-    // Beri latar belakang putih
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    // Salin gambar grafik ke atas background putih
-    ctx.drawImage(originalCanvas, 0, 0);
-
-    // Download sebagai file PNG
-    const link = document.createElement('a');
-    link.download = `${title.replace(/\s+/g, '_')}.png`;
-    link.href = tempCanvas.toDataURL('image/png', 1.0);
-    link.click();
-  }
-
   // Helper fungsi untuk memberi tanda highlight kuning pada kata kunci
   function highlightText(text, keyword) {
     if (!text) return "-";
@@ -6505,6 +6466,12 @@
     document.getElementById("user_namalengkap_input").value = "";
     document.getElementById("user_name_input").readOnly = false;    
     document.getElementById("btnSaveUserAcc").innerText = "💾 SIMPAN AKUN";
+
+    // 1. Bersihkan sisa pilihan sebelumnya terlebih dahulu
+    document.getElementById("user_kec_select").value = "";
+    document.getElementById("user_desa_select").innerHTML = '<option value="">-- PILIH DESA --</option>';
+
+    // 2. Baru jalankan evaluasi role pengguna
     onUserRoleChange();
     
     const dusunContainer = document.getElementById("userDusunContainer");
@@ -8090,14 +8057,7 @@
 
     if (!wrapper || !grid) return;
     grid.innerHTML = "";
-    if (wDusun) wDusun.style.display = "none";
-
-    // Kunci tepat 4 kolom ke samping
-    grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(4, 1fr)";
-    grid.style.gap = "8px";
-    grid.style.maxHeight = "none";
-    grid.style.overflow = "visible";
+    if (wDusun) wDusun.style.display = "none";    
 
     const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
     const cleanKec = String(kdKec).padStart(2, '0');
@@ -10357,7 +10317,7 @@
 
     let fullHtml = '';
     list.forEach(item => {
-      if (jenisDoc === 'KIV' || jenisDoc === 'K0') {
+      if (jenisDoc === 'KIV') {
         fullHtml += renderSatuFormKIV(item);
       } else if (jenisDoc === 'CONSENT') {
         fullHtml += renderSatuConsent(item);
@@ -10377,7 +10337,7 @@
     iframe.style.border = '0';
     document.body.appendChild(iframe);
 
-    const isKiv = (jenisDoc === 'KIV' || jenisDoc === 'K0');
+    const isKiv = (jenisDoc === 'KIV');
 
     const doc = iframe.contentWindow.document;
     doc.open();
