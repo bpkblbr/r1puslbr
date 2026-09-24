@@ -5951,7 +5951,7 @@
     resetMwForm();
   }
 
-  function switchMwTab(tab) {
+  function switchMwTab(tab, shouldReset = true) {
     const isForm = (tab === 'form');
     document.getElementById("mwTabForm").style.display = isForm ? "block" : "none";
     document.getElementById("mwTabList").style.display = isForm ? "none" : "block";
@@ -5960,8 +5960,10 @@
     document.getElementById("tabBtnListMw").className = isForm ? "btn-nav btn-secondary" : "btn-nav btn-action";
 
     if (isForm) {
-      // Bersihkan formulir kembali ke mode input baru jika tab diklik manual
-      resetMwForm();
+      // Hanya reset jika tab diklik manual oleh pengguna (bukan dari tombol edit)
+      if (shouldReset) {
+        resetMwForm();
+      }
     } else {
       loadRegisteredWilayahList();
     }
@@ -6181,9 +6183,13 @@
     const item = allRegisteredWilayahData.find(w => String(w.id) === String(id));
     if (!item) return;
 
-    // Bersihkan dan atur status lock form terlebih dahulu
+    // 1. Pindah ke tab form TANPA me-reset data (kirim false)
+    switchMwTab('form', false);
+
+    // 2. Bersihkan field sebelum diisi data edit
     resetMwForm();
 
+    // 3. Masukkan data yang akan diedit
     document.getElementById("mw_id").value = item.id;
     document.getElementById("mw_provinsi_nama").value = item.provinsi;
     document.getElementById("mw_kode_prov").value = item.kode_prov;
@@ -6197,7 +6203,7 @@
     document.getElementById("mw_kode_dusun").value = item.kode_dusun;
     document.getElementById("mw_jumlah_rt").value = item.jumlah_rt;
 
-    // Kunci tambahan saat mode edit agar wilayah induk tidak sengaja tertukar
+    // 4. Kunci field induk saat mode edit
     const inProvNama = document.getElementById("mw_provinsi_nama");
     const inProvKode = document.getElementById("mw_kode_prov");
     const inKabNama  = document.getElementById("mw_kabupaten_nama");
@@ -6207,7 +6213,6 @@
     const inDesaNama = document.getElementById("mw_desa_nama");
     const inDesaKode = document.getElementById("mw_kode_desa");
 
-    // Provinsi & Kabupaten selalu terkunci saat mengedit baris yang sudah ada
     inProvNama.readOnly = true; inProvKode.readOnly = true;
     inProvNama.style.backgroundColor = "#e9ecef"; inProvKode.style.backgroundColor = "#e9ecef";
     inKabNama.readOnly = true; inKabKode.readOnly = true;
@@ -6224,7 +6229,6 @@
     }
 
     document.getElementById("btnSaveMw").innerText = "💾 PERBARUI WILAYAH";
-    switchMwTab('form');
   }
 
   function confirmDeleteMw(id, namaDusun) {
@@ -6289,7 +6293,7 @@
     resetUserForm();
   }
 
-  function switchUserTab(tab) {
+  function switchUserTab(tab, shouldReset = true) {
     const isForm = (tab === 'form');
     document.getElementById("userTabForm").style.display = isForm ? "block" : "none";
     document.getElementById("userTabList").style.display = isForm ? "none" : "block";
@@ -6298,8 +6302,10 @@
     document.getElementById("tabBtnUserList").className = isForm ? "btn-nav btn-secondary" : "btn-nav btn-action";
 
     if (isForm) {
-      // Bersihkan formulir akun kembali ke mode input baru jika tab diklik manual
-      resetUserForm();
+      // Hanya reset jika tab diklik manual oleh pengguna (bukan dari tombol edit)
+      if (shouldReset) {
+        resetUserForm();
+      }
     } else {
       loadUsersList();
     }
@@ -6674,6 +6680,10 @@
     const item = allUsersData.find(u => String(u.id) === String(id));
     if (!item) return;
 
+    // 1. Pindah ke tab form TANPA me-reset data (kirim false)
+    switchUserTab('form', false);
+
+    // 2. Masukkan data yang akan diedit
     document.getElementById("user_id").value = item.id;
     document.getElementById("user_namalengkap_input").value = item.nama_lengkap || "";
     document.getElementById("user_name_input").value = item.username;
@@ -6699,7 +6709,6 @@
 
         const checkboxes = document.querySelectorAll('input[name="user_dusun_checkbox"]');
         checkboxes.forEach(cb => {
-          // Setel true jika ada dalam daftar, setel false jika tidak ada
           cb.checked = dsnArr.includes(String(cb.value).trim().padStart(4, '0'));
         });
       }
@@ -6711,7 +6720,6 @@
     } else {
       document.getElementById("user_role_select").disabled = false;
     }
-    switchUserTab('form');
   }
 
   function confirmDeleteUser(id, username) {
