@@ -285,6 +285,41 @@
       cursor: not-allowed;
       border-color: #e2e8f0 !important;
     }
+
+    .label-field-kb {
+      font-size: 11.5px !important;
+      font-weight: 700 !important;
+      color: #475569 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.3px;
+      margin: 0 !important;
+      line-height: 1.35 !important;
+      min-height: 28px;
+      display: flex;
+      align-items: flex-end;
+      white-space: normal !important;
+      word-break: break-word;
+    }
+
+    .input-control-kb {
+      height: 42px !important;
+      min-height: 42px !important;
+      width: 100% !important;
+      padding: 0 12px !important;
+      border-radius: 6px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      font-size: 13px !important;
+      color: #1e293b !important;
+      background-color: #ffffff;
+      box-sizing: border-box !important;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .input-control-kb:focus {
+      border-color: #0284c7 !important;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+    }
     
     .grid-2-col {
       display: grid;
@@ -6612,7 +6647,7 @@
       const nmKec = getNamaKec(item.kode_kec).toLowerCase();
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa).toLowerCase();
       const nmDusunRaw = (item.role === "User Desa" && item.allowed_dusun) 
-        ? item.allowed_dusun.toLowerCase() 
+        ? (Array.isArray(item.allowed_dusun) ? item.allowed_dusun.join(" ") : String(item.allowed_dusun)).toLowerCase() 
         : "";
 
       return (item.nama_lengkap || '').toLowerCase().includes(filter) ||
@@ -7287,24 +7322,7 @@
     } catch (err) {
       Swal.fire("Gagal", "Terjadi kesalahan saat mengunduh data: " + err.message, "error");
     }
-  }
-  
-  function parseExcelDate(val) {
-    if (!val) return null;
-    if (typeof val === 'string' && val.includes('-')) {
-      let parts = val.split('-');
-      if (parts.length === 3) {
-        if (parts[0].length === 2 && parts[2].length === 4) {
-          return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-      }
-    }
-    let parsed = new Date(val);
-    if (!isNaN(parsed.getTime())) {
-      return parsed.toISOString().split('T')[0];
-    }
-    return null;
-  }
+  }  
 
   // Variabel global sementara untuk menyimpan data baris yang dilewati/duplikat
   let lastSkippedRowsData = [];
@@ -9247,35 +9265,6 @@
     return { judulTabel, filePrefix, headers, rows };
   }  
 
-  function bukaPilihanCetakDokumen(index) {
-    const item = cachedAntreanLayanan[index];
-    if (!item) return;
-
-    Swal.fire({
-      title: 'Cetak Dokumen Pelayanan KB',
-      html: `
-        <div style="text-align: left; font-size: 13px; color: #334155; margin-bottom: 12px;">
-          Akseptor: <b>${item.nama_istri}</b> (ID: ${item.id_pus})<br>
-          Rencana Alkon: <span style="color:#0284c7; font-weight:bold;">${item.rencana_metode}</span>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px;" onclick="eksporDokumenKbKePDF('KIV', ${index})">
-            📄 Cetak Form K/IV/KB/15
-          </button>
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #0d9488;" onclick="eksporDokumenKbKePDF('KI', ${index})">
-            📋 Cetak Kartu K/I/KB/13
-          </button>
-          <button type="button" class="btn-nav btn-action" style="padding: 10px; justify-content: center; font-size: 13px; background-color: #d97706;" onclick="eksporDokumenKbKePDF('CONSENT', ${index})">
-            ✍️ Cetak Informed Consent
-          </button>
-        </div>
-      `,
-      showConfirmButton: false,
-      showCancelButton: true,
-      cancelButtonText: 'Tutup'
-    });
-  }
-
   function bukaModalCetakMassal() {    
     const statusFilter = String(document.getElementById("filterStatusLayanan")?.value || "").toUpperCase().trim();
     if (statusFilter !== "TERDAFTAR") {
@@ -9338,18 +9327,15 @@
     const selectedBoxes = document.querySelectorAll('input[name="cb_cetak_akseptor"]:checked');
     const selectedIds = Array.from(selectedBoxes).map(cb => cb.value);
 
-    // Kunci 1: Cegah jika tidak ada yang dicentang
     if (selectedIds.length === 0) {
       Swal.fire("Peringatan", "Beri centang minimal pada salah satu akseptor!", "warning");
       return;
     }
 
-    // Kunci 2: Ambil objek data nyata
     const targetAkseptor = (cachedAntreanLayanan || []).filter(item => 
       item && selectedIds.includes(String(item.id)) && item.status === 'TERDAFTAR'
     );
 
-    // Kunci 3: Tolak dan jangan buka window.print jika data akseptor kosong
     if (targetAkseptor.length === 0) {
       Swal.fire({
         icon: 'error',
@@ -9361,43 +9347,14 @@
     }
 
     tutupModalCetakMassal();
-
     const formatDokumen = document.getElementById("cetakMassalJenisDokumen").value;
-    let printHtml = "";
 
-    if (formatDokumen === "KIV") {
-      printHtml = targetAkseptor.map(item => renderSatuFormKIV(item)).join('');
-    } else if (formatDokumen === "KI") {
-      printHtml = generateBatchKiKbPrint(targetAkseptor);
+    // Panggil fungsi cetak iframe yang sudah memiliki styling A4 presisi
+    if (formatDokumen === "KI") {
+      cetakBatchKiKbA4(targetAkseptor);
     } else {
-      printHtml = targetAkseptor.map(item => renderSatuConsent(item)).join('');
+      cetakBatchDokumenA4(targetAkseptor, formatDokumen);
     }
-
-    // Validasi akhir: pastikan string cetak bukan konten kosong
-    if (!printHtml || printHtml.trim() === "") {
-      Swal.fire("Perhatian", "Gagal memproses dokumen cetak karena konten kosong.", "warning");
-      return;
-    }
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Cetak Dokumen Pelayanan KB</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; color: #000; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #333; padding: 6px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .page-break { page-break-after: always; }
-          </style>
-        </head>
-        <body onload="window.print(); window.close();">
-          ${printHtml}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
   }
   
   function exportLayananToExcel() {
@@ -10508,70 +10465,7 @@
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     }, 600);
-  }
-  
-  function parseRangeNomorUrut(inputStr, totalData) {
-    if (!inputStr || inputStr.trim() === "") {
-      return Array.from({ length: totalData }, (_, i) => i);
-    }
-
-    const selectedIndices = new Set();
-    const parts = inputStr.split(',');
-
-    parts.forEach(part => {
-      const trimmed = part.trim();
-      if (trimmed.includes('-')) {
-        const [startStr, endStr] = trimmed.split('-');
-        const start = parseInt(startStr, 10);
-        const end = parseInt(endStr, 10);
-        if (!isNaN(start) && !isNaN(end)) {
-          const min = Math.max(1, Math.min(start, end));
-          const max = Math.min(totalData, Math.max(start, end));
-          for (let i = min; i <= max; i++) {
-            selectedIndices.add(i - 1);
-          }
-        }
-      } else {
-        const num = parseInt(trimmed, 10);
-        if (!isNaN(num) && num >= 1 && num <= totalData) {
-          selectedIndices.add(num - 1);
-        }
-      }
-    });
-
-    return Array.from(selectedIndices).sort((a, b) => a - b);
   }  
-
-  function eksekusiCetakPilihan(jenisDoc) {
-    const rangeStr = document.getElementById("inputRangeCetak")?.value || "";
-    const total = cachedAntreanLayanan.length;
-    const indices = parseRangeNomorUrut(rangeStr, total);
-
-    if (indices.length === 0) {
-      Swal.fire("Perhatian", "Nomor urut yang dimasukkan tidak valid atau di luar rentang!", "warning");
-      return;
-    }
-
-    const selectedData = indices.map(idx => cachedAntreanLayanan[idx]);
-    Swal.close();
-
-    if (jenisDoc === 'KI') {
-      cetakBatchKiKbA4(selectedData);
-    } else {
-      cetakBatchDokumenA4(selectedData, jenisDoc);
-    }
-  }
-
-  // Alias tunggal agar kompatibel jika ada pemanggilan individual lama
-  function eksporDokumenKbKePDF(jenisDoc, index) {
-    if (cachedAntreanLayanan && cachedAntreanLayanan[index]) {
-      if (jenisDoc === 'KI') {
-        cetakBatchKiKbA4([cachedAntreanLayanan[index]]);
-      } else {
-        cetakBatchDokumenA4([cachedAntreanLayanan[index]], jenisDoc);
-      }
-    }
-  }
 
   function exitApp() {
     Swal.fire({
