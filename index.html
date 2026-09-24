@@ -9798,23 +9798,34 @@
     let dLahir = "", mLahir = "", yLahir = "";
     if (item.tgl_lahir_istri) {
       // Menangani format YYYY-MM-DD maupun DD/MM/YYYY
-      const cleanTgl = String(item.tgl_lahir_istri).replace(/\//g, '-');
+      const cleanTgl = String(item.tgl_lahir_istri).replace(/\//g, '-').trim();
       const pLahir = cleanTgl.split('-');
       if (pLahir.length === 3) {
-        if (pLahir[0].length === 4) { // YYYY-MM-DD
+        if (pLahir[0].length === 4) { // Format: YYYY-MM-DD
           dLahir = pLahir[2].padStart(2, '0');
           mLahir = pLahir[1].padStart(2, '0');
           yLahir = pLahir[0];
-        } else { // DD-MM-YYYY
+        } else { // Format: DD-MM-YYYY
           dLahir = pLahir[0].padStart(2, '0');
           mLahir = pLahir[1].padStart(2, '0');
           yLahir = pLahir[2];
         }
       }
     }
-    const umurIstriVal = (item.umur_istri !== undefined && item.umur_istri !== null && item.umur_istri !== "") 
-      ? item.umur_istri 
-      : (yLahir ? (new Date().getFullYear() - parseInt(yLahir, 10)) : "");
+    
+    let parsedUmurDb = parseInt(item.umur_istri, 10);
+    let umurIstriVal = "";
+
+    if (!isNaN(parsedUmurDb) && parsedUmurDb > 0) {
+      umurIstriVal = parsedUmurDb;
+    } else if (item.tgl_lahir_istri) {      
+      const thnRef = parseInt(item.tahun || yLayanan || new Date().getFullYear(), 10);
+      const umurDihitung = (typeof hitungUmurPresisi === "function") 
+        ? hitungUmurPresisi(item.tgl_lahir_istri, thnRef)
+        : (yLahir ? (thnRef - parseInt(yLahir, 10)) : 0);
+
+      umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
+    }
 
     const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kecamatan_nama || item.kode_kec || "");
     const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.desa_nama || item.kode_desa || "");
