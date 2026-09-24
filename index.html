@@ -9925,10 +9925,38 @@
       umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
     }
 
-    const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kecamatan_nama || item.kode_kec || "");
-    const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.desa_nama || item.kode_desa || "");
-    const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
-    const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.dusun_nama || item.kode_dusun || "");
+    // RESOLUSI NAMA WILAYAH LENGKAP (Mendukung Composite Key)
+    const curKab = String(item.kode_kab || userKodeKab || "01").padStart(2, '0');
+    const curKec = String(item.kode_kec || "").padStart(2, '0');
+    const curDesa = String(item.kode_desa || "").padStart(4, '0');
+    const curDsn = String(item.kode_dusun || "").padStart(4, '0');
+
+    // A. Nama Kecamatan
+    const nmKec = (dataKecamatan[curKab] && dataKecamatan[curKab][curKec]) 
+      ? dataKecamatan[curKab][curKec] 
+      : (item.kecamatan_nama || curKec || "");
+
+    // B. Nama Desa
+    const compositeDesaKey = curKab + "_" + curKec;
+    let desasMapKiv = dataDesa[compositeDesaKey] || dataDesa[curKec] || {};
+    if (Object.keys(desasMapKiv).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + curKec)) {
+          desasMapKiv = dataDesa[k];
+          break;
+        }
+      }
+    }
+    const nmDesa = (desasMapKiv && desasMapKiv[curDesa]) 
+      ? desasMapKiv[curDesa] 
+      : (item.desa_nama || curDesa || "");
+
+    // C. Nama Dusun
+    const dsnMap = (typeof getDusunList === "function") ? getDusunList(curKec, curDesa, curKab) : null;
+    const nmDsn = (dsnMap && dsnMap[curDsn]) 
+      ? dsnMap[curDsn].nama 
+      : (item.dusun_nama || curDsn || "");
+
     const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
 
     const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
@@ -10239,10 +10267,37 @@
       umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
     }
 
-    const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kecamatan_nama || item.kode_kec || "");
-    const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.desa_nama || item.kode_desa || "");
-    const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
-    const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) ? dsnMap[item.kode_dusun].nama : (item.dusun_nama || item.kode_dusun || "");
+    // RESOLUSI NAMA WILAYAH LENGKAP (Mendukung Composite Key)
+    const curKab = String(item.kode_kab || userKodeKab || "01").padStart(2, '0');
+    const curKec = String(item.kode_kec || "").padStart(2, '0');
+    const curDesa = String(item.kode_desa || "").padStart(4, '0');
+    const curDsn = String(item.kode_dusun || "").padStart(4, '0');
+
+    // A. Nama Kecamatan
+    const nmKec = (dataKecamatan[curKab] && dataKecamatan[curKab][curKec]) 
+      ? dataKecamatan[curKab][curKec] 
+      : (item.kecamatan_nama || curKec || "");
+
+    // B. Nama Desa
+    const compositeDesaKey = curKab + "_" + curKec;
+    let desasMapConsent = dataDesa[compositeDesaKey] || dataDesa[curKec] || {};
+    if (Object.keys(desasMapConsent).length === 0) {
+      for (let k in dataDesa) {
+        if (k.endsWith("_" + curKec)) {
+          desasMapConsent = dataDesa[k];
+          break;
+        }
+      }
+    }
+    const nmDesa = (desasMapConsent && desasMapConsent[curDesa]) 
+      ? desasMapConsent[curDesa] 
+      : (item.desa_nama || curDesa || "");
+
+    // C. Nama Dusun
+    const dsnMap = (typeof getDusunList === "function") ? getDusunList(curKec, curDesa, curKab) : null;
+    const nmDsn = (dsnMap && dsnMap[curDsn]) 
+      ? dsnMap[curDsn].nama 
+      : (item.dusun_nama || curDsn || "");
 
     const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
     const isSuntik = alkon.includes("SUNTIK");
