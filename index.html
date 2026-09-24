@@ -9118,23 +9118,26 @@
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const todayStr = new Date().toISOString().split('T')[0];
 
+    // Daftar metode kontrasepsi murni
+    const masterMetode = ["IMPLAN", "IUD", "SUNTIK", "PIL", "KONDOM", "MOW", "MOP"];
+    const cleanRencana = String(rencanaMetode || "").trim().toUpperCase();
+
+    // Susun opsi: jika sama dengan rencana, otomatis terseleksi tanpa ada tulisan tambahan
+    let opsiHtml = masterMetode.map(m => {
+      const isSelected = (m === cleanRencana) ? "selected" : "";
+      return `<option value="${m}" ${isSelected}>${m}</option>`;
+    }).join("");
+
     Swal.fire({
       title: 'Konfirmasi Pelayanan KB',
       html: `
         <div style="text-align:left; font-size:13px; color:#334155; margin-bottom:8px;">
           Akseptor: <b>${namaIstri}</b> (ID: <code>${idPus}</code>)<br>
-          Rencana Alkon: <b>${rencanaMetode}</b> (${monthNames[bulanRencana - 1]} ${tahun})
+          Rencana Alkon: <b>${cleanRencana}</b> (${monthNames[bulanRencana - 1]} ${tahun})
         </div>
         <div style="text-align:left; font-size:12px; font-weight:bold; margin-bottom:4px;">Metode Realisasi Tindakan:</div>
         <select id="swalRealMetode" class="swal2-input" style="width:100%; margin:0 0 10px 0; font-size:13px;">
-          <option value="${rencanaMetode}" selected>${rencanaMetode} (Sesuai Rencana)</option>
-          <option value="IMPLAN">IMPLAN</option>
-          <option value="IUD">IUD</option>
-          <option value="SUNTIK">SUNTIK</option>
-          <option value="PIL">PIL</option>
-          <option value="KONDOM">KONDOM</option>
-          <option value="MOW">MOW</option>
-          <option value="MOP">MOP</option>
+          ${opsiHtml}
         </select>
         <div style="text-align:left; font-size:12px; font-weight:bold; margin-bottom:4px;">Tanggal Tindakan:</div>
         <input type="date" id="swalRealTgl" class="swal2-input" value="${todayStr}" style="width:100%; margin:0; font-size:13px;">
