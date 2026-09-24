@@ -10126,7 +10126,21 @@
     const mLayanan = pTgl[1] || "01";
     const yLayanan = pTgl[0] || "2026";
 
-    const umurIstriVal = (item.umur_istri !== undefined && item.umur_istri !== null) ? item.umur_istri : "";
+    // 1. HITUNG UMUR ISTRI SECARA PRESISI (Jika di DB bernilai 0 / kosong)
+    let parsedUmurDb = parseInt(item.umur_istri, 10);
+    let umurIstriVal = "";
+
+    if (!isNaN(parsedUmurDb) && parsedUmurDb > 0) {
+      umurIstriVal = parsedUmurDb;
+    } else if (item.tgl_lahir_istri) {
+      const thnRef = parseInt(item.tahun || yLayanan || new Date().getFullYear(), 10);
+      const umurDihitung = (typeof hitungUmurPresisi === "function") 
+        ? hitungUmurPresisi(item.tgl_lahir_istri, thnRef)
+        : 0;
+
+      umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
+    }
+
     const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) ? dataKecamatan[userKodeKab][item.kode_kec] : (item.kecamatan_nama || item.kode_kec || "");
     const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) ? dataDesa[item.kode_kec][item.kode_desa] : (item.desa_nama || item.kode_desa || "");
     const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
@@ -10168,7 +10182,8 @@
               </td>
               <td style="width: 2%; vertical-align: top;">:</td>
               <td style="width: 63%; vertical-align: top;">
-                <span style="font-weight: bold; text-decoration: underline;">${item.faskes_tujuan || '....................................................................................'}</span>
+                <!-- GARIS BAWAH DIHILANGKAN (TEBAL POLOS) -->
+                <span style="font-weight: bold;">${item.faskes_tujuan || '....................................................................................'}</span>
               </td>
             </tr>
             <tr>
