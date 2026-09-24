@@ -5959,7 +5959,10 @@
     document.getElementById("tabBtnFormMw").className = isForm ? "btn-nav btn-action" : "btn-nav btn-secondary";
     document.getElementById("tabBtnListMw").className = isForm ? "btn-nav btn-secondary" : "btn-nav btn-action";
 
-    if (!isForm) {
+    if (isForm) {
+      // Bersihkan formulir kembali ke mode input baru jika tab diklik manual
+      resetMwForm();
+    } else {
       loadRegisteredWilayahList();
     }
   }
@@ -6294,7 +6297,10 @@
     document.getElementById("tabBtnUserForm").className = isForm ? "btn-nav btn-action" : "btn-nav btn-secondary";
     document.getElementById("tabBtnUserList").className = isForm ? "btn-nav btn-secondary" : "btn-nav btn-action";
 
-    if (!isForm) {
+    if (isForm) {
+      // Bersihkan formulir akun kembali ke mode input baru jika tab diklik manual
+      resetUserForm();
+    } else {
       loadUsersList();
     }
   }
