@@ -2757,11 +2757,24 @@
               selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
               containerDsn.style.display = 'none';
 
-              if (selKec && dataDesa[selKec]) {
-                for (let kd in dataDesa[selKec]) {
-                  let cleanKdDesa = String(kd).trim().padStart(4, '0');
-                  selDesa.add(new Option(dataDesa[selKec][kd].toUpperCase(), cleanKdDesa));
+              if (!selKec) return;
+              
+              const curKab = String(userKodeKab || document.getElementById("kode_kab")?.value || "01").padStart(2, '0');
+              const compositeKey = curKab + "_" + selKec;
+              
+              let desas = dataDesa[compositeKey] || dataDesa[selKec] || {};
+              if (Object.keys(desas).length === 0) {
+                for (let k in dataDesa) {
+                  if (k.endsWith("_" + selKec)) {
+                    desas = dataDesa[k];
+                    break;
+                  }
                 }
+              }
+              
+              for (let kd in desas) {
+                let cleanKdDesa = String(kd).trim().padStart(4, '0');
+                selDesa.add(new Option(desas[kd].toUpperCase(), cleanKdDesa));
               }
             };
 
@@ -2777,7 +2790,8 @@
               const isSameDesa = (selKec === curKdKec && selDesa === curKdDesa);
 
               if (isSameDesa) {
-                const dsnList = getDusunList(selKec, selDesa);
+                const curKab = String(userKodeKab || document.getElementById("kode_kab")?.value || "01").padStart(2, '0');
+                const dsnList = getDusunList(selKec, selDesa, curKab);
                 if (dsnList) {
                   for (let kd in dsnList) {
                     let cleanKdDsn = String(kd).trim().padStart(4, '0');
