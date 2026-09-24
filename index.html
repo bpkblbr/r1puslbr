@@ -9521,12 +9521,60 @@
     const isNonPbi = String(item.peserta_jkn || '').toUpperCase().includes('BUKAN PBI') || String(item.peserta_jkn || '').toUpperCase().includes('SWASTA');
     const isNonJkn = String(item.peserta_jkn || '').toUpperCase().includes('TIDAK') || (!isPbi && !isNonPbi);
 
-    const tglLahirTeks = (item.tgl_lahir_istri ? item.tgl_lahir_istri : '-') + (item.umur_istri ? ` / ${item.umur_istri} TH` : '');
-    const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${item.dusun_nama || '-'}, DESA ${item.desa_nama || '-'}, KEC. ${item.kecamatan_nama || '-'}`;
-
     const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
     const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
-    const nmDesa = item.desa_nama || 'DESA';
+
+    // 1. RESOLUSI NAMA KECAMATAN, DESA, DAN DUSUN
+    const nmKec = (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][item.kode_kec]) 
+      ? dataKecamatan[userKodeKab][item.kode_kec] 
+      : (item.kecamatan_nama || item.kode_kec || '-');
+
+    const nmDesa = (dataDesa[item.kode_kec] && dataDesa[item.kode_kec][item.kode_desa]) 
+      ? dataDesa[item.kode_kec][item.kode_desa] 
+      : (item.desa_nama || item.kode_desa || '-');
+
+    const dsnMap = (typeof getDusunList === "function") ? getDusunList(item.kode_kec, item.kode_desa) : null;
+    const nmDsn = (dsnMap && dsnMap[item.kode_dusun]) 
+      ? dsnMap[item.kode_dusun].nama 
+      : (item.dusun_nama || item.kode_dusun || '-');
+
+    const alamatLengkap = `RT ${item.kode_rt || '-'}, DUSUN ${nmDsn}, DESA ${nmDesa}, KEC. ${nmKec}`;
+
+    // 2. FORMAT TANGGAL LAHIR DD-MM-YYYY & HITUNG UMUR ISTRI
+    let strTglLahirDmy = "-";
+    let yLahir = "";
+    if (item.tgl_lahir_istri) {
+      const cleanTgl = String(item.tgl_lahir_istri).replace(/\//g, '-').trim();
+      const p = cleanTgl.split('-');
+      if (p.length === 3) {
+        if (p[0].length === 4) { // Format: YYYY-MM-DD
+          strTglLahirDmy = `${p[2].padStart(2, '0')}-${p[1].padStart(2, '0')}-${p[0]}`;
+          yLahir = p[0];
+        } else { // Format: DD-MM-YYYY
+          strTglLahirDmy = `${p[0].padStart(2, '0')}-${p[1].padStart(2, '0')}-${p[2]}`;
+          yLahir = p[2];
+        }
+      }
+    }
+
+    // Ambil umur valid (> 0) atau hitung otomatis secara presisi
+    let parsedUmurDb = parseInt(item.umur_istri, 10);
+    let umurIstriVal = "";
+
+    if (!isNaN(parsedUmurDb) && parsedUmurDb > 0) {
+      umurIstriVal = parsedUmurDb;
+    } else if (item.tgl_lahir_istri) {
+      const thnRef = parseInt(item.tahun || yLayanan || new Date().getFullYear(), 10);
+      const umurDihitung = (typeof hitungUmurPresisi === "function") 
+        ? hitungUmurPresisi(item.tgl_lahir_istri, thnRef)
+        : (yLahir ? (thnRef - parseInt(yLahir, 10)) : 0);
+
+      umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
+    }
+
+    const tglLahirTeks = umurIstriVal 
+      ? `${strTglLahirDmy} / ${umurIstriVal} Tahun` 
+      : strTglLahirDmy;
 
     return `
       <div class="ki-page-card">
@@ -9543,7 +9591,7 @@
           <div class="ki-bar-bottom"></div>
           <div class="ki-body-front">
             <table class="tbl-front-data">
-              <tr><td class="b-text" style="width:37%;">Nama Peserta KB</td><td class="b-text" style="width:3%;">:</td><td class="b-text" style="width:60%;">${item.nama_istri || '-'}</td></tr>
+              <tr><td class="b-text" style="width:37%;">Nama Peserta KB</td><td class="b-text" style="width:3%;">:</td><td class="b-text" style="width:60%; font-weight:bold;">${item.nama_istri || '-'}</td></tr>
               <tr><td class="b-text">Nama Suami/Istri</td><td class="b-text">:</td><td class="b-text">${item.nama_suami || '-'}</td></tr>
               <tr><td class="b-text">Tgl. Lahir/Umur Istri</td><td class="b-text">:</td><td class="b-text">${tglLahirTeks}</td></tr>
               <tr><td class="b-text" style="vertical-align:top;">Alamat Peserta KB</td><td class="b-text" style="vertical-align:top;">:</td><td class="b-text">${alamatLengkap}</td></tr>
