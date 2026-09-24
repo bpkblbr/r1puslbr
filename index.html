@@ -9354,11 +9354,13 @@
     const selectedBoxes = document.querySelectorAll('input[name="cb_cetak_akseptor"]:checked');
     const selectedIds = Array.from(selectedBoxes).map(cb => cb.value);
 
+    // 1. Validasi centang
     if (selectedIds.length === 0) {
       Swal.fire("Peringatan", "Beri centang minimal pada salah satu akseptor!", "warning");
       return;
     }
 
+    // 2. Ambil data akseptor
     const targetAkseptor = (cachedAntreanLayanan || []).filter(item => 
       item && selectedIds.includes(String(item.id)) && item.status === 'TERDAFTAR'
     );
@@ -9374,9 +9376,10 @@
     }
 
     tutupModalCetakMassal();
+
     const formatDokumen = document.getElementById("cetakMassalJenisDokumen").value;
 
-    // Panggil fungsi cetak iframe yang sudah memiliki styling A4 presisi
+    // 3. Eksekusi cetak langsung sesuai dokumen pilihan
     if (formatDokumen === "KI") {
       cetakBatchKiKbA4(targetAkseptor);
     } else {
@@ -9819,7 +9822,7 @@
 
     let dCabut = "", mCabut = "", yCabut = "";
     if (tglFormatted && (alkon.includes("IMPLAN") || alkon.includes("IUD") || alkon.includes("SUSUK"))) {
-      const tglPasangObj = new Date(tglRef || tglFormatted);
+      const tglPasangObj = new Date(tglFormatted); // Gunakan tglFormatted langsung
       if (!isNaN(tglPasangObj.getTime())) {
         const addYears = alkon.includes("IUD") ? 8 : 3;
         tglPasangObj.setFullYear(tglPasangObj.getFullYear() + addYears);
