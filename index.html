@@ -322,8 +322,7 @@
       cursor: not-allowed;
       border-color: #e2e8f0 !important;
     }
-
-    /* Grid Grid Simetris Khusus Form Layanan */
+    
     .grid-2-col {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -337,8 +336,7 @@
       gap: 16px;
       margin-bottom: 14px;
     }
-
-    /* Penataan Checkbox & Label agar Sejajar, Tidak Bergeser, & Tidak Terpotong */
+    
     .checkbox-grid-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -387,8 +385,7 @@
       overflow: visible !important;
       text-overflow: unset !important;
     }
-
-    /* Responsif untuk Smartphone */
+    
     @media (max-width: 640px) {
       .grid-2-col, .grid-3-col {
         grid-template-columns: 1fr;
@@ -396,6 +393,17 @@
       }
       .label-field-kb {
         min-height: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      #filterExpLayananDesaGrid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+    @media (max-width: 480px) {
+      #filterExpLayananDesaGrid {
+        grid-template-columns: 1fr !important;
       }
     }
 
@@ -1710,7 +1718,7 @@
                 <button type="button" onclick="toggleAllLayananCheckboxes('cb_layanan_desa', false)" style="font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; border: 1px solid #cbd5e1; background: #fff;">Hapus Semua</button>
               </div>
             </div>
-            <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: none !important; overflow: visible !important; background: #fff; border: 1.5px solid #cbd5e1; padding: 10px; border-radius: 6px;"></div>
+            <div id="filterExpLayananDesaGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: none !important; overflow: visible !important; background: #fff; border: 1.5px solid #cbd5e1; padding: 10px; border-radius: 6px; box-sizing: border-box;"></div>
           </div>
 
           <!-- BARIS 3: CHECKBOX FILTER DUSUN -->
@@ -8075,9 +8083,9 @@
     grid.innerHTML = "";
     if (wDusun) wDusun.style.display = "none";
 
-    // Biarkan kontainer memanjang otomatis mengikuti jumlah desa
+    // Kunci tepat 4 kolom ke samping
     grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(200px, 1fr))";
+    grid.style.gridTemplateColumns = "repeat(4, 1fr)";
     grid.style.gap = "8px";
     grid.style.maxHeight = "none";
     grid.style.overflow = "visible";
@@ -8111,21 +8119,21 @@
       label.style.cssText = `
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 11.5px;
+        gap: 6px;
+        font-size: 11px;
         font-weight: 600;
         color: #1e293b;
         background: #f8fafc;
-        padding: 6px 10px;
-        border-radius: 6px;
+        padding: 6px 8px;
+        border-radius: 5px;
         border: 1.5px solid #cbd5e1;
         cursor: pointer;
         box-sizing: border-box;
-        min-height: 38px;
+        min-height: 36px;
       `;
       label.innerHTML = `
-        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')" style="width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: #0284c7; cursor: pointer;">
-        <span style="white-space: normal; line-height: 1.25; word-break: break-word;">${desas[kd]}</span>
+        <input type="checkbox" name="cb_layanan_desa" value="${cleanKd}" onchange="onLayananDesaCheckboxChange('${cleanKec}', '${cleanKab}')" style="width: 15px; height: 15px; flex-shrink: 0; margin: 0; accent-color: #0284c7; cursor: pointer;">
+        <span style="white-space: normal; line-height: 1.2; word-break: break-word;">${desas[kd]}</span>
       `;
       grid.appendChild(label);
     });
