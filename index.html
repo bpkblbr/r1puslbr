@@ -1403,19 +1403,19 @@
         <div style="display: grid; grid-template-columns: 1fr 85px 1fr 85px; gap: 10px; margin-bottom: 12px; align-items: end;">
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <label style="width: 100% !important; margin: 0; font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">PROVINSI</label>
-            <input type="text" id="mw_provinsi_nama" value="NUSA TENGGARA BARAT" required placeholder="NAMA PROVINSI" style="width: 100%; box-sizing: border-box;">
+            <input type="text" id="mw_provinsi_nama" required placeholder="NAMA PROVINSI" style="width: 100%; box-sizing: border-box;">
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <label style="width: 100% !important; margin: 0; font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase; white-space: nowrap;">KD PROV</label>
-            <input type="text" id="mw_kode_prov" value="52" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
+            <input type="text" id="mw_kode_prov" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <label style="width: 100% !important; margin: 0; font-size: 11px; color: #475569; font-weight: bold; text-align: center; text-transform: uppercase;">KABUPATEN</label>
-            <input type="text" id="mw_kabupaten_nama" value="LOMBOK BARAT" required placeholder="NAMA KABUPATEN" style="width: 100%; box-sizing: border-box;">
+            <input type="text" id="mw_kabupaten_nama" required placeholder="NAMA KABUPATEN" style="width: 100%; box-sizing: border-box;">
           </div>
           <div style="display: flex; flex-direction: column; gap: 4px;">
             <label style="width: 100% !important; margin: 0; font-size: 11px; color: #475569; text-align: center; font-weight: bold; text-transform: uppercase; white-space: nowrap;">KD KAB</label>
-            <input type="text" id="mw_kode_kab" value="01" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
+            <input type="text" id="mw_kode_kab" maxlength="2" required placeholder="KODE" style="width: 100%; text-align: center; background-color: #f8fafc; box-sizing: border-box;">
           </div>
         </div>
 
@@ -2091,7 +2091,7 @@
       let namaWilayah = String(wilayahNama || "").trim().toUpperCase();
 
       if (roleUpper.includes("KAB")) {
-        identity = "Admin Kabupaten " + (namaWilayah || "LOMBOK BARAT");
+        identity = "Admin " + (namaWilayah ? (namaWilayah.startsWith("KAB") || namaWilayah.startsWith("KOTA") ? namaWilayah : "Kabupaten " + namaWilayah) : "Kabupaten/Kota");
       } else if (roleUpper.includes("KEC")) {
         identity = "Admin Kecamatan " + (namaWilayah || "");
       } else {
@@ -2099,7 +2099,6 @@
       }
 
       identity = identity.trim();
-      
       if (!namaWilayah && !roleUpper.includes("KAB")) {
         identity = role + " (" + username + ")";
       }
@@ -2114,7 +2113,6 @@
 
   function refreshGreeting() {
     if (!currentUser) return;
-
     let namaWilayahDinamis = "";
     if (userRole.includes("KAB")) {
       for (let kdProv in dataKabupaten) {
@@ -2123,7 +2121,6 @@
           break;
         }
       }
-      if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
     } else if (userRole.includes("KEC") || userRole === "ADMIN") {
       if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
         namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
@@ -2133,7 +2130,6 @@
         namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
       }
     }
-
     setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
   }
   
@@ -2281,8 +2277,7 @@
         </td>`;
       tbody.appendChild(tr);
     });
-
-    // Pantau setiap perubahan data di Bagian I (Wilayah) dan Bagian II (Identitas PUS)
+    
     const watchedFieldIds = [
       "provinsi", "kabupaten", "kecamatan", "desa", "dusun", "rt",
       "nama_suami", "nik_suami", "nama_istri", "nik_istri",
@@ -2296,8 +2291,7 @@
         el.addEventListener("change", checkAndLockKbTable);
       }
     });
-
-    // Jalankan penguncian awal saat form pertama kali dimuat
+    
     checkAndLockKbTable();
   };
 
@@ -2321,13 +2315,11 @@
 
       if (!dataKecamatan[kdKab]) dataKecamatan[kdKab] = {};
       dataKecamatan[kdKab][kdKec] = r.kecamatan;
-
-      // Composite Key Desa: kdKab_kdKec
+      
       let desaKey = kdKab + "_" + kdKec;
       if (!dataDesa[desaKey]) dataDesa[desaKey] = {};
-      dataDesa[desaKey][kdDesa] = r.desa;
+      dataDesa[desaKey][kdDesa] = r.desa;      
       
-      // Composite Key Dusun: kdKab_kdKec_kdDesa
       let dsnKey = kdKab + "_" + kdKec + "_" + kdDesa;
       if (!dataDusun[dsnKey]) dataDusun[dsnKey] = {};
       dataDusun[dsnKey][kdDsn] = { nama: r.dusun, jumlah_rt: r.jumlah_rt || 1 };
@@ -6985,11 +6977,17 @@
     const dusunSel = document.getElementById("dusun");
     const rtSel = document.getElementById("rt");
 
-    let defaultProv = "52";
+    let defaultProv = "";
     if (userKodeKab) {
       for (let p in dataKabupaten) {
-        if (dataKabupaten[p][userKodeKab]) { defaultProv = p; break; }
+        if (dataKabupaten[p] && dataKabupaten[p][userKodeKab]) { 
+          defaultProv = p; 
+          break; 
+        }
       }
+    }
+    if (!defaultProv) {
+      defaultProv = Object.keys(dataProvinsi)[0] || "";
     }
 
     if (isDesaRole()) {
@@ -7147,10 +7145,28 @@
       "KB_Juni", "KB_Juli", "KB_Agustus", "KB_September", "KB_Oktober", "KB_November", "KB_Desember"
     ];
 
+    let curKdKab = userKodeKab || "";
+    let curKdProv = "";
+    let curNamaKab = "";
+    let curNamaProv = "";
+
+    for (let p in dataKabupaten) {
+      if (dataKabupaten[p] && dataKabupaten[p][curKdKab]) {
+        curNamaKab = dataKabupaten[p][curKdKab];
+        curKdProv = p;
+        curNamaProv = dataProvinsi[p] || "";
+        break;
+      }
+    }
+    if (!curKdProv && Object.keys(dataProvinsi).length > 0) {
+      curKdProv = Object.keys(dataProvinsi)[0];
+      curNamaProv = dataProvinsi[curKdProv];
+    }
+
     const sampleRow = [
-      "", "2026", "", "NUSA TENGGARA BARAT", "52", "LOMBOK BARAT", "01",
-      "LEMBAR", "05", "MAREJE", "0001", "DUSUN SATU", "0001",
-      "RT 001", "001", "AHMAD SUAMI", "5201050101850001", "SITI ISTRI", "5201054101900001",
+      "", String(new Date().getFullYear()), "", curNamaProv || "PROVINSI", curKdProv || "", curNamaKab || "KABUPATEN/KOTA", curKdKab || "",
+      "NAMA KECAMATAN", "01", "NAMA DESA", "0001", "NAMA DUSUN", "0001",
+      "RT 001", "001", "NAMA SUAMI", "16 DIGIT NIK SUAMI", "NAMA ISTRI", "16 DIGIT NIK ISTRI",
       "1990-05-15", "36", "2", "3",
       "PBI", "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN",
       "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN", "IMPLAN"
@@ -10427,6 +10443,23 @@
       ? dsnMap[curDsn].nama 
       : (item.dusun_nama || curDsn || "");
 
+    const provKey = String(item.kode_prov || "").padStart(2, '0');
+    let nmKab = item.kabupaten_nama || "";
+    if (!nmKab) {
+      for (let p in dataKabupaten) {
+        if (dataKabupaten[p] && dataKabupaten[p][curKab]) {
+          nmKab = dataKabupaten[p][curKab];
+          break;
+        }
+      }
+    }
+    nmKab = nmKab || "KABUPATEN/KOTA";
+
+    let nmProv = item.provinsi_nama || (provKey && dataProvinsi[provKey]) || "";
+    if (!nmProv) {
+      nmProv = Object.values(dataProvinsi)[0] || "PROVINSI";
+    }
+
     const alkon = String(item.rencana_metode || item.metode_realisasi || "").toUpperCase();
     const isSuntik = alkon.includes("SUNTIK");
     const isIud = alkon.includes("IUD");
@@ -10534,10 +10567,10 @@
                 <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
                   <tr>
                     <td style="width: 50%;">Kecamatan <b>${nmKec || '...............................'}</b></td>
-                    <td style="width: 50%;">Kabupaten/Kota <b>LOMBOK BARAT</b></td>
+                    <td style="width: 50%;">Kabupaten/Kota <b>${nmKab}</b></td>
                   </tr>
                   <tr>
-                    <td>Provinsi <b>NUSA TENGGARA BARAT</b></td>
+                    <td>Provinsi <b>${nmProv}</b></td>
                     <td>Kode pos ....................</td>
                   </tr>
                 </table>
@@ -10603,10 +10636,10 @@
                 <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
                   <tr>
                     <td style="width: 50%;">Kecamatan <b>${nmKec || '...............................'}</b></td>
-                    <td style="width: 50%;">Kabupaten/Kota <b>LOMBOK BARAT</b></td>
+                    <td style="width: 50%;">Kabupaten/Kota <b>${nmKab}</b></td>
                   </tr>
                   <tr>
-                    <td>Provinsi <b>NUSA TENGGARA BARAT</b></td>
+                    <td>Provinsi <b>${nmProv}</b></td>
                     <td>Kode pos ....................</td>
                   </tr>
                 </table>
@@ -10632,7 +10665,7 @@
                 Klien
               </td>
               <td style="width: 35%; text-align: center; vertical-align: bottom;">
-                <div style="margin-bottom: 1.5mm;">Lombok Barat, ${dLayanan}-${mLayanan}-${yLayanan}</div>
+                <div style="margin-bottom: 1.5mm;">${nmKab}, ${dLayanan}-${mLayanan}-${yLayanan}</div>
                 Suami/Isteri Klien *)
               </td>
             </tr>
@@ -10896,8 +10929,7 @@
       reverseButtons: true,
       focusCancel: true
     }).then((result) => {
-      if (result.isConfirmed) {
-        // 1. Bersihkan listener realtime Supabase secara tuntas
+      if (result.isConfirmed) {        
         if (realtimeLayananChannel) {
           db.removeChannel(realtimeLayananChannel);
           realtimeLayananChannel = null;
@@ -10907,11 +10939,9 @@
           db.removeChannel(realtimeMutasiChannel);
           realtimeMutasiChannel = null;
         }
-
-        // 2. Hapus sesi login dari penyimpanan lokal perangkat
+        
         localStorage.removeItem("pus_app_session");
-
-        // 3. Tutup jendela atau alihkan ke halaman logout
+        
         window.close();
         setTimeout(() => {
           window.location.href = "https://bpkblbr.github.io/r1puslbr/?status=out";
