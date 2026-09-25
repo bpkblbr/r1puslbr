@@ -7284,6 +7284,40 @@
         return;
       }
 
+      const mKeysDl = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
+      allData.forEach(row => {
+        let mutationSeen = false;
+        let age50Start = 13; // Default tidak terkunci jika belum 50 tahun
+
+        if (row.tgl_lahir_istri) {
+          const dob = new Date(row.tgl_lahir_istri);
+          if (!isNaN(dob.getTime())) {
+            const birthYear = dob.getFullYear();
+            const birthMonth = dob.getMonth() + 1; // 1 - 12
+            const yearTurning50 = birthYear + 50;
+            const currentTahun = parseInt(row.tahun || targetTahun, 10);
+
+            if (currentTahun > yearTurning50) {
+              age50Start = 1; // Kunci dari Januari jika tahun berjalan sudah lewat usia 50
+            } else if (currentTahun === yearTurning50) {
+              age50Start = birthMonth; // Kunci mulai bulan kelahiran di tahun genap 50
+            }
+          }
+        }
+
+        mKeysDl.forEach((k, mIdx) => {
+          let bulanKe = mIdx + 1;
+          let val = String(row[k] || "").toUpperCase().trim();
+
+          // Kosongkan jika sudah melewati bulan usia 50+ atau mutasi sudah pernah terjadi
+          if (mutationSeen || bulanKe >= age50Start) {
+            row[k] = "";
+          } else if (val.includes("CERAI") || val.includes("MENINGGAL") || val.includes("PINDAH")) {
+            mutationSeen = true; // Tandai mutasi ditemukan, bulan berikutnya otomatis dikosongkan
+          }
+        });
+      });
+
       // 3. Susun kolom baku (36 kolom persis template)
       const headers = [
         "ID_PUS", "Tahun", "Timestamp", "Provinsi", "Kode Provinsi", "Kabupaten", "Kode Kabupaten",
@@ -7758,9 +7792,16 @@
           });
           return;
         }
+        
+        const CHUNK_SIZE = 500;
+        for (let i = 0; i < payloadList.length; i += CHUNK_SIZE) {
+          const chunk = payloadList.slice(i, i + CHUNK_SIZE);
+          const { error: upsertError } = await db
+            .from('data_pus')
+            .upsert(chunk, { onConflict: 'id_pus,tahun' });
 
-        const { error: upsertError } = await db.from('data_pus').upsert(payloadList, { onConflict: 'id_pus,tahun' });
-        if (upsertError) throw upsertError;        
+          if (upsertError) throw upsertError;
+        }
 
         Swal.fire({
           icon: 'success',
