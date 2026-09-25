@@ -6681,28 +6681,36 @@
       return kdDesa;
     }
 
-    function getNamaDusunList(kdKab, kdKec, kdDesa, allowedDusunArr, role) {
-      if (role !== "User Desa") return "-";
-      if (!allowedDusunArr || (Array.isArray(allowedDusunArr) && allowedDusunArr.length === 0)) {
+    function getNamaDusunList(kdKab, kdKec, kdDesa, rawDusunData, role) {
+      if (role !== "User Desa") return "-";      
+      
+      let arr = [];
+      if (Array.isArray(rawDusunData)) {
+        arr = rawDusunData;
+      } else if (typeof rawDusunData === "string" && rawDusunData.trim() !== "") {
+        arr = rawDusunData.split(",");
+      }
+      
+      arr = arr.map(c => String(c).trim().padStart(4, '0')).filter(c => c !== "" && c !== "0000" && c !== "NULL");
+      
+      if (arr.length === 0) {
         return "<span style='color:#059669; font-weight:600;'>SEMUA DUSUN</span>";
       }
-
-      const dsnMap = getDusunList(kdKec, kdDesa, kdKab);
-      const arr = Array.isArray(allowedDusunArr) 
-        ? allowedDusunArr 
-        : String(allowedDusunArr).split(',').map(c => c.trim().padStart(4, '0'));
-        
-      const names = [];
-      arr.forEach(c => {
-        let cleanCode = String(c).trim().padStart(4, '0');
-        if (dsnMap && dsnMap[cleanCode]) {
-          names.push(dsnMap[cleanCode].nama);
-        } else {
-          names.push(cleanCode);
+      
+      const cleanKab = String(kdKab || userKodeKab || "01").padStart(2, '0');
+      const cleanKec = String(kdKec || "").padStart(2, '0');
+      const cleanDesa = String(kdDesa || "").padStart(4, '0');
+      
+      const dsnMap = getDusunList(cleanKec, cleanDesa, cleanKab);
+      
+      const names = arr.map(code => {
+        if (dsnMap && dsnMap[code] && dsnMap[code].nama) {
+          return dsnMap[code].nama;
         }
+        return code; // Tampilkan kode dusun jika nama belum termuat di cache
       });
 
-      return `<span style='color:#0284c7; font-weight:600;'>${names.join(", ")}</span>`;
+      return `<span style='background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:11px;'>${names.join(", ")}</span>`;
     }
 
     const filtered = allUsersData.filter(item => {
@@ -6729,10 +6737,9 @@
       const tr = document.createElement("tr");
       const nmKec = getNamaKec(item.kode_kec);
       const nmDesa = getNamaDesa(item.kode_kec, item.kode_desa);
-      const nmDusunText = getNamaDusunList(item.kode_kab, item.kode_kec, item.kode_desa, item.allowed_dusun, item.role);
-      // ==============================================================
-      // LOGIKA PEMBATASAN HAK AKSES TOMBOL EDIT & HAPUS
-      // ==============================================================
+      const dusunField = item.allowed_dusun || item.kode_dusun_list || null;
+      const nmDusunText = getNamaDusunList(item.kode_kab, item.kode_kec, item.kode_desa, dusunField, item.role);
+      
       let canModify = false;
       const targetRole = String(item.role || "").toUpperCase();
 
@@ -6747,13 +6754,11 @@
           canModify = true;
         }
       }
-
-      // Render tombol aksi jika memiliki izin, jika tidak tampilkan tanda strip (-)
+      
       const actionButtons = canModify ? `
         <button type="button" class="btn-nav btn-warning" style="padding: 3px 6px; font-size: 11px;" onclick="populateUserToForm('${item.id}')" title="Edit Akun">✏️</button>
         <button type="button" class="btn-nav btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="confirmDeleteUser('${item.id}', '${item.username}')" title="Hapus Akun">🗑️</button>
-      ` : `<span style="color: #94a3b8; font-size: 12px; font-style: italic; user-select: none;">Terkunci</span>`;
-      // ==============================================================
+      ` : `<span style="color: #94a3b8; font-size: 12px; font-style: italic; user-select: none;">Terkunci</span>`;      
 
       tr.innerHTML = `
         <td style="text-align:center;">${idx + 1}</td>
@@ -6779,11 +6784,9 @@
   function populateUserToForm(id) {
     const item = allUsersData.find(u => String(u.id) === String(id));
     if (!item) return;
-
-    // 1. Pindah ke tab form TANPA me-reset data (kirim false)
+    
     switchUserTab('form', false);
-
-    // 2. Masukkan data yang akan diedit
+    
     document.getElementById("user_id").value = item.id;
     document.getElementById("user_namalengkap_input").value = item.nama_lengkap || "";
     document.getElementById("user_name_input").value = item.username;
@@ -6800,18 +6803,19 @@
 
     if (item.kode_desa) {
       document.getElementById("user_desa_select").value = String(item.kode_desa).trim().padStart(4, '0');
-      onUserDesaChange();
+      onUserDesaChange();      
       
-      if (item.allowed_dusun) {
-        const dsnArr = Array.isArray(item.allowed_dusun)
-          ? item.allowed_dusun.map(s => String(s).trim().padStart(4, '0'))
-          : String(item.allowed_dusun).split(',').map(s => s.trim().padStart(4, '0'));
+      const rawAllowed = item.allowed_dusun || item.kode_dusun_list || null;
+      if (rawAllowed) {
+        const dsnArr = Array.isArray(rawAllowed)
+          ? rawAllowed.map(s => String(s).trim().padStart(4, '0'))
+          : String(rawAllowed).split(',').map(s => s.trim().padStart(4, '0'));
 
         const checkboxes = document.querySelectorAll('input[name="user_dusun_checkbox"]');
         checkboxes.forEach(cb => {
           cb.checked = dsnArr.includes(String(cb.value).trim().padStart(4, '0'));
         });
-      }
+      }      
     }
 
     document.getElementById("btnSaveUserAcc").innerText = "💾 PERBARUI AKUN";
