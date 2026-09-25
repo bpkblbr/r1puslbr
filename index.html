@@ -2071,6 +2071,17 @@
   let chartTrendBulananInstance = null;
 
   const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+  function parseAllowedDusun(raw) {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map(d => String(d).trim().padStart(4, '0')).filter(Boolean);
+    }
+    if (typeof raw === "string") {
+      return raw.split(',').map(d => d.trim().padStart(4, '0')).filter(d => d !== "" && d !== "0000");
+    }
+    return [];
+  }
   
   function getTimeGreeting() {
     const hour = new Date().getHours();
@@ -2186,7 +2197,8 @@
         userKodeKab = parsed.userKodeKab || "";
         userKodeKec = parsed.userKodeKec || "";
         userKodeDesa = parsed.userKodeDesa || "";
-        userAllowedDusun = Array.isArray(parsed.allowed_dusun) ? parsed.allowed_dusun : [];
+        const rawDusunFromSession = parsed.allowed_dusun || parsed.userAllowedDusun || parsed.kode_dusun_list || null;
+        userAllowedDusun = parseAllowedDusun(rawDusunFromSession);
 
         // 1. Tampilkan kontainer dashboard terlebih dahulu
         document.getElementById("loginContainer").style.display = "none";
@@ -3499,7 +3511,8 @@
       userKodeKec = String(data.kode_kec || "").trim().padStart(2, '0');
       userKodeDesa = String(data.kode_desa || "").trim().padStart(4, '0');
 
-      userAllowedDusun = Array.isArray(data.allowed_dusun) ? data.allowed_dusun : [];
+      const rawDusunFromDb = data.allowed_dusun || data.kode_dusun_list || null;
+      userAllowedDusun = parseAllowedDusun(rawDusunFromDb);
       
       const sessionData = {
         currentUser: data.username,
@@ -3897,24 +3910,30 @@
     resetDropdown("dusun", "kode_dusun"); 
     resetDropdown("rt", "kode_rt");
     
-    // Sertakan kodeKab agar composite key terbaca sempurna
     let dusunObj = getDusunList(kodeKec, kodeDesa, kodeKab);
     
     if (kodeDesa && dusunObj) {
       const dusunSelect = document.getElementById("dusun");
       dusunSelect.disabled = false;
+      
+      const allowedSet = new Set((userAllowedDusun || []).map(d => String(d).trim().padStart(4, '0')));
+
       for (let kode in dusunObj) {
-        let cleanKd = String(kode).trim().padStart(4, '0');        
+        let cleanKd = String(kode).trim().padStart(4, '0');      
         
-        if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0) {
-          if (!userAllowedDusun.includes(cleanKd)) {
-            continue;
+        if (isDesaRole() && allowedSet.size > 0) {
+          if (!allowedSet.has(cleanKd)) {
+            continue; 
           }
         }        
         
         dusunSelect.add(new Option(dusunObj[kode].nama.toUpperCase(), cleanKd));
       }
-      if (selectedVal) { 
+      
+      if (isDesaRole() && dusunSelect.options.length === 2) {
+        dusunSelect.selectedIndex = 1;
+        updateRT();
+      } else if (selectedVal) { 
         setSelectValueCaseInsensitive("dusun", selectedVal); 
         updateRT(); 
       }
@@ -4334,8 +4353,7 @@
     let from = 0;
     const step = 1000;
     let hasMore = true;
-
-    // Bersihkan karakter non-digit agar pencocokan murni numerik
+    
     const cleanKecFilter = filterKec ? String(filterKec).trim().replace(/\D/g, "") : "";
     const cleanDesaFilter = filterDesa ? String(filterDesa).trim().replace(/\D/g, "") : "";
     const cleanDusunFilter = (filterDusun && filterDusun !== "0000") ? String(filterDusun).trim().replace(/\D/g, "") : "";
@@ -4361,7 +4379,12 @@
         const dsnPad = cleanDusunFilter.padStart(4, '0');
         query = query.eq('kode_dusun', dsnPad);
       }
-
+      
+      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0 && !cleanDusunFilter) {
+        const normalizedAllowed = userAllowedDusun.map(d => String(d).trim().padStart(4, '0'));
+        query = query.in('kode_dusun', normalizedAllowed);
+      }
+      
       const { data, error } = await query.order('id_pus', { ascending: true }).range(from, from + step - 1);
       if (error) throw error;
 
@@ -4394,13 +4417,14 @@
         return rDsn === cleanDusunFilter.padStart(4, '0');
       });
     }
-
+    
     if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0 && !cleanDusunFilter) {
+      const allowedSet = new Set(userAllowedDusun.map(d => String(d).trim().padStart(4, '0')));
       allData = allData.filter(r => {
         const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
-        return userAllowedDusun.includes(rDsn);
+        return allowedSet.has(rDsn);
       });
-    }
+    }    
 
     return allData;
   }
