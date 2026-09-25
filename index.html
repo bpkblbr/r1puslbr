@@ -4357,6 +4357,10 @@
     const cleanKecFilter = filterKec ? String(filterKec).trim().replace(/\D/g, "") : "";
     const cleanDesaFilter = filterDesa ? String(filterDesa).trim().replace(/\D/g, "") : "";
     const cleanDusunFilter = (filterDusun && filterDusun !== "0000") ? String(filterDusun).trim().replace(/\D/g, "") : "";
+    
+    const allowedDusunList = (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0)
+      ? userAllowedDusun.map(d => String(d).trim().padStart(4, '0')).filter(d => d !== "" && d !== "0000")
+      : [];
 
     while (hasMore) {
       let query = db.from('data_pus').select('*').eq('tahun', tahun);
@@ -4370,22 +4374,24 @@
         const kecNum = parseInt(cleanKecFilter, 10);
         query = query.or(`kode_kec.eq.${kecPad},kode_kec.eq.${kecNum}`);
       }
+      
       if (cleanDesaFilter) {
         const desPad = cleanDesaFilter.padStart(4, '0');
         const desNum = parseInt(cleanDesaFilter, 10);
         query = query.or(`kode_desa.eq.${desPad},kode_desa.eq.${desNum}`);
       }
+      
       if (cleanDusunFilter) {
         const dsnPad = cleanDusunFilter.padStart(4, '0');
         query = query.eq('kode_dusun', dsnPad);
+      } else if (allowedDusunList.length > 0) {        
+        query = query.in('kode_dusun', allowedDusunList);
       }
       
-      if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0 && !cleanDusunFilter) {
-        const normalizedAllowed = userAllowedDusun.map(d => String(d).trim().padStart(4, '0'));
-        query = query.in('kode_dusun', normalizedAllowed);
-      }
-      
-      const { data, error } = await query.order('id_pus', { ascending: true }).range(from, from + step - 1);
+      const { data, error } = await query
+        .order('id_pus', { ascending: true })
+        .range(from, from + step - 1);
+
       if (error) throw error;
 
       if (data && data.length > 0) {
@@ -4398,33 +4404,36 @@
     }
     
     if (cleanKecFilter) {
+      const targetKecNum = parseInt(cleanKecFilter, 10);
       allData = allData.filter(r => {
         const rKec = String(r.kode_kec || "").trim().replace(/\D/g, "");
-        return rKec !== "" && parseInt(rKec, 10) === parseInt(cleanKecFilter, 10);
+        return rKec !== "" && parseInt(rKec, 10) === targetKecNum;
       });
     }
 
     if (cleanDesaFilter) {
+      const targetDesaNum = parseInt(cleanDesaFilter, 10);
       allData = allData.filter(r => {
         const rDesa = String(r.kode_desa || "").trim().replace(/\D/g, "");
-        return rDesa !== "" && parseInt(rDesa, 10) === parseInt(cleanDesaFilter, 10);
+        return rDesa !== "" && parseInt(rDesa, 10) === targetDesaNum;
       });
     }
 
     if (cleanDusunFilter) {
+      const targetDsnPad = cleanDusunFilter.padStart(4, '0');
       allData = allData.filter(r => {
         const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
-        return rDsn === cleanDusunFilter.padStart(4, '0');
+        return rDsn === targetDsnPad;
       });
     }
     
-    if (isDesaRole() && userAllowedDusun && userAllowedDusun.length > 0 && !cleanDusunFilter) {
-      const allowedSet = new Set(userAllowedDusun.map(d => String(d).trim().padStart(4, '0')));
+    if (allowedDusunList.length > 0 && !cleanDusunFilter) {
+      const allowedSet = new Set(allowedDusunList);
       allData = allData.filter(r => {
         const rDsn = String(r.kode_dusun || "").trim().padStart(4, '0');
         return allowedSet.has(rDsn);
       });
-    }    
+    }
 
     return allData;
   }
