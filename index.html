@@ -187,7 +187,7 @@
 
     .search-filter-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px;
       width: 100%;
       box-sizing: border-box;
@@ -259,7 +259,7 @@
       padding-bottom: 6px;
     }
 
-    /* Container Card */
+    /* Container Card Form Layanan */
     .card-layanan-plan {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -337,7 +337,7 @@
 
     .checkbox-item-kb {
       display: flex !important;
-      align-items: center !important; /* Presisi vertikal di tengah */
+      align-items: center !important;
       gap: 8px !important;
       font-size: 12px !important;
       font-weight: 600 !important;
@@ -399,7 +399,7 @@
       width: 210mm;
       height: 297mm;
       box-sizing: border-box;
-      padding: 23.5mm 15mm; /* 23.5mm atas-bawah & 15mm kiri-kanan memusatkan kartu 180x250mm tepat di tengah */
+      padding: 23.5mm 15mm;
       display: grid;
       grid-template-columns: 90mm 90mm;
       grid-template-rows: 125mm 125mm;
@@ -416,13 +416,13 @@
       box-sizing: border-box;
       overflow: hidden;
       position: relative;
-      border: 0.2mm dashed #cbd5e1; /* Garis panduan potong */
+      border: 0.2mm dashed #cbd5e1;
     }
 
     @media print {
       @page {
         size: A4 portrait;
-        margin: 0; /* Menghilangkan margin bawaan driver printer */
+        margin: 0;
       }
       html, body {
         width: 210mm;
@@ -437,91 +437,92 @@
       }
     }
    
+    /* Optimasi Responsif Layanan KB Mobile */
     @media (max-width: 640px) {    
-    #modalPelayananKb .modal-content {
-      width: 95% !important;
-      padding: 14px 10px !important;
-      margin: 3% auto !important;
-      max-height: 94vh !important;
+      #modalPelayananKb .modal-content {
+        width: 95% !important;
+        padding: 14px 10px !important;
+        margin: 3% auto !important;
+        max-height: 94vh !important;
+      }
+      
+      #modalPelayananKb .modal-content > div[style*="display: flex; gap: 10px; margin-bottom: 15px"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      #tabBtnLayananAntrean,
+      #tabBtnLayananDaftar {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 10px !important;
+      }
+      
+      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] > div {
+        width: 100% !important;
+      }
+      #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] button {
+        width: 100% !important;
+      }
+      
+      #filterExpLayananDesaGrid,
+      #filterExpLayananDusunGrid {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
+        max-height: 180px !important;
+      }
+      
+      #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] button {
+        width: 100% !important;
+      }
+      
+      #layananTabDaftar div[style*="grid-template-columns: repeat(auto-fit"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      #layananTabDaftar div[style*="display: flex; gap: 8px;"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      #layananTabDaftar div[style*="display: flex; gap: 8px;"] button {
+        width: 100% !important;
+        padding: 10px !important;
+      }
+      
+      #formPendaftaranLayanan .grid-2-col,
+      #formPendaftaranLayanan .grid-3-col {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      #formPendaftaranLayanan .card-layanan-plan {
+        padding: 12px 10px !important;
+      }
+      
+      #layananTabDaftar .card-layanan-plan > div[style*="justify-content: space-between"] {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+      }
+      
+      #formPendaftaranLayanan > div[style*="display: flex; gap: 10px;"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      #btnSimpanPendaftaranLayanan,
+      #formPendaftaranLayanan button[type="button"] {
+        width: 100% !important;
+      }
     }
-    
-    #modalPelayananKb .modal-content > div[style*="display: flex; gap: 10px; margin-bottom: 15px"] {
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-    #tabBtnLayananAntrean,
-    #tabBtnLayananDaftar {
-      width: 100% !important;
-      justify-content: center !important;
-      padding: 10px !important;
-    }
-    
-    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 10px !important;
-      width: 100% !important;
-    }
-    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] > div {
-      width: 100% !important;
-    }
-    #layananTabAntrean div[style*="grid-template-columns: minmax(180px"] button {
-      width: 100% !important;
-    }
-    
-    #filterExpLayananDesaGrid,
-    #filterExpLayananDusunGrid {
-      grid-template-columns: 1fr !important;
-      width: 100% !important;
-      max-height: 180px !important;
-    }
-    
-    #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] {
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-    #layananTabAntrean div[style*="border-top: 1px solid #e2e8f0"] button {
-      width: 100% !important;
-    }
-    
-    #layananTabDaftar div[style*="grid-template-columns: repeat(auto-fit"] {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-    #layananTabDaftar div[style*="display: flex; gap: 8px;"] {
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-    #layananTabDaftar div[style*="display: flex; gap: 8px;"] button {
-      width: 100% !important;
-      padding: 10px !important;
-    }
-    
-    #formPendaftaranLayanan .grid-2-col,
-    #formPendaftaranLayanan .grid-3-col {
-      grid-template-columns: 1fr !important;
-      gap: 12px !important;
-    }
-    #formPendaftaranLayanan .card-layanan-plan {
-      padding: 12px 10px !important;
-    }
-    
-    #layananTabDaftar .card-layanan-plan > div[style*="justify-content: space-between"] {
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 4px !important;
-    }
-    
-    #formPendaftaranLayanan > div[style*="display: flex; gap: 10px;"] {
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-    #btnSimpanPendaftaranLayanan,
-    #formPendaftaranLayanan button[type="button"] {
-      width: 100% !important;
-    }
-  }
   </style>
 </head>
 <body>
