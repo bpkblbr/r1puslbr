@@ -2202,7 +2202,7 @@
               break;
             }
           }
-          if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
+          if (!namaWilayahDinamis) namaWilayahDinamis = userKodeKab ? (dataKabupaten[userKodeProv || Object.keys(dataProvinsi)[0]]?.[userKodeKab] || "") : "";
         } else if (userRole.includes("KEC") || userRole === "ADMIN") {
           if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
             namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
@@ -3520,7 +3520,7 @@
             break;
           }
         }
-        if (!namaWilayahDinamis) namaWilayahDinamis = "LOMBOK BARAT";
+        if (!namaWilayahDinamis) namaWilayahDinamis = userKodeKab ? (dataKabupaten[userKodeProv || Object.keys(dataProvinsi)[0]]?.[userKodeKab] || "") : "";
       } else if (userRole.includes("KEC") || userRole === "ADMIN") {
         if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
           namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
@@ -5611,7 +5611,7 @@
       console.error("Export PDF Error:", err);
       Swal.fire("Gagal", "Terjadi kesalahan saat membuat dokumen PDF: " + err.message, "error");
     }
-  }  
+  }
 
   // Helper fungsi untuk memberi tanda highlight kuning pada kata kunci
   function highlightText(text, keyword) {
@@ -6151,8 +6151,10 @@
 
     } else {
       // Admin Kabupaten: Terkunci di kabupaten, Kecamatan s.d. Dusun KOSONG dan terbuka
-      setFieldLock(inProvNama, inProvKode, hasKab, curNamaProv || "NUSA TENGGARA BARAT", curKdProv || "52");
-      setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab || "LOMBOK BARAT", curKdKab || "01");
+      const fallbackProvKey = Object.keys(dataProvinsi)[0] || "";
+      const fallbackProvName = dataProvinsi[fallbackProvKey] || "";
+      setFieldLock(inProvNama, inProvKode, hasKab, curNamaProv || fallbackProvName, curKdProv || fallbackProvKey);
+      setFieldLock(inKabNama, inKabKode, hasKab, curNamaKab, curKdKab);
       setFieldLock(inKecNama, inKecKode, false, "", "");
       setFieldLock(inDesaNama, inDesaKode, false, "", "");
       setFieldLock(inDsnNama, inDsnKode, false, "", "");
@@ -6948,9 +6950,7 @@
       `;
     }
     onChartTingkatChange();
-  }
-
-  function resetFormToNew() { resetInputForm(); }
+  }  
   
   function resetInputForm() {
     document.getElementById("pusForm").reset();
@@ -7738,7 +7738,7 @@
             id_pus: idPus,
             tahun: parseInt(r[1] || targetTahun, 10),
             timestamp: new Date().toISOString(),
-            provinsi_nama: String(r[3] || "NUSA TENGGARA BARAT").toUpperCase().trim(),
+            provinsi_nama: String(r[3] || dataProvinsi[kdProv] || "PROVINSI").toUpperCase().trim(),
             kode_prov: kdProv,
             kabupaten_nama: String(r[5] || "").toUpperCase().trim(),
             kode_kab: kdKab,
@@ -7849,8 +7849,13 @@
       "Dusun", "Kode Dusun", "Jumlah RT"
     ];
 
+    const provKey = Object.keys(dataProvinsi)[0] || "";
+    const provName = dataProvinsi[provKey] || "PROVINSI";
+    const kabKey = (provKey && dataKabupaten[provKey]) ? Object.keys(dataKabupaten[provKey])[0] : "";
+    const kabName = (provKey && dataKabupaten[provKey]) ? dataKabupaten[provKey][kabKey] : "KABUPATEN/KOTA";
+
     const sampleRow = [
-      "NUSA TENGGARA BARAT", "52", "LOMBOK BARAT", "01",
+      provName, provKey, kabName, kabKey,
       "LEMBAR", "05", "MAREJE", "0001",
       "DUSUN SATU", "0001", "5"
     ];
@@ -7882,7 +7887,7 @@
         }
 
         const payloadList = rows.slice(1).map(r => ({
-          provinsi: String(r[0] || "").trim().toUpperCase(),
+          provinsi: String(r[0] || dataProvinsi[kdProv] || "PROVINSI").trim().toUpperCase(),
           kode_prov: String(r[1] || "").trim().padStart(2, '0'),
           kabupaten: String(r[2] || "").trim().toUpperCase(),
           kode_kab: String(r[3] || "").trim().padStart(2, '0'),
@@ -10944,11 +10949,11 @@
         
         window.close();
         setTimeout(() => {
-          window.location.href = "https://bpkblbr.github.io/r1puslbr/?status=out";
+          window.location.href = "about:blank";
         }, 300);
       }
     });
-  }  
+  }
 </script>
 </body>
 </html>
