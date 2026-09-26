@@ -3782,15 +3782,14 @@
     const val = String(kd).trim().toLowerCase();    
     return val !== "" && val !== "null" && val !== "undefined" && !/^0+$/.test(val);
   }
-
-  // Fungsi accept mutasi yang diselaraskan:
+  
   function acceptAndAutoFillMutasi(index) {
     const item = cachedPendingMutasiList[index];
     if (!item || !item.payload) return;
 
     const payloadData = typeof item.payload === "string" ? JSON.parse(item.payload) : item.payload;
 
-    // 1. Hapus status mutasi dari riwayat bulan KB agar data di wilayah baru bersih
+    
     const monthPayloadKeys = ["kb_jan", "kb_feb", "kb_mar", "kb_apr", "kb_mei", "kb_jun", "kb_jul", "kb_agu", "kb_sep", "kb_okt", "kb_nov", "kb_des"];
     monthPayloadKeys.forEach(mKey => {
       let val = String(payloadData[mKey] || "").toUpperCase();
@@ -3802,8 +3801,7 @@
     closeInboxMutasiModal();
     showFormView();
     resetInputForm();
-
-    // 2. Set State Form & Bersihkan ID PUS lama agar terbentuk ID baru di wilayah tujuan
+    
     document.getElementById("id_mutasi_tiket").value = item.id;
     document.getElementById("id_pus").value = "";
     document.getElementById("original_id_pus").value = "";
@@ -3811,37 +3809,43 @@
     if (document.getElementById("tahun_input")) {
       document.getElementById("tahun_input").value = payloadData.tahun || item.tahun;
     }
-
-    // 3. Sinkronisasi Dropdown Wilayah Berjenjang (Kecamatan -> Desa -> Dusun -> RT)
-    const targetKec = String(item.kode_kec_tujuan || userKodeKec || "").trim().padStart(2, '0');
-    const targetDesa = String(item.kode_desa_tujuan || userKodeDesa || "").trim().padStart(4, '0');
-    const targetDsn = String(item.kode_dusun_tujuan || "").trim().padStart(4, '0');
-
+    
+    const targetProv = String(payloadData.kode_prov || Object.keys(dataProvinsi)[0] || "").trim().padStart(2, '0');
+    const targetKab  = String(payloadData.kode_kab || userKodeKab || document.getElementById("kode_kab")?.value || "").trim().padStart(2, '0');
+    const targetKec  = String(item.kode_kec_tujuan || payloadData.kode_kec || "").trim().padStart(2, '0');
+    const targetDesa = String(item.kode_desa_tujuan || payloadData.kode_desa || "").trim().padStart(4, '0');
+    const targetDsn  = String(item.kode_dusun_tujuan || payloadData.kode_dusun || "").trim().padStart(4, '0');
+    
+    if (targetProv) {
+      setSelectValueCaseInsensitive("provinsi", targetProv);
+      document.getElementById("kode_prov").value = targetProv;
+      updateKabupaten(targetKab);
+    }
+    
+    if (targetKab) {
+      setSelectValueCaseInsensitive("kabupaten", targetKab);
+      document.getElementById("kode_kab").value = targetKab;
+      updateKecamatan(targetKec);
+    }
+    
     if (targetKec) {
       setSelectValueCaseInsensitive("kecamatan", targetKec);
       document.getElementById("kode_kec").value = targetKec;
-      
-      // Muat daftar desa di bawah kecamatan tujuan
       updateDesa(targetDesa);
-      
-      if (targetDesa) {
-        setSelectValueCaseInsensitive("desa", targetDesa);
-        document.getElementById("kode_desa").value = targetDesa;
-        
-        // Muat daftar dusun di bawah desa tujuan
-        updateDusun(cleanTargetDusunValid(targetDsn) ? targetDsn : "");
-        
-        if (cleanTargetDusunValid(targetDsn)) {
-          setSelectValueCaseInsensitive("dusun", targetDsn);
-          document.getElementById("kode_dusun").value = targetDsn;
-          
-          // Muat daftar RT di bawah dusun tujuan
-          updateRT();
-        }
-      }
     }
-
-    // 4. Salin Identitas PUS
+    
+    if (targetDesa) {
+      setSelectValueCaseInsensitive("desa", targetDesa);
+      document.getElementById("kode_desa").value = targetDesa;
+      updateDusun(cleanTargetDusunValid(targetDsn) ? targetDsn : "");
+    }
+    
+    if (cleanTargetDusunValid(targetDsn)) {
+      setSelectValueCaseInsensitive("dusun", targetDsn);
+      document.getElementById("kode_dusun").value = targetDsn;
+      updateRT();
+    }
+    
     document.getElementById("nama_suami").value = payloadData.nama_suami || "";
     document.getElementById("nik_suami").value = payloadData.nik_suami || "";
     document.getElementById("nama_istri").value = payloadData.nama_istri || "";
@@ -3854,8 +3858,7 @@
     document.getElementById("umur_anak_terkecil").value = payloadData.umur_anak_terkecil || 0;
 
     setSelectValueCaseInsensitive("peserta_jkn", payloadData.peserta_jkn);
-
-    // 5. Salin Riwayat KB Bulanan (Setelah dibersihkan dari status mutasi)
+    
     for (let m = 1; m <= 12; m++) {
       let mKey = monthPayloadKeys[m - 1];
       if (payloadData[mKey]) {
@@ -3870,7 +3873,7 @@
     Swal.fire({
       icon: 'info',
       title: 'Data Mutasi Dimuat!',
-      text: `Data PUS [${item.nama_istri}] berhasil dimuat. Silakan periksa atau lengkapi Dusun & RT, lalu klik SIMPAN DATA.`
+      html: `Data PUS <b>${item.nama_istri}</b> berhasil dimuat.<br>Wilayah Tujuan: <b>Desa ${item.desa_tujuan || '-'}</b>.<br><br>Silakan tentukan Dusun & RT, lalu klik <b>SIMPAN DATA PUS</b>.`
     });
   }
   
