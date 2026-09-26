@@ -2136,10 +2136,8 @@
       if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
         namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
       }
-    } else {
-      if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
-        namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
-      }
+    } else {      
+      namaWilayahDinamis = getNamaDesaByKode(userKodeKec, userKodeDesa, userKodeKab);
     }
     setUserGreeting(userRole, namaWilayahDinamis, currentUser, currentNamaLengkap);
   }
@@ -2219,10 +2217,8 @@
           if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
             namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
           }
-        } else {
-          if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
-            namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
-          }
+        } else {          
+          namaWilayahDinamis = getNamaDesaByKode(userKodeKec, userKodeDesa, userKodeKab);
         }
 
         // 3. SETELAH showDashboardView() SELESAI, BARU SET GREETING
@@ -2649,6 +2645,42 @@
     for (let kd in desas) {
       sel.add(new Option(desas[kd].toUpperCase(), String(kd).padStart(4, '0')));
     }
+  }
+
+  function getDesaList(kdKec, kdKab = "") {
+    if (!kdKec) return null;
+    let cleanKab = String(kdKab || userKodeKab || document.getElementById("kode_kab")?.value || "01").padStart(2, '0');
+    let cleanKec = String(kdKec).padStart(2, '0');
+
+    // 1. Coba composite key kdKab_kdKec
+    let compositeKey = cleanKab + "_" + cleanKec;
+    if (dataDesa[compositeKey] && Object.keys(dataDesa[compositeKey]).length > 0) {
+      return dataDesa[compositeKey];
+    }
+
+    // 2. Coba single key kdKec
+    if (dataDesa[cleanKec] && Object.keys(dataDesa[cleanKec]).length > 0) {
+      return dataDesa[cleanKec];
+    }
+
+    // 3. Fallback: Telusuri kunci yang berakhiran _kdKec
+    for (let k in dataDesa) {
+      if (k.endsWith("_" + cleanKec) && Object.keys(dataDesa[k]).length > 0) {
+        return dataDesa[k];
+      }
+    }
+
+    return null;
+  }
+  
+  function getNamaDesaByKode(kdKec, kdDesa, kdKab = "") {
+    if (!kdDesa) return "-";
+    let cleanDesa = String(kdDesa).padStart(4, '0');
+    const desas = getDesaList(kdKec, kdKab);
+    if (desas && desas[cleanDesa]) {
+      return desas[cleanDesa];
+    }
+    return kdDesa; // Fallback jika belum termuat
   }
 
   function getDusunList(kdKec, kdDesa, kdKab = "") {
@@ -3538,10 +3570,8 @@
         if (dataKecamatan[userKodeKab] && dataKecamatan[userKodeKab][userKodeKec]) {
           namaWilayahDinamis = dataKecamatan[userKodeKab][userKodeKec];
         }
-      } else {
-        if (dataDesa[userKodeKec] && dataDesa[userKodeKec][userKodeDesa]) {
-          namaWilayahDinamis = dataDesa[userKodeKec][userKodeDesa];
-        }
+      } else {        
+        namaWilayahDinamis = getNamaDesaByKode(userKodeKec, userKodeDesa, userKodeKab);
       }
       
       setUserGreeting(data.role, namaWilayahDinamis, data.username, currentNamaLengkap);
@@ -3794,8 +3824,7 @@
 
     document.getElementById("id_mutasi_tiket").value = item.id;
     document.getElementById("id_pus").value = "";
-    if (document.getElementById("old_id_pus")) document.getElementById("old_id_pus").value = "";
-    if (document.getElementById("original_id_pus")) document.getElementById("original_id_pus").value = "";
+    document.getElementById("original_id_pus").value = "";
 
     if (document.getElementById("tahun_input")) {
       document.getElementById("tahun_input").value = payloadData.tahun || item.tahun;
@@ -3984,8 +4013,13 @@
     applyMutationAndAgeLocks();
   }
 
-  function hitungUmurPresisi(tglLahirInput, tahunPelaporan) {
+  function hitungUmurPresisi(tglLahirInput, tahunPelaporan = null) {
     if (!tglLahirInput) return 0;
+    
+    if (!tahunPelaporan) {
+      const inputEl = document.getElementById("tahun_input");
+      tahunPelaporan = inputEl && inputEl.value ? parseInt(inputEl.value, 10) : new Date().getFullYear();
+    }
 
     let birthYear, birthMonth, birthDay;
 
@@ -4161,56 +4195,37 @@
           }
         }
       }
-
-      // Format komponen wilayah
+      
       const kdProv = document.getElementById("kode_prov").value.padStart(2, '0');
       const kdKab  = document.getElementById("kode_kab").value.padStart(2, '0');
       const kdKec  = document.getElementById("kode_kec").value.padStart(2, '0');
       const kdDesa = document.getElementById("kode_desa").value.padStart(4, '0');
       const kdDsn  = document.getElementById("kode_dusun").value.padStart(4, '0');
       const kdRt   = document.getElementById("kode_rt").value.padStart(3, '0');
-
-      // Prefix baku: [Prov(2)][Kab(2)][Kec(2)][Desa(4)] [Dsn(4)][RT(3)]
+      
       const expectedPrefix = `${kdProv}${kdKab}${kdKec}${kdDesa} ${kdDsn}${kdRt}`;
       let isRelocatedInSameVillage = false;
-
-      // Cek apakah data lama dipindah RT/Dusun pada mode edit
+      
       if (isEditMode && originalIdPus && !originalIdPus.startsWith(expectedPrefix)) {
         isRelocatedInSameVillage = true;
-        idPus = ""; // Kosongkan agar membentuk ID baru di RT tujuan
+        idPus = "";
       }
-
-      // Generate nomor urut baru mulai 001 di RT tujuan jika idPus kosong
+      
       if (!idPus) {
-        const { data: matchedRows, error: errSearchSeq } = await db
-          .from('data_pus')
-          .select('id_pus')
-          .eq('kode_prov', kdProv)
-          .eq('kode_kab', kdKab)
-          .eq('kode_kec', kdKec)
-          .eq('kode_desa', kdDesa)
-          .eq('kode_dusun', kdDsn)
-          .eq('kode_rt', kdRt)
-          .eq('tahun', thn);
+        const { data: generatedId, error: rpcErr } = await db.rpc('generate_next_id_pus', {
+          p_kode_prov: kdProv,
+          p_kode_kab: kdKab,
+          p_kode_kec: kdKec,
+          p_kode_desa: kdDesa,
+          p_kode_dusun: kdDsn,
+          p_kode_rt: kdRt,
+          p_tahun: thn
+        });
 
-        if (errSearchSeq) throw errSearchSeq;
+        if (rpcErr) throw rpcErr;
+        if (!generatedId) throw new Error("Gagal membuat ID PUS otomatis.");
 
-        let maxSeq = 0;
-        if (matchedRows && matchedRows.length > 0) {
-          matchedRows.forEach(row => {
-            const cleanId = String(row.id_pus || "").trim();
-            if (cleanId.startsWith(expectedPrefix)) {
-              const seqStr = cleanId.slice(expectedPrefix.length).trim();
-              const seqPart = parseInt(seqStr, 10);
-              if (!isNaN(seqPart) && seqPart > maxSeq) {
-                maxSeq = seqPart;
-              }
-            }
-          });
-        }
-
-        const nextNum = maxSeq + 1;
-        idPus = `${expectedPrefix}${String(nextNum).padStart(3, '0')}`;
+        idPus = generatedId;
         document.getElementById("id_pus").value = idPus;
       }
 
@@ -5372,89 +5387,134 @@
       if (chartStatusPropInstance) chartStatusPropInstance.destroy();
       chartStatusPropInstance = new Chart(canvasStatusProp.getContext('2d'), {
         type: 'doughnut',
-        data: { labels: ['Peserta KB', 'Bukan Peserta'], datasets: [{ data: [t.ber_kb, t.tidak_kb], backgroundColor: ['#28a745', '#dc3545'] }] },
+        data: { 
+          labels: ['Peserta KB', 'Bukan Peserta'], 
+          datasets: [{ data: [t.ber_kb, t.tidak_kb], backgroundColor: ['#28a745', '#dc3545'] }] 
+        },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
       });
     }
 
     // 2. Chart Rasio MKJP vs Non-MKJP
-    if (chartMkjpRasioInstance) chartMkjpRasioInstance.destroy();
-    chartMkjpRasioInstance = new Chart(document.getElementById('chartMkjpRasio').getContext('2d'), {
-      type: 'doughnut',
-      data: { labels: ['MKJP', 'Non-MKJP'], datasets: [{ data: [t.mkjp, t.non_mkjp], backgroundColor: ['#0d9488', '#38bdf8'] }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
-    });
+    const canvasMkjpRasio = document.getElementById('chartMkjpRasio');
+    if (canvasMkjpRasio) {
+      if (chartMkjpRasioInstance) chartMkjpRasioInstance.destroy();
+      chartMkjpRasioInstance = new Chart(canvasMkjpRasio.getContext('2d'), {
+        type: 'doughnut',
+        data: { 
+          labels: ['MKJP', 'Non-MKJP'], 
+          datasets: [{ data: [t.mkjp, t.non_mkjp], backgroundColor: ['#0d9488', '#38bdf8'] }] 
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+      });
+    }
 
     // 3. Chart JKN
-    if (chartJknInstance) chartJknInstance.destroy();
-    chartJknInstance = new Chart(document.getElementById('chartJkn').getContext('2d'), {
-      type: 'doughnut',
-      data: { labels: ['PBI', 'Non-PBI', 'Swasta', 'Tidak Memiliki'], datasets: [{ data: [t.jkn_pbi, t.jkn_non_pbi, t.jkn_swasta, t.jkn_none], backgroundColor: ['#10b981', '#0284c7', '#8b5cf6', '#ef4444'] }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
-    });
+    const canvasJkn = document.getElementById('chartJkn');
+    if (canvasJkn) {
+      if (chartJknInstance) chartJknInstance.destroy();
+      chartJknInstance = new Chart(canvasJkn.getContext('2d'), {
+        type: 'doughnut',
+        data: { 
+          labels: ['PBI', 'Non-PBI', 'Swasta', 'Tidak Memiliki'], 
+          datasets: [{ data: [t.jkn_pbi, t.jkn_non_pbi, t.jkn_swasta, t.jkn_none], backgroundColor: ['#10b981', '#0284c7', '#8b5cf6', '#ef4444'] }] 
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+      });
+    }
 
     // 4. Chart Umur Istri
-    if (chartUmurIstriInstance) chartUmurIstriInstance.destroy();
-    chartUmurIstriInstance = new Chart(document.getElementById('chartUmurIstri').getContext('2d'), {
-      type: 'bar',
-      data: { labels: ['< 20 Th', '20-34 Th', '35-49 Th'], datasets: [{ label: 'Jumlah Istri', data: [t.umur_u20, t.umur_20_34, t.umur_35_49], backgroundColor: ['#f59e0b', '#10b981', '#ef4444'] }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    const canvasUmurIstri = document.getElementById('chartUmurIstri');
+    if (canvasUmurIstri) {
+      if (chartUmurIstriInstance) chartUmurIstriInstance.destroy();
+      chartUmurIstriInstance = new Chart(canvasUmurIstri.getContext('2d'), {
+        type: 'bar',
+        data: { 
+          labels: ['< 20 Th', '20-34 Th', '35-49 Th'], 
+          datasets: [{ label: 'Jumlah Istri', data: [t.umur_u20, t.umur_20_34, t.umur_35_49], backgroundColor: ['#f59e0b', '#10b981', '#ef4444'] }] 
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
     // 5. Chart Komposisi KB Baru
-    if (chartKbBaruCompInstance) chartKbBaruCompInstance.destroy();
-    chartKbBaruCompInstance = new Chart(document.getElementById('chartKbBaruComp').getContext('2d'), {
-      type: 'bar',
-      data: { labels: ['KBPP', 'Pasca DO', 'Baru Murni'], datasets: [{ label: 'Jumlah', data: [t.kb_baru_kbpp, t.kb_baru_pasca_do, t.kb_baru_murni], backgroundColor: ['#0284c7', '#f59e0b', '#10b981'] }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    const canvasKbBaruComp = document.getElementById('chartKbBaruComp');
+    if (canvasKbBaruComp) {
+      if (chartKbBaruCompInstance) chartKbBaruCompInstance.destroy();
+      chartKbBaruCompInstance = new Chart(canvasKbBaruComp.getContext('2d'), {
+        type: 'bar',
+        data: { 
+          labels: ['KBPP', 'Pasca DO', 'Baru Murni'], 
+          datasets: [{ label: 'Jumlah', data: [t.kb_baru_kbpp, t.kb_baru_pasca_do, t.kb_baru_murni], backgroundColor: ['#0284c7', '#f59e0b', '#10b981'] }] 
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
     // 6. Chart Mix Kontrasepsi
-    if (chartMixKontrasepsiInstance) chartMixKontrasepsiInstance.destroy();
-    chartMixKontrasepsiInstance = new Chart(document.getElementById('chartMixKontrasepsi').getContext('2d'), {
-      type: 'bar',
-      data: { labels: ['Suntik', 'Pil', 'Kondom', 'Implan', 'IUD', 'MOW', 'MOP'], datasets: [{ label: 'Peserta', data: [t.stk, t.pil, t.kdm, t.imp, t.iud, t.mow, t.mop], backgroundColor: '#3b82f6' }] },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    const canvasMix = document.getElementById('chartMixKontrasepsi');
+    if (canvasMix) {
+      if (chartMixKontrasepsiInstance) chartMixKontrasepsiInstance.destroy();
+      chartMixKontrasepsiInstance = new Chart(canvasMix.getContext('2d'), {
+        type: 'bar',
+        data: { 
+          labels: ['Suntik', 'Pil', 'Kondom', 'Implan', 'IUD', 'MOW', 'MOP'], 
+          datasets: [{ label: 'Peserta', data: [t.stk, t.pil, t.kdm, t.imp, t.iud, t.mow, t.mop], backgroundColor: '#3b82f6' }] 
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
     // 7. Chart Alasan Tidak KB
-    if (chartAlasanTidakKbInstance) chartAlasanTidakKbInstance.destroy();
-    chartAlasanTidakKbInstance = new Chart(document.getElementById('chartAlasanTidakKb').getContext('2d'), {
-      type: 'bar',
-      data: { labels: ['IAT', 'TIAL', 'IAS', 'Hamil', 'TKI'], datasets: [{ label: 'Jumlah', data: [t.iat, t.tial, t.ias, t.hamil, t.tki], backgroundColor: ['#f59e0b', '#d97706', '#94a3b8', '#ec4899', '#64748b'] }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
+    const canvasAlasan = document.getElementById('chartAlasanTidakKb');
+    if (canvasAlasan) {
+      if (chartAlasanTidakKbInstance) chartAlasanTidakKbInstance.destroy();
+      chartAlasanTidakKbInstance = new Chart(canvasAlasan.getContext('2d'), {
+        type: 'bar',
+        data: { 
+          labels: ['IAT', 'TIAL', 'IAS', 'Hamil', 'TKI'], 
+          datasets: [{ label: 'Jumlah', data: [t.iat, t.tial, t.ias, t.hamil, t.tki], backgroundColor: ['#f59e0b', '#d97706', '#94a3b8', '#ec4899', '#64748b'] }] 
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
 
     // 8. Chart Perbandingan Wilayah
-    const wilLabels = Object.keys(perWilayahMap);
-    if (chartWilayahInstance) chartWilayahInstance.destroy();
-    chartWilayahInstance = new Chart(document.getElementById('chartWilayah').getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: wilLabels,
-        datasets: [
-          { label: 'MKJP', data: wilLabels.map(k => perWilayahMap[k].mkjp), backgroundColor: '#0d9488' },
-          { label: 'Peserta KB', data: wilLabels.map(k => perWilayahMap[k].ber_kb), backgroundColor: '#28a745' },
-          { label: 'Total PUS', data: wilLabels.map(k => perWilayahMap[k].total_pus), backgroundColor: '#cbd5e1' }
-        ]
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-    });
+    const canvasWilayah = document.getElementById('chartWilayah');
+    if (canvasWilayah) {
+      const wilLabels = Object.keys(perWilayahMap);
+      if (chartWilayahInstance) chartWilayahInstance.destroy();
+      chartWilayahInstance = new Chart(canvasWilayah.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: wilLabels,
+          datasets: [
+            { label: 'MKJP', data: wilLabels.map(k => perWilayahMap[k].mkjp), backgroundColor: '#0d9488' },
+            { label: 'Peserta KB', data: wilLabels.map(k => perWilayahMap[k].ber_kb), backgroundColor: '#28a745' },
+            { label: 'Total PUS', data: wilLabels.map(k => perWilayahMap[k].total_pus), backgroundColor: '#cbd5e1' }
+          ]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+      });
+    }
 
     // 9. Chart Tren Bulanan
-    const trendLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    if (chartTrendBulananInstance) chartTrendBulananInstance.destroy();
-    chartTrendBulananInstance = new Chart(document.getElementById('chartTrendBulanan').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: trendLabels,
-        datasets: [
-          { label: 'Peserta KB Aktif', data: t.trend_ber_kb, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.3 },
-          { label: 'Bukan Peserta KB', data: t.trend_tidak_kb, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.3 }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-    });
+    const canvasTrend = document.getElementById('chartTrendBulanan');
+    if (canvasTrend) {
+      const trendLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+      if (chartTrendBulananInstance) chartTrendBulananInstance.destroy();
+      chartTrendBulananInstance = new Chart(canvasTrend.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: trendLabels,
+          datasets: [
+            { label: 'Peserta KB Aktif', data: t.trend_ber_kb, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.3 },
+            { label: 'Bukan Peserta KB', data: t.trend_tidak_kb, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+      });
+    }
   }
 
   // =========================================================================
@@ -7764,9 +7824,10 @@
             }
           }
 
-          let parsedTglLahir = formatExcelDate(r[19]);
-          let umurFromExcel = hitungUmurPresisi(parsedTglLahir);
-          
+          let parsedTglLahir = formatExcelDate(r[19]);          
+          let tahunBaris = parseInt(r[1] || targetTahun, 10);
+          let umurFromExcel = hitungUmurPresisi(parsedTglLahir, tahunBaris);
+
           if (umurFromExcel === 0 && r[20]) {
             umurFromExcel = parseInt(r[20] || 0, 10);
           }
@@ -7911,39 +7972,97 @@
       return;
     }
 
+    Swal.fire({
+      title: 'Memproses Wilayah...',
+      text: 'Membaca dan memvalidasi baris data Excel...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     const reader = new FileReader();
     reader.onload = async function(e) {
       try {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "" });
 
-        if (rows.length <= 1) {
+        if (!rows || rows.length <= 1) {
           Swal.fire("Kosong", "File Excel tidak memiliki data baris!", "warning");
           return;
         }
+        
+        const fallbackProvKey = Object.keys(dataProvinsi)[0] || "52";
+        const fallbackProvName = dataProvinsi[fallbackProvKey] || "PROVINSI";
 
-        const payloadList = rows.slice(1).map(r => ({
-          provinsi: String(r[0] || dataProvinsi[kdProv] || "PROVINSI").trim().toUpperCase(),
-          kode_prov: String(r[1] || "").trim().padStart(2, '0'),
-          kabupaten: String(r[2] || "").trim().toUpperCase(),
-          kode_kab: String(r[3] || "").trim().padStart(2, '0'),
-          kecamatan: String(r[4] || "").trim().toUpperCase(),
-          kode_kec: String(r[5] || "").trim().padStart(2, '0'),
-          desa: String(r[6] || "").trim().toUpperCase(),
-          kode_desa: String(r[7] || "").trim().padStart(4, '0'),
-          dusun: String(r[8] || "").trim().toUpperCase(),
-          kode_dusun: String(r[9] || "").trim().padStart(4, '0'),
-          jumlah_rt: parseInt(r[10] || 1, 10)
-        })).filter(item => item.dusun !== "");
+        const payloadList = [];
+        
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          
+          const rawDusun = String(r[8] || "").trim();
+          const rawDesa = String(r[6] || "").trim();
+          if (!rawDusun || !rawDesa) continue;
+          
+          const cleanKdProv = String(r[1] || fallbackProvKey).trim().padStart(2, '0');
+          const cleanKdKab  = String(r[3] || userKodeKab || "01").trim().padStart(2, '0');
+          const cleanKdKec  = String(r[5] || "").trim().padStart(2, '0');
+          const cleanKdDesa = String(r[7] || "").trim().padStart(4, '0');
+          const cleanKdDsn  = String(r[9] || "").trim().padStart(4, '0');
+          
+          if (!cleanKdKec || !cleanKdDesa || !cleanKdDsn) continue;
+          
+          const namaProv = String(r[0] || dataProvinsi[cleanKdProv] || fallbackProvName).trim().toUpperCase();
+          
+          let namaKab = String(r[2] || "").trim().toUpperCase();
+          if (!namaKab && dataKabupaten[cleanKdProv] && dataKabupaten[cleanKdProv][cleanKdKab]) {
+            namaKab = String(dataKabupaten[cleanKdProv][cleanKdKab]).trim().toUpperCase();
+          }
 
-        const { error } = await db.from('master_wilayah').upsert(payloadList, { onConflict: 'kode_kec,kode_desa,kode_dusun' });
+          payloadList.push({
+            provinsi: namaProv,
+            kode_prov: cleanKdProv,
+            kabupaten: namaKab || "KABUPATEN/KOTA",
+            kode_kab: cleanKdKab,
+            kecamatan: String(r[4] || "").trim().toUpperCase(),
+            kode_kec: cleanKdKec,
+            desa: rawDesa.toUpperCase(),
+            kode_desa: cleanKdDesa,
+            dusun: rawDusun.toUpperCase(),
+            kode_dusun: cleanKdDsn,
+            jumlah_rt: Math.max(1, parseInt(r[10] || 1, 10))
+          });
+        }
+
+        if (payloadList.length === 0) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Tidak Ada Data Valid',
+            text: 'Pastikan kolom Kecamatan, Desa, Dusun, dan Kodenya terisi dengan benar di file Excel.'
+          });
+          return;
+        }
+        
+        const { error } = await db
+          .from('master_wilayah')
+          .upsert(payloadList, { onConflict: 'kode_kec,kode_desa,kode_dusun' });
+
         if (error) throw error;
 
-        Swal.fire("Berhasil", `Sebanyak ${payloadList.length} wilayah berhasil diimpor!`, "success");
-        loadRegisteredWilayahList();
-        loadMasterWilayahFromDB();
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: `Sebanyak ${payloadList.length} baris wilayah berhasil disinkronkan ke database!`
+        });
+        
+        const fileInput = document.getElementById('excelWilayahInput');
+        if (fileInput) fileInput.value = "";
+        
+        if (typeof loadRegisteredWilayahList === "function") loadRegisteredWilayahList();
+        if (typeof loadMasterWilayahFromDB === "function") await loadMasterWilayahFromDB();
+
       } catch (err) {
+        console.error("Upload Wilayah Error:", err);
         Swal.fire("Error", "Gagal memproses file wilayah: " + err.message, "error");
       }
     };
