@@ -7977,31 +7977,78 @@
       }
     };
     reader.readAsArrayBuffer(file);
-  }
-  
-  // ==========================================
-  // MODUL DOWNLOAD & UPLOAD EXCEL MASTER WILAYAH
-  // ==========================================
+  }  
+
   function downloadWilayahTemplate() {
     const headers = [
       "Provinsi", "Kode Provinsi", "Kabupaten", "Kode Kabupaten",
       "Kecamatan", "Kode Kecamatan", "Desa", "Kode Desa",
       "Dusun", "Kode Dusun", "Jumlah RT"
     ];
-
-    const provKey = Object.keys(dataProvinsi)[0] || "";
-    const provName = dataProvinsi[provKey] || "PROVINSI";
-    const kabKey = (provKey && dataKabupaten[provKey]) ? Object.keys(dataKabupaten[provKey])[0] : "";
-    const kabName = (provKey && dataKabupaten[provKey]) ? dataKabupaten[provKey][kabKey] : "KABUPATEN/KOTA";
-
+    
+    const provKey = Object.keys(dataProvinsi)[0] || document.getElementById("kode_prov")?.value || "";
+    let provName = "";
+    if (provKey && dataProvinsi[provKey]) {
+      provName = dataProvinsi[provKey];
+    } else {
+      provName = document.getElementById("provinsi")?.options[document.getElementById("provinsi")?.selectedIndex]?.text || "PROVINSI";
+    }
+    
+    const kabKey = userKodeKab || document.getElementById("kode_kab")?.value || (provKey && dataKabupaten[provKey] ? Object.keys(dataKabupaten[provKey])[0] : "");
+    let kabName = "";
+    if (provKey && kabKey && dataKabupaten[provKey]?.[kabKey]) {
+      kabName = dataKabupaten[provKey][kabKey];
+    } else {
+      kabName = document.getElementById("kabupaten")?.options[document.getElementById("kabupaten")?.selectedIndex]?.text || "KABUPATEN/KOTA";
+    }
+    
+    const kecKey = userKodeKec || document.getElementById("kode_kec")?.value || "01";
+    let kecName = "KECAMATAN";
+    if (kabKey && dataKecamatan[kabKey]?.[kecKey]) {
+      kecName = dataKecamatan[kabKey][kecKey];
+    } else {
+      kecName = document.getElementById("kecamatan")?.options[document.getElementById("kecamatan")?.selectedIndex]?.text || "NAMA KECAMATAN";
+    }
+    
     const sampleRow = [
-      provName, provKey, kabName, kabKey,
-      "LEMBAR", "05", "MAREJE", "0001",
-      "DUSUN SATU", "0001", "5"
+      String(provName).toUpperCase(),
+      String(provKey).padStart(2, '0'),
+      String(kabName).toUpperCase(),
+      String(kabKey).padStart(2, '0'),
+      String(kecName).toUpperCase(),
+      String(kecKey).padStart(2, '0'),
+      "NAMA DESA",
+      "0001",
+      "NAMA DUSUN",
+      "0001",
+      "5"
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
-    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:K2');
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C of [1, 3, 5, 7, 9]) { // Kolom indeks kode wilayah
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (ws[cellRef] && typeof ws[cellRef].v === 'string') {
+          ws[cellRef].t = 's';
+        }
+      }
+    }
+    
+    ws['!cols'] = [
+      { wch: 22 },
+      { wch: 15 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 12 }
+    ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "TEMPLATE_WILAYAH");
@@ -10051,21 +10098,33 @@
   
   function renderSatuKartuBelakang(item) {
     const alkon = String(item.rencana_metode || item.metode_realisasi || '-').toUpperCase();
-    const tglRef = item.tgl_rencana_layanan || new Date().toISOString().split('T')[0];
-    const [yLayanan, mLayanan, dLayanan] = tglRef.split('-');
+    
+    // 1. Sanitasi format tanggal rencana layanan
+    const rawTglRef = String(item.tgl_rencana_layanan || new Date().toISOString().split('T')[0]).replace(/\//g, '-').trim();
+    const pTgl = rawTglRef.split('-');
+    let yLayanan = String(new Date().getFullYear()), mLayanan = "01", dLayanan = "01";
+
+    if (pTgl.length === 3) {
+      if (pTgl[0].length === 4) { // Format: YYYY-MM-DD
+        yLayanan = pTgl[0];
+        mLayanan = pTgl[1].padStart(2, '0');
+        dLayanan = pTgl[2].padStart(2, '0');
+      } else { // Format: DD-MM-YYYY
+        dLayanan = pTgl[0].padStart(2, '0');
+        mLayanan = pTgl[1].padStart(2, '0');
+        yLayanan = pTgl[2];
+      }
+    }
     const yShort = yLayanan.slice(-2);
 
+    // 2. SOLUSI POIN 3: Perhitungan Tanggal Cabut Implan (3 Thn) & IUD (8 Thn) Tanpa Objek Date
     let dCabut = "", mCabut = "", yCabutShort = "";
-    if (alkon.includes("IMPLAN") || alkon.includes("IMP") || alkon.includes("IUD")) {
-      const tglPasang = new Date(tglRef);
-      if (!isNaN(tglPasang.getTime())) {
-        const tambahTahun = (alkon.includes("IMPLAN") || alkon.includes("IMP")) ? 3 : 8;
-        tglPasang.setFullYear(tglPasang.getFullYear() + tambahTahun);
-        const yC = String(tglPasang.getFullYear());
-        mCabut = String(tglPasang.getMonth() + 1).padStart(2, '0');
-        dCabut = String(tglPasang.getDate()).padStart(2, '0');
-        yCabutShort = yC.slice(-2);
-      }
+    if (alkon.includes("IMPLAN") || alkon.includes("IMP") || alkon.includes("IUD") || alkon.includes("SUSUK")) {
+      const tambahTahun = (alkon.includes("IMPLAN") || alkon.includes("IMP") || alkon.includes("SUSUK")) ? 3 : 8;
+      dCabut = dLayanan;
+      mCabut = mLayanan;
+      const thnCabutFull = String(parseInt(yLayanan, 10) + tambahTahun);
+      yCabutShort = thnCabutFull.slice(-2);
     }
 
     return `
@@ -10123,7 +10182,7 @@
         </div>
       </div>
     `;
-  }  
+  } 
 
   function cetakBatchKiKbA4(daftarAkseptor) {
     const list = daftarAkseptor || cachedAntreanLayanan;
@@ -10235,7 +10294,7 @@
     }, 600);
   }
   
-  function renderSatuFormKIV(item) {
+  function renderSatuFormKIV(item) {    
     const cleanTglFormatted = String(item.tgl_rencana_layanan || new Date().toISOString().split('T')[0]).replace(/\//g, '-').trim();
     const pTgl = cleanTglFormatted.split('-');
     let yLayanan = String(new Date().getFullYear()), mLayanan = "01", dLayanan = "01";
@@ -10253,15 +10312,14 @@
 
     let dLahir = "", mLahir = "", yLahir = "";
     if (item.tgl_lahir_istri) {
-      // Menangani format YYYY-MM-DD maupun DD/MM/YYYY
       const cleanTgl = String(item.tgl_lahir_istri).replace(/\//g, '-').trim();
       const pLahir = cleanTgl.split('-');
       if (pLahir.length === 3) {
-        if (pLahir[0].length === 4) { // Format: YYYY-MM-DD
+        if (pLahir[0].length === 4) {
           dLahir = pLahir[2].padStart(2, '0');
           mLahir = pLahir[1].padStart(2, '0');
           yLahir = pLahir[0];
-        } else { // Format: DD-MM-YYYY
+        } else {
           dLahir = pLahir[0].padStart(2, '0');
           mLahir = pLahir[1].padStart(2, '0');
           yLahir = pLahir[2];
@@ -10282,34 +10340,20 @@
 
       umurIstriVal = umurDihitung > 0 ? umurDihitung : "";
     }
-
-    // RESOLUSI NAMA WILAYAH LENGKAP (Mendukung Composite Key)
-    const curKab = String(item.kode_kab || userKodeKab || "01").padStart(2, '0');
-    const curKec = String(item.kode_kec || "").padStart(2, '0');
-    const curDesa = String(item.kode_desa || "").padStart(4, '0');
+    
+    const curKab = String(item.kode_kab || userKodeKab || document.getElementById("kode_kab")?.value || "").padStart(2, '0');
+    const curKec = String(item.kode_kec || userKodeKec || "").padStart(2, '0');
+    const curDesa = String(item.kode_desa || userKodeDesa || "").padStart(4, '0');
     const curDsn = String(item.kode_dusun || "").padStart(4, '0');
-
-    // A. Nama Kecamatan
+    
     const nmKec = (dataKecamatan[curKab] && dataKecamatan[curKab][curKec]) 
       ? dataKecamatan[curKab][curKec] 
       : (item.kecamatan_nama || curKec || "");
-
-    // B. Nama Desa
-    const compositeDesaKey = curKab + "_" + curKec;
-    let desasMapKiv = dataDesa[compositeDesaKey] || dataDesa[curKec] || {};
-    if (Object.keys(desasMapKiv).length === 0) {
-      for (let k in dataDesa) {
-        if (k.endsWith("_" + curKec)) {
-          desasMapKiv = dataDesa[k];
-          break;
-        }
-      }
-    }
-    const nmDesa = (desasMapKiv && desasMapKiv[curDesa]) 
-      ? desasMapKiv[curDesa] 
+    
+    const nmDesa = (typeof getNamaDesaByKode === "function")
+      ? getNamaDesaByKode(curKec, curDesa, curKab)
       : (item.desa_nama || curDesa || "");
-
-    // C. Nama Dusun
+    
     const dsnMap = (typeof getDusunList === "function") ? getDusunList(curKec, curDesa, curKab) : null;
     const nmDsn = (dsnMap && dsnMap[curDsn]) 
       ? dsnMap[curDsn].nama 
@@ -10329,17 +10373,13 @@
     else if (alkon.includes("IUD")) kdAlkon = "8";
     else if (alkon.includes("MOW") || alkon.includes("TUBEKTOMI")) kdAlkon = "9";
     else if (alkon.includes("MOP") || alkon.includes("VASEKTOMI")) kdAlkon = "10";
-
+    
     let dCabut = "", mCabut = "", yCabut = "";
-    if (tglFormatted && (alkon.includes("IMPLAN") || alkon.includes("IUD") || alkon.includes("SUSUK"))) {
-      const tglPasangObj = new Date(tglFormatted); // Gunakan tglFormatted langsung
-      if (!isNaN(tglPasangObj.getTime())) {
-        const addYears = alkon.includes("IUD") ? 8 : 3;
-        tglPasangObj.setFullYear(tglPasangObj.getFullYear() + addYears);
-        dCabut = String(tglPasangObj.getDate()).padStart(2, '0');
-        mCabut = String(tglPasangObj.getMonth() + 1).padStart(2, '0');
-        yCabut = String(tglPasangObj.getFullYear());
-      }
+    if (alkon.includes("IMPLAN") || alkon.includes("IMP") || alkon.includes("IUD") || alkon.includes("SUSUK")) {
+      const addYears = alkon.includes("IUD") ? 8 : 3;
+      dCabut = dLayanan;
+      mCabut = mLayanan;
+      yCabut = String(parseInt(yLayanan, 10) + addYears);
     }
 
     const jnsAkseptor = String(item.jenis_akseptor || "").toUpperCase();
@@ -10352,7 +10392,7 @@
     const rawJkn = String(item.peserta_jkn || "").toUpperCase().trim();
     let kdAsuransi = "";
     if (rawJkn.includes("PBI") || rawJkn.includes("BPJS")) {
-      kdAsuransi = "1"; // Baik PBI maupun BUKAN PBI masuk ke BPJS Kesehatan (1)
+      kdAsuransi = "1";
     } else if (rawJkn.includes("SWASTA")) {
       kdAsuransi = "2";
     } else if (rawJkn.includes("TIDAK") || rawJkn === "TIDAK MEMILIKI" || rawJkn === "NON-JKN") {
@@ -10367,8 +10407,8 @@
     let strBulan = "";
     if (totalAnak > 0) {
       const umurAnakNum = parseInt(item.umur_anak_terkecil || 0, 10);
-      strUmurThn = String(umurAnakNum).padStart(2, '0'); // Contoh: 4 -> "04"
-      strBulan = "00"; // Format baku 00 Bulan
+      strUmurThn = String(umurAnakNum).padStart(2, '0');
+      strBulan = "00";
     }
 
     return `
@@ -10543,7 +10583,7 @@
             </div>
           </div>
 
-          <!-- BAGIAN BAWAH & TANDA TANGAN (margin diatur rapat tanpa margin-top: auto) -->
+          <!-- BAGIAN BAWAH & TANDA TANGAN -->
           <div style="border-top: 1px solid #000; margin-top: 3.5mm; padding-top: 2mm; font-size: 7.4pt;">
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
