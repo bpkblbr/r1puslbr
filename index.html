@@ -2785,17 +2785,17 @@
   }
 
   function onKbMonthChange(monthIndex) {
-  const sel = document.getElementById("kb_" + monthIndex);
-  const val = sel ? sel.value : "";
+    const sel = document.getElementById("kb_" + monthIndex);
+    const val = sel ? sel.value : "";
 
-  // Jalankan logika mutasi pindah jika memilih PINDAH
-  if (val === "PINDAH") {
-    promptPindahDomisili(monthIndex);
+    // Jalankan logika mutasi pindah jika memilih PINDAH
+    if (val === "PINDAH") {
+      promptPindahDomisili(monthIndex);
+    }
+
+    // Terapkan aturan lock/unlock bulan setelah pilihan berubah
+    applyMutationAndAgeLocks();
   }
-
-  // Terapkan aturan lock/unlock bulan setelah pilihan berubah
-  applyMutationAndAgeLocks();
-}
 
   function promptPindahDomisili(monthIndex) {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -2830,20 +2830,19 @@
           title: 'Pilih Wilayah Tujuan',
           showCloseButton: true,
           html: `
-            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Kecamatan Tujuan:</div>
+            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Kecamatan Tujuan: <span style="color:#ef4444;">*</span></div>
             <select id="swalMutasiKec" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiKecChange()">
               ${kecOptions}
             </select>
             
-            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Desa Tujuan:</div>
+            <div style="text-align:left; font-size:13px; color:#444; margin-bottom:6px;">Desa Tujuan: <span style="color:#ef4444;">*</span></div>
             <select id="swalMutasiDesa" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0 0 10px 0;" onchange="onSwalMutasiDesaChange()">
               <option value="">-- PILIH DESA TUJUAN --</option>
             </select>
 
-            <!-- Dropdown Dusun (Otomatis muncul HANYA jika pindah di dalam desa yang sama) -->
             <div id="swalContainerDusunTujuan" style="display: none;">
               <div style="text-align:left; font-size:13px; color:#0284c7; font-weight:bold; margin-bottom:6px;">
-                📍 Pilih Dusun Tujuan :
+                📍 Pilih Dusun Tujuan : <span style="color:#ef4444;">*</span>
               </div>
               <select id="swalMutasiDusun" class="swal2-input" style="width: 100%; font-size: 13px; padding: 8px; margin: 0; border-color: #0284c7;">
                 <option value="">-- PILIH DUSUN TUJUAN --</option>
@@ -2896,21 +2895,14 @@
 
               selDsn.innerHTML = '<option value="">-- PILIH DUSUN TUJUAN --</option>';
 
-              // Munculkan dusun tujuan jika kecamatan dan desa sama dengan wilayah asal
               const isSameDesa = (selKec === curKdKec && selDesa === curKdDesa);
-
               if (isSameDesa) {
                 const curKab = String(userKodeKab || document.getElementById("kode_kab")?.value || "01").padStart(2, '0');
                 const dsnList = getDusunList(selKec, selDesa, curKab);
                 if (dsnList) {
                   for (let kd in dsnList) {
                     let cleanKdDsn = String(kd).trim().padStart(4, '0');
-                    
-                    // Dusun asal tidak ditampilkan sebagai pilihan
-                    if (cleanKdDsn === curKdDusun) {
-                      continue;
-                    }
-
+                    if (cleanKdDsn === curKdDusun) continue;
                     selDsn.add(new Option(dsnList[kd].nama.toUpperCase(), cleanKdDsn));
                   }
                 }
@@ -2924,10 +2916,15 @@
             const kecTujuan = String(document.getElementById('swalMutasiKec').value || "").trim().padStart(2, '0');
             const desaSelect = document.getElementById('swalMutasiDesa');
             const desaTujuan = String(desaSelect.value || "").trim().padStart(4, '0');
-            const desaNama = desaSelect.selectedIndex >= 0 ? desaSelect.options[desaSelect.selectedIndex].text : "";
+            const desaNama = (desaSelect.selectedIndex > 0) ? desaSelect.options[desaSelect.selectedIndex].text : "";
 
-            if (!kecTujuan || !desaTujuan) {
-              Swal.showValidationMessage('Kecamatan dan Desa tujuan wajib dipilih!');
+            // VALIDASI WAJIB SAMPAI TINGKAT DESA
+            if (!kecTujuan || kecTujuan === "00") {
+              Swal.showValidationMessage('Kecamatan tujuan wajib dipilih!');
+              return false;
+            }
+            if (!desaTujuan || desaTujuan === "0000" || desaSelect.selectedIndex <= 0) {
+              Swal.showValidationMessage('Desa / Kelurahan tujuan wajib dipilih!');
               return false;
             }
 
@@ -2936,8 +2933,8 @@
             const dsnTujuan = String(dsnSelect.value || "").trim().padStart(4, '0');
             const dsnNama = (dsnSelect.selectedIndex > 0) ? dsnSelect.options[dsnSelect.selectedIndex].text : "";
 
-            if (isSameDesa && !cleanTargetDusunValid(dsnTujuan)) {
-              Swal.showValidationMessage('Pindah di dalam desa wajib memilih Dusun tujuan baru!');
+            if (isSameDesa && (!cleanTargetDusunValid(dsnTujuan) || dsnSelect.selectedIndex <= 0)) {
+              Swal.showValidationMessage('Pindah di dalam desa yang sama wajib memilih Dusun tujuan baru!');
               return false;
             }
 
@@ -2958,14 +2955,10 @@
             document.getElementById("pindah_dusun_tujuan").value = mutRes.value.dusun;
             document.getElementById("pindah_dusun_nama").value = mutRes.value.dusunNama;
 
-            let infoTujuan = `Desa ${mutRes.value.desaNama}`;
-            if (mutRes.value.dusunNama) {
-              infoTujuan += ` (Dusun ${mutRes.value.dusunNama})`;
-            }
-
-            Swal.fire('Tercatat', `Tujuan pindah: ${infoTujuan}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
+            applyMutationAndAgeLocks(); //
+            Swal.fire('Tercatat', `Tujuan pindah: Desa ${mutRes.value.desaNama}. Tiket mutasi akan dibuat saat form disimpan.`, 'success');
           } else {
-            BATalkanPilihanPindah(monthIndex);
+            BATalkanPilihanPindah(monthIndex); //[cite: 7]
           }
         });
 
@@ -2977,14 +2970,15 @@
         document.getElementById("pindah_dusun_tujuan").value = "";
         document.getElementById("pindah_dusun_nama").value = "";
 
+        applyMutationAndAgeLocks(); //[cite: 7]
         Swal.fire({
           icon: 'info',
           title: 'Pindah Ke Luar Kabupaten',
-          text: 'Status PINDAH ke luar kabupaten tercatat. Data akseptor ini akan dinonaktifkan dari wilayah Anda saat form disimpan.'
+          text: 'Status PINDAH keluar kabupaten tercatat. Data akseptor dinonaktifkan di wilayah setempat saat disimpan.'
         });
 
       } else {        
-        BATalkanPilihanPindah(monthIndex);
+        BATalkanPilihanPindah(monthIndex); //[cite: 7]
       }
     });
   }
@@ -4122,6 +4116,21 @@
 
     if (jmlAnak > 0 && (!umurAnakTerkecil || parseInt(umurAnakTerkecil, 10) < 0)) {
       errors.push("Umur Anak Terkecil wajib diisi (karena anak > 0)");
+    }
+
+    let adaStatusPindah = false;
+    for (let m = 1; m <= 12; m++) {
+      if ((document.getElementById("kb_" + m)?.value || "").toUpperCase() === "PINDAH") {
+        adaStatusPindah = true;
+        break;
+      }
+    }
+    const isPindahDalamKab = document.getElementById("is_pindah_dalam_kab").value === "true";
+    if (adaStatusPindah && isPindahDalamKab) {
+      const desaTujuan = document.getElementById("pindah_desa_tujuan").value.trim();
+      if (!desaTujuan || desaTujuan === "0000") {
+        errors.push("Desa tujuan mutasi belum ditentukan!");
+      }
     }
 
     if (errors.length > 0) {
